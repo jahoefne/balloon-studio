@@ -4,6 +4,7 @@
 
 import type { MeshBuffers, Vec2 } from '../types';
 import { cos, PI, sin } from '../swift/dmath';
+import { swiftMax } from './swiftCompat';
 
 /** A mesh under construction, with one color group per triangle. */
 export interface StubMesh {
@@ -199,7 +200,7 @@ export const binarySTL = (m: StubMesh): Uint8Array => {
     const a = p(m.indices[3 * t]!), b = p(m.indices[3 * t + 1]!), c = p(m.indices[3 * t + 2]!);
     const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], w = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
     const n = [u[1]! * w[2]! - u[2]! * w[1]!, u[2]! * w[0]! - u[0]! * w[2]!, u[0]! * w[1]! - u[1]! * w[0]!];
-    const length = Math.max(Math.sqrt(n[0]! * n[0]! + n[1]! * n[1]! + n[2]! * n[2]!), 1e-30);
+    const length = swiftMax(Math.sqrt(n[0]! * n[0]! + n[1]! * n[1]! + n[2]! * n[2]!), 1e-30);
     const values = [n[0]! / length, n[1]! / length, n[2]! / length, ...a, ...b, ...c];
     values.forEach((value, k) => view.setFloat32(84 + t * 50 + k * 4, value, true));
   }

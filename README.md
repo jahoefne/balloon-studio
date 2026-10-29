@@ -6,7 +6,7 @@ Balloon Studio is becoming a web app: **https://jahoefne.github.io/balloon-studi
 
 ## Status
 
-Milestone M0: repository, build and deployment pipeline. The editors, 3D preview and exports arrive part by part; see [`docs/plan.md`](docs/plan.md) (German) for the work packages, the identity criterion for exported files and the milestones.
+Milestone M0 (repository, build and deployment pipeline) and the first wave of work packages are done: the Swift-compatibility primitives and writers of the core (`web/src/core/swift`, `geometry`, `io`, `testing`), the rasterizer conventions (`core/raster`), the UI primitives (`web/src/ui`), the core contract with worker client and stub core (`core/types.ts`, `core/api.ts`, `web/src/worker`, `core/stub`) and the Mac reference set (`mac/ReferenceExporter`, `references/`). The editors, 3D preview and exports arrive part by part; see [`docs/plan.md`](docs/plan.md) (German) for the work packages, the identity criterion for exported files and the milestones.
 
 ## Repository layout
 

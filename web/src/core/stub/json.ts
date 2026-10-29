@@ -24,8 +24,9 @@ const asDouble = (v: unknown, key: string): number => {
   if (typeof v !== 'number' || !Number.isFinite(v)) throw new DecodeError(`${key}: expected Double`);
   return v;
 };
+const INT64_LIMIT = 9223372036854775808; // 2^63, the magnitude where Swift's Int overflows
 const asInt = (v: unknown, key: string): number => {
-  if (typeof v !== 'number' || !Number.isInteger(v) || Math.abs(v) > 2 ** 63) throw new DecodeError(`${key}: expected Int`);
+  if (typeof v !== 'number' || !Number.isInteger(v) || Math.abs(v) > INT64_LIMIT) throw new DecodeError(`${key}: expected Int`);
   return v;
 };
 const asBool = (v: unknown, key: string): boolean => {
