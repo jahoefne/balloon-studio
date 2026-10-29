@@ -276,7 +276,20 @@ func checkExpectations(_ c: GridCase, _ produced: Produced) -> [String] {
     return failures
 }
 
+// CoreGraphics drawing into separate contexts on several threads at once does not give the same
+// bitmap as drawing alone: on macOS 26.6.2, 11 of 16 parallel Night Flight or Summit Cable Car
+// artworks differed from a sequential draw, by up to 140/255 in a few thousand pixels. Cases that
+// draw (relief artworks, text masks) therefore run one at a time; the others stay parallel.
+let coreGraphics = NSLock()
+func drawsWithCoreGraphics(_ c: GridCase) -> Bool {
+    guard c.part == "pattern", let style = (try? decodeRaw(PatternSettings.self, c.pattern))?.style else { return false }
+    return style == .text || style.hasRelief
+}
+
 func run(_ c: GridCase, _ writer: Writer) -> [String: Any] {
+    let serialized = drawsWithCoreGraphics(c)
+    if serialized { coreGraphics.lock() }
+    defer { if serialized { coreGraphics.unlock() } }
     var record: [String: Any] = ["id": c.id, "part": c.part, "quality": c.qualityName, "group": c.group]
     writer.remove("files/\(c.id)"); writer.remove("entries/\(c.id)")
     let start = DispatchTime.now().uptimeNanoseconds
