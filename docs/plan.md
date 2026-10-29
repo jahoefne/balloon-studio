@@ -1,0 +1,477 @@
+# Balloon Studio → Web-App (GitHub Pages) — Umsetzungsplan
+
+Stand: 2026-10-29. Abschnitte 1–3 sind Kontext und verbindliche Regeln, 4–8 die Arbeitspakete (Präfixe K, U, R, V), 9–12 Reihenfolge, Verifikation, Risiken und Annahmen.
+
+## 1. Kontext
+
+Balloon Studio ist eine native Mac-App (SwiftUI/SceneKit, ~10.300 Zeilen Swift in `Sources/BalloonStudio/`, Version 1.29.3), die druckfertige Dateien erzeugt: Ballonhüllen (STL, zweifarbige Bambu-3MF), Körbe, Mobile-Ringe (STL oder ZIP-Kit), Figuren (STL/ZIP), Wolken- und Sonnenlampen (ZIP-Kit mit STLs, `LED-LAYOUT.svg`, `ASSEMBLY.md`, Settings-JSON) und einen Kabelclip (STL). Sie soll als statische Web-App auf GitHub Pages laufen. Funktionsumfang und erzeugte Dateien müssen identisch bleiben. Die Umsetzung erfolgt durch parallel arbeitende Opus-Agenten; dieser Plan ist ihr Auftrag.
+
+### Entscheidungen (mit dem Nutzer abgestimmt, 2026-10-29)
+
+| Thema | Entscheidung |
+| --- | --- |
+| Architektur | Geometrie-/Export-Kern (~7.270 Zeilen, 23 Dateien) wird **1:1 nach TypeScript portiert** (gleiche Algorithmen, gleiche Operationsreihenfolge). Kein SwiftWasm. |
+| Stack | Wie `jahoefne/stacklamp`: TypeScript, React 19, Vite (rolldown), Three.js, zustand, vitest, Deploy per GitHub Actions auf Pages. |
+| „Identisch" | **Byte-identisch, wo deterministisch.** STL: Byte-Gleichheit angestrebt, toleriert nur ≤ 1 Float32-ULP bei identischer Dreieckszahl, -reihenfolge und Topologie. ZIP: Eintrag für Eintrag. JSON: Swift-Referenz bekommt `.sortedKeys`, TS schreibt dasselbe kanonische Layout → byte-identisch. 3MF: gleiche Struktur/Texte, Koordinaten numerisch ≤ 1e-12 relativ (libm-Unterschiede in der letzten Stelle). |
+| Text / Night Flight / Summit Cable Car | Eigener **deterministischer Software-Rasterizer** in TS + gebündelte OFL-Fonts als Ersatz der Apple-Fonts. Visuell gleichwertig, toleranzgeprüft gegen die CoreGraphics-Höhenkarte; **ausgenommen vom Byte-Kriterium**. |
+| Repo/Hosting | Neues **öffentliches** Repo `jahoefne/balloon-studio` → `https://jahoefne.github.io/balloon-studio/`. Swift-Quellen, Tests und ein neuer Headless-Referenz-Exporter wandern nach `mac/` mit ins Repo; die Mac-App ist während der Portierung das Orakel. |
+| Name | Die Web-App heißt weiterhin „Balloon Studio". |
+
+### Ausgangslage (verifiziert)
+
+- **Kein Git-Repo**, kein `Package.swift`; Build mit `swiftc` über `scripts/build-app.sh`, Tests über `scripts/test.sh`, `scripts/test-patterns.sh`, `scripts/test-stl-import.sh` (eigene `@main`-Runner, `require/check → fatalError`, Suites per argv). Lokal: `DEVELOPER_DIR=/Library/Developer/CommandLineTools xcrun swiftc …` (Xcode-Lizenz nicht akzeptiert). Swift 6.3.3, Node 26, npm 11, `gh` eingeloggt als `jahoefne`.
+- **Kern** (nur Foundation): `BalloonGeometry`, `BalloonPatterns`, `ThreeMF` (XML + eigener `StoredZIP`), `SurfaceQuery`, `CeilingLoop`, `StringHoles`, `BasketGeometry`, `RingGeometry`, `SegmentedRing`, `SunGeometry`, `CloudGeometry` (1.052 Zeilen), `CableSeal`, `CableClamp`, `LampSurface`, `CloudLEDLayout`, `LampSettingsFile`, `FigureGeometry`, `NailInsert`, `CableClip`, `STLImport` (CryptoKit SHA-256 für den `BSTL0002`-Header).
+- **Apple-abhängig:** `BalloonText` (CoreText-Shaping, Systemfonts, CG-Fill ohne Antialiasing → 0/1-Maske), `NightFlight` und `SummitCableCar` (CGContext-Graustufen-Höhenkarte 1024–3072 × 256–1200 px mit Antialiasing, Bézier-Fills, Strokes mit Round Caps, Dash, Clipping, linearen/radialen Gradienten; Summit nutzt zusätzlich CGs Stroker/Dasher und ein eigenes Pfad-Warping).
+- **UI** (~3.000 Zeilen): `BalloonStudioApp` (Shell, Balloon-Tab, `ParameterControl`), `BalloonPreview` (SceneKit), `PatternEditor`, `BasketEditor`, `RingEditor`, `CloudEditor` (Cloud + Sun), `FigureEditor`, `CableClipEditor`, `STLImportView`, `LEDReflectorDiagram`. Englisch, hart kodiert, Light-Mode erzwungen.
+- **Tests:** 17 Dateien, 3.589 Zeilen, ~620 Assertions in Parameter-Sweeps; **keine Golden-Files**, nur Invarianten (manifold, Volumen, Maße, Bohrungen, Settings-Roundtrips). Kein Headless-Export vorhanden. `output/` enthält überwiegend Kits älterer Versionen → nicht als Referenz brauchbar.
+- **Nicht-Determinismus heute:** `JSONEncoder()` ohne `.sortedKeys` (CloudGeometry:464, FigureGeometry:570, ThreeMF:49) → Schlüsselreihenfolge pro Prozess zufällig; damit ändern sich auch CRC/Offsets jedes Kit-ZIPs und jeder 3MF zwischen zwei Mac-Läufen.
+
+## 2. Zielarchitektur und Repo-Layout (verbindlich für alle Agenten)
+
+```
+balloon-studio/
+├── mac/                                   # bisherige Swift-App, erster Commit = unveränderter Import
+│   ├── Sources/BalloonStudio/*.swift      # unverändert bis auf StableJSON.swift (+3 Aufrufstellen, Abschnitt 8)
+│   ├── Tests/*.swift                      # unverändert
+│   ├── scripts/*.sh                       # Pfade an mac/ angepasst
+│   ├── ReferenceExporter/main.swift       # NEU: Headless-Exporter (WP-V1)
+│   ├── Probes/{Libm,Arith,Format,Json}/main.swift   # NEU: Laufzeit-Semantik-Proben (WP-V1)
+│   ├── cases/grid.json                    # Referenz-Fallraster (WP-V1)
+│   └── blender/create_balloon.py
+├── web/                                   # Vite-App, base '/balloon-studio/'
+│   ├── src/core/                          # reines TS, kein DOM, kein node:, läuft in Worker und vitest
+│   │   ├── swift/        rounding.ts minmax.ts format.ts json.ts sort.ts text.ts dmath.ts
+│   │   ├── geometry/     point3.ts mesh.ts meshBuilder.ts weld.ts surfaceQuery.ts
+│   │   ├── io/           binaryStl.ts storedZip.ts crc32.ts sha256.ts
+│   │   ├── balloon/      balloonParameters.ts balloonGenerator.ts ceilingLoop.ts stringHoles.ts balloonStl.ts
+│   │   ├── patterns/     balloonPatterns.ts threeMF.ts textLayout.ts nightFlightRelief.ts raster.ts (Seam-Typen)
+│   │   ├── raster/       affine.ts path.ts flatten.ts stroke.ts dash.ts scanline.ts clip.ts gradient.ts canvas.ts pgm.ts
+│   │   ├── text/         fontFile.ts fontSet.ts shaper.ts textMask.ts
+│   │   ├── artwork/      nightFlightArtwork.ts summitCableCarArtwork.ts
+│   │   ├── lamp/         cloudGeometry.ts sunGeometry.ts cableSeal.ts cableClamp.ts lampSurface.ts cloudLedLayout.ts nailInsert.ts lampSettingsFile.ts cloudKit.ts
+│   │   ├── ring/         ringGeometry.ts segmentedRing.ts
+│   │   ├── figures/      figureGeometry.ts
+│   │   ├── basket/       basketGeometry.ts
+│   │   ├── clip/         cableClip.ts
+│   │   ├── testing/      stl.ts hits.ts ray.ts inside.ts basket.ts motifs.ts check.ts zipReader.ts
+│   │   ├── api.ts types.ts                # CoreApi-Vertrag (WP-U2)
+│   │   ├── real/index.ts                  # CoreApi-Implementierung über die Module oben (WP-K9)
+│   │   └── stub/index.ts                  # Platzhalter-Geometrie mit echten Normalizern (WP-U2)
+│   ├── src/worker/   core.worker.ts client.ts protocol.ts
+│   ├── src/{app,ui,stores,persistence,preview,editors,io}/   # Abschnitt 6
+│   ├── public/fonts/ *.ttf LICENSES.md
+│   ├── tests/        # vitest: 1 Datei je Swift-Testdatei + Raster-/Text-Tests, fixtures/ (gz), support/
+│   ├── harness/      # Referenzvergleich (WP-V2): manifest.ts compare.ts stlDiff.ts zipDiff.ts jsonDiff.ts threeMfDiff.ts report.ts pack.ts
+│   ├── bench/        # Node-Benchmarks der Hot Paths
+│   └── scripts/      # check-bundle-size.mjs bench-patterns.ts export-pattern-tests.ts assertion-census.ts subset-cjk.sh
+├── references/
+│   ├── manifest.json                      # SHA-256 + Metadaten jedes Falls (committet, ~200 KB)
+│   ├── files/<sha256[0:2]>/<sha256>       # Tier A: kleine Referenzkörper ≤ 300 KB, content-addressed (committet, ≤ ~5 MB)
+│   ├── probes/*.json|*.bin                # Ausgaben der Swift-Proben (committet)
+│   ├── fixtures/legacy-settings/*.json    # die sechs Settings-JSONs aus output/ (committet)
+│   ├── report.json patch-proof.json PACK.md
+│   └── pack/                              # Tier B: vollständige Referenzen (~1 GB roh, ~600 MB zstd) — gitignored, Release-Asset
+├── docs/            architecture.md parity-checklist.md manual-browser-checklist.md mac-app.md (alte README) history/
+└── .github/workflows/deploy.yml (web: unit, compare-smoke, build, Pages) + compare-full.yml (main/nightly/Label)
+```
+
+Jede TS-Datei des Kerns beginnt mit `// Ported from mac/Sources/BalloonStudio/<File>.swift @ <commit>`, behält Funktionsnamen, Deklarations- und Operationsreihenfolge; bewusste Abweichungen sind mit `// SWIFT-DIFF: <Grund>` markiert.
+
+Laufzeit: UI-Thread (React, Three.js) ↔ zwei Instanzen eines Core-Workers (`preview` mit Debounce 100/60 ms und latest-wins, `io` für Export/Import). Export nimmt den Parameter-Snapshot beim Öffnen des Speichern-Dialogs. Persistenz in `localStorage` unter den bisherigen Schlüsseln (`BalloonStudio.parameters.v1`, `.pattern.v1`, `.purge.v1`, `.basket.v1`, `.ring.v1`, `.cloud.v1`, `.sun.v1`, `.figure.v1`, `.cableClip.v1`) mit demselben JSON, damit die vorhandenen Migrationen (`init(from:)`-Logik) 1:1 weitergelten.
+
+## 3. Swift-Semantik, die der TS-Port exakt nachbilden muss (verifiziert am 2026-10-29)
+
+| Swift | Verhalten (gemessen) | TS-Konsequenz |
+| --- | --- | --- |
+| `"\(Double)"` (3MF-Koordinaten, `balloon-studio.txt`) | kürzeste Round-Trip-Ziffern; immer `.0` bei ganzen Werten (`25.0`, `-0.0`); Exponentform bei Exponent < −4 oder ≥ 16: `1e-05`, `1e+16`, `1.2345678901234568e+17`; `1000000000000000.0` | eigener `swiftDescription(x)`: Ziffern aus `Number.prototype.toString`/`toExponential` ableiten, Layout nach Swift-Regeln |
+| `JSONEncoder` (Settings, `pattern-settings.json`) | kompakt, ganze Doubles ohne `.0` (`"width":230`), kleine Werte `1e-05`, `/` als `\/`, `nil`-Optionals weggelassen, Schlüssel künftig sortiert | `encodeSwiftJSON(obj)` mit sortierten Schlüsseln, Swift-Zahlformat, `\/`-Escaping |
+| `JSONSerialization` `.prettyPrinted,.sortedKeys` (`kit-manifest.json`) | 17 signifikante Stellen (`0.29999999999999999`, `169.45178757107396`), ganze Werte ohne `.0`, `" : "`, 2 Leerzeichen, Arrays ein Element pro Zeile | eigener Pretty-Printer; `%.17g`-Äquivalent über `toPrecision(17)` + Strip |
+| `JSONSerialization` `.sortedKeys` kompakt (`balloon-settings.json`) | wie oben ohne Whitespace | dito |
+| `String(format:"%.1f"/"%.2f", en_US_POSIX)` | korrekt gerundet auf dem exakten Binärwert; **exakte Ties → gerade** (`0.25 → 0.2`), `0.35 → 0.4`, `2.675 → 2.68` | `toFixed` wählt bei exakten Ties die größere Zahl → eigener `printfFixed(x, n)` mit Tie-Erkennung |
+| `String(format:"%g")` (Dateinamen Ring/Clip) | `8 → "8"`, `3.75 → "3.75"`, Exponentform mit großem `E` (`1E-05`), praktisch nie erreicht (Werte 2–12) | `printfG(x)`; Exponentfall mit Test abgesichert |
+| `.rounded()` | Hälften **vom Nullpunkt weg** (`-2.5 → -3`) | `roundHalfAway(x)` statt `Math.round` |
+| `.remainder(dividingBy:)` | IEEE-Rest (Quotient halb-gerade): `2.5.remainder(3) = -0.5` | `ieeeRemainder(a,b)` |
+| `.truncatingRemainder` | wie JS `%` | `%` |
+| `Float(x)` | round-to-nearest-even | `Math.fround` |
+| `sort`/`sorted(by:)` | **stabil** (seit Swift 5 dokumentiert garantiert); Ties an CableClamp:317, SurfaceQuery:59 damit deterministisch | **kein Swift-Patch**; TS `stableSorted(array, lessThan)` über `Array.prototype.sort` (stabil seit ES2019) mit Komparator `a<b ? -1 : b<a ? 1 : 0`; Probe pinnt die Stabilität |
+| `min(x,y)` / `max(x,y)` | bei Gleichheit liefert `min` `x`, `max` `y`; `max(0.0,-0.0) = -0.0` (JS `Math.max(0,-0)` = `+0` → anderes STL-Byte) | `swiftMin(x,y) = y<x ? y : x`, `swiftMax(x,y) = y>=x ? y : x`; `Sequence.min()/max()`, `min(by:)/max(by:)` → `arrayMin/arrayMax/minBy/maxBy` (erstes von gleichen); `Math.min/max` im Kern verboten |
+| `Int(x)` / `Int(floor(x))` / `rounded(.up)` | trunc / floor / ceil; `Int(x)` trapt bei nicht-endlich | `Math.trunc` mit Finite-Assert / `Math.floor` / `Math.ceil` |
+| `stride(from:through:by:)` (Double) | `from + i·by` (multiplikativ), z. B. CableClamp:183 | `strideThrough(from, through, by)` identisch |
+| FP-Kontraktion | Swift ohne Fast-Math: kein FMA | JS hat kein FMA; Probe prüft `a*b+c`, `a*b-c*d` bitweise |
+| `Set<Edge>`-Iteration | vor Vertex-Erzeugung überall sortiert (BalloonPatterns:194, LampSurface:254, FigureGeometry:512, NightFlight:274 `rings`); CableClamp:208-221 ist bei gültiger Kontur ordnungsunabhängig (`next.count == edges.count`-Guard); einzige ordnungsabhängige Stelle STLImport:166-178 betrifft nur Schätzwerte für Alt-STLs | TS sortiert identisch; `reconstruct` iteriert aufsteigend und wird nur toleranzgeprüft |
+| `String`-Grapheme/Whitespace in `PatternSettings.normalized` (BalloonPatterns:55; landet in jeder 3MF) | Swift `Character` = Grapheme-Cluster, `isWhitespace` = Unicode | `Intl.Segmenter('grapheme')`, `/^\p{White_Space}$/u`; Probe mit Kombinationszeichen, Emoji-ZWJ, NBSP |
+| `sin/cos/atan2/hypot/pow/exp/…` (≈290 Aufrufe) | Apple-libm; V8/SpiderMonkey nutzen fdlibm-Ports, **JavaScriptCore die System-libm** → `Math.*` ist nicht browserübergreifend deterministisch | **kernweit** `swift/dmath.ts` (pure-JS fdlibm via `@stdlib/math-base-special-*`; `hypot = sqrt(x*x+y*y)`; `x*x` statt `pow(x,2)`; `Math.sqrt/floor/ceil/trunc/abs/fround` erlaubt). Ergebnis: identische Bytes in Chrome, Safari, Firefox und Node; gegenüber Apple-libm bleiben seltene 1-ULP-Abweichungen (Float32: ~2⁻²⁹ pro Koordinate; Schwellen-Flips ~1e-15 pro Vergleich) → Harness-Kriterium. Lint verbietet rohes `Math.sin/…`, `Math.hypot`, `Math.pow`, `**`, `Math.min/max/round`, nacktes `.sort()` im Kern |
+
+Feste Strings/Konstanten, die exakt übernommen werden: STL-Header `"Balloon Studio | millimetres | watertight material | Z up"` (80 Byte, nullgefüllt), `BSTL0002`-Header (Flags, Panels, 13 LE-Float32, 16 Byte SHA-256-Präfix über Header[0..<62] + Daten ab Byte 80, 2 Nullbytes; Leser akzeptiert `BSTL0001`), 3MF `Application = "Balloon Studio 1.4"`, Transform `1 0 0 0 1 0 0 0 1 128 128 0`, `paint_color` `4`/`8`, ZIP (stored, Version 20, Flags 0, Zeit 0, Datum 33, CRC-32, keine Extra-Felder, Reihenfolge der Einträge), `kit-manifest.json` `format_version 2`, `flightCompositionVersion 3`, Datum `2026-09-28` und Amazon-URL in `ASSEMBLY.md`.
+
+## 4. Arbeitspakete — Übersicht und Präfixe
+
+Arbeitspakete (WP) sind so geschnitten, dass unabhängige Opus-Agenten sie parallel bearbeiten können. Präfixe: **K** = Kern-Port (TS-Geometrie), **R** = Rasterizer/Fonts/Reliefmuster, **U** = Web-UI/Preview/I/O, **D** = Repo/Deploy, **V** = Referenz-Exporter/Harness/Verifikation. Jedes WP nennt Ziel, Eingaben (Swift-Dateien/Zeilen), Ausgaben (Pfade), Abhängigkeiten und Abnahmekriterien. Strings und Zahlenbereiche werden **immer aus den genannten Swift-Zeilen kopiert**, nie aus dem Gedächtnis.
+
+Querschnittsregeln für alle WPs:
+- Kern-Code (`web/src/core/**`) ist reines TypeScript ohne DOM-/Browser-APIs und ohne `node:`-Imports, lauffähig in Node (vitest) und im Worker. Keine `Math.random`, kein `Date`, kein `Intl` außer `Intl.Segmenter` in `swift/text.ts`.
+- Jede Swift-Datei bekommt eine TS-Datei gleichen Namens (camelCase) mit identischer Funktionsgliederung; Kopfkommentar nennt Quelle und Commit; Abweichungen `// SWIFT-DIFF:`.
+- Schwellen, Rundungen, Sortierungen, Iterations- und Einfügereihenfolgen (Vertex-Indizes!) werden exakt übernommen (Abschnitt 3), auch wenn eine „bessere" Variante naheläge. Ausdrücke werden in der Swift-Reihenfolge geschrieben (`u*u*u*a.x+3*u*u*f*b.x+…`), keine algebraischen Vereinfachungen.
+- Keine Funktion wird „verbessert" oder zusammengelegt, bevor der Referenzvergleich für ihren Teil grün ist.
+- Agenten lesen die genannten Swift-Zeilen selbst; dieser Plan paraphrasiert, die Swift-Quelle entscheidet.
+
+### Betriebsanleitung für die Opus-Agenten
+- **Ein WP = ein Agent = ein Branch `wp/<kürzel>` = ein PR nach `main`.** PR-Beschreibung nennt das WP, die portierten Swift-Zeilen und die Abnahmekriterien mit Ergebnis (Harness-Report, Testanzahl). CI (`unit` + `compare-smoke`) muss grün sein; Merge durch den Nutzer oder einen Integrations-Agenten.
+- **Dateibesitz:** jedes WP nennt seine Ausgabepfade; zwei gleichzeitig laufende WPs schreiben nie dieselbe Datei. Gemeinsame Verträge (`core/types.ts`, `core/api.ts`, `worker/protocol.ts`, `core/swift/*`, `core/geometry/*`, `patterns/raster.ts`) werden **zuerst** eingefroren (U2, K1, R0) und danach nur per eigenem kleinem PR geändert, auf den die betroffenen Agenten hingewiesen werden.
+- **Reihenfolge innerhalb eines Kern-WPs:** (1) Parameter-Struct + `normalized()` + Codec gegen die `normalized`-Strings im Manifest, (2) Generator bei `preview`-Qualität gegen Harness, (3) `export`-Qualität, (4) Kit-Texte/SVG/JSON, (5) portierte Swift-Tests. Erst Harness grün, dann Tests, dann Aufräumen.
+- **Definition of Done (Kern-WP):** alle Fälle des Teils im Harness `identical` oder `ulp` (≤ 1 ULP, Topologie gleich, Text/JSON/SVG byte-gleich), zugehörige Swift-Testdatei portiert (Assertion-Zensus ≥ Swift-Zahl minus Allowlist), `npm run typecheck && npm test` grün, Lint-Regeln des Kerns ohne Ausnahme.
+- **Definition of Done (UI-WP):** alle Controls/Strings/Readouts der genannten Swift-Zeilen vorhanden (Paritäts-Checkliste-Zeilen abgehakt), Tests aus dem WP grün, manuell im Browser geprüft (Chrome + ein zweiter Browser), Bundle-Budget eingehalten.
+- Lokal auf dem Mac: Swift-Builds immer mit `DEVELOPER_DIR=/Library/Developer/CommandLineTools`. Lange Läufe (`make-references.sh`, `full`-Tier) im Hintergrund mit Log + Exit-Code.
+
+## 5. K — Kern-Port nach TypeScript
+
+### WP-K1 — Swift-Kompatibilität, Primitive, Writer, Test-Utilities (Fundament, zuerst)
+Eingaben: `BalloonGeometry.swift:99-210` (Point3, Triangle, MeshError, `BalloonMesh.validate`, `binarySTL`), `ThreeMF.swift:57-85` (StoredZIP, CRC32), `SurfaceQuery.swift` (ganz), Test-Utilities `GeometryTests.swift:8-38, 242-273, 463-477`, `NailInsertTests.swift:5-19`, `WickerTests.swift:6-30`, `PatternTests.swift:6-14`.
+Ausgaben: `web/src/core/swift/*`, `core/geometry/*`, `core/io/*`, `core/testing/*` + Unit-Tests; ESLint-Konfiguration für `src/core` (verbotene `Math.*`/`.sort()`/DOM).
+- `swift/rounding.ts`: `rounded(x)` (half away from zero, `-0` erhalten), `ieeeRemainder(x,y)` exakt (Tie-Fall über exakten Quotienten), `truncatingRemainder` = `%`, `intTrunc` mit Finite-Assert, `intDiv`, `strideThrough`.
+- `swift/minmax.ts`: `swiftMin/swiftMax/arrayMin/arrayMax/minBy/maxBy` (Abschnitt 3).
+- `swift/dmath.ts`: `sin, cos, tan, atan, atan2, asin, acos, exp, pow, log, cbrt` aus `@stdlib/math-base-special-*` (Apache-2.0, pure JS), `hypot(x,y) = Math.sqrt(x*x+y*y)`, `PI = Math.PI`; Doc-Kommentar mit der Swift→JS-Tabelle; Test: exhaustiv `fround(b/255)` für b∈0..255, Stichproben gegen die Libm-Probe (ULP-Statistik, informativ).
+- `swift/format.ts`: `swiftDoubleDescription(x)` (kürzeste Round-Trip-Ziffern aus `Number.prototype.toString`, Swift-Layout: `.0`, `-0.0`, Exponentform bei Exponent < −4 oder ≥ 16, zweistelliger Exponent `1e-05`/`1e+16`), `formatFixed(x, n)` und `formatG(x, precision = 6 | 17)` über **exakte BigInt-Dezimalentwicklung** mit Round-half-even bei exakten Ties (printf-Semantik; `toFixed` würde `2.25 → "2.3"` liefern); `%g` mit großem `E` im Exponentfall (Probe entscheidet).
+- `swift/json.ts`: `encodeJSONCompact(obj)` (JSONEncoder-kompatibel: Schlüssel sortiert, kompakt, Doubles via Description ohne `.0`, Ints unverändert, `/`→`\/`, Steuerzeichen wie Probe, `undefined` weggelassen), `encodeJSONPretty17g(obj)` (JSONSerialization `.prettyPrinted,.sortedKeys`: `"k" : v`, 2 Leerzeichen, ein Array-Element pro Zeile, Doubles `%.17g`, Int-Provenienz-Flag, damit `450` bleibt), `encodeJSONCompactSerialization` (für `balloon-settings.json`, ThreeMF:48).
+- `swift/sort.ts`: `stableSorted(array, lessThan)`, `sortedDoubles`. `swift/text.ts`: `swiftCharacters`, `isSwiftWhitespace`, `utf8`.
+- `geometry/`: `Point3 {x,y,z}` mit freien Funktionen `sub/add/scale/cross/dot/length/unit` (`unit` mit `swiftMax(length, 1e-30)`), `Triangle`, `BalloonMesh` (`vertices`, `triangles`, `maxOverhang`, `innerVertexRange`, `dimensions()`, `validate()` mit Union-Find auf `Int32Array` und Kanten-Multimenge in offener Adressierung mit Schlüssel `lo·2²¹+hi`; identische Fehlerstrings), `binarySTL()` (direkt in einen `ArrayBuffer`, Header-Bytes identisch, Normalen in Double dann `fround`, Attribut `0,0`; `DataView.setFloat32(off, v, true)` wegen 50-Byte-Stride). `surfaceQuery.ts`: Faces als `Float64Array` (12 Doubles/Face), Knoten als Typed Arrays, `distanceSquared` skalar in Swift-Reihenfolge, `build` mit `stableSorted` und derselben Achsenregel. `weld.ts`: `IntKey3Map` (offene Adressierung für `(Int,Int,Int)`-Schlüssel; CloudMeshBuilder, CableClamp.stand) und `ExactPointMap` (exakte Double-Schlüssel, `-0`→`0` normalisiert wie Swift-Hashing; STL-Import). `meshBuilder.ts`: wachsende `F64Buf/U32Buf`.
+- `io/storedZip.ts`: byteweiser Port von `StoredZIP.archive` (lokaler Header `20,0,0,0,33`, CRC32-Tabelle, Central Directory, EOCD, keine Extra-Felder); `crc32.ts`; `sha256.ts` via `@noble/hashes` (synchron, Worker-fähig; Test gegen `node:crypto`).
+- `testing/`: `parseSTL` mit exaktem Float32-Bit-Welding und Normalen-`require` (GeometryTests:8-38), `lateralHits/verticalHits`, `ray` (Möller–Trumbore), `inside`, `basketSection/basketRadius`, `motifCount`, `check(cond,msg)` wirft, `zipEntries(bytes)`.
+Abnahme: Unit-Tests gegen die Proben-Fixtures (`references/probes/*`): `rounded`, `ieeeRemainder` auf 1 M Paaren, `description` auf dem Koordinaten-Sample, `%.1f/%.2f/%g/%.17g` inkl. exakter Ties, beide JSON-Writer byte-gleich zu den Proben-Dumps, `StoredZIP` byte-gleich zum Proben-Dump, `validate` akzeptiert den Classic-Ballon und verwirft die zwei beschädigten Meshes aus GeometryTests:230-236 (sobald K2 da ist). Abhängigkeit: U0; kann mit handabgeleiteten Erwartungen starten und auf Fixtures umstellen, sobald V1 liefert.
+
+### WP-K2 — Ballon-Kern + STL-Import
+Eingaben: `BalloonGeometry.swift` (Parameter :3-97 inkl. Decode-Defaults, Generator :212-380), `CeilingLoop.swift`, `StringHoles.swift`, `STLImport.swift` (`export :26-46`, `settings :66-85`, `parse :87-143` binär+ASCII, `centered`, `reconstruct :157-238`).
+Ausgaben: `core/balloon/*`; `web/tests/balloon.test.ts` (← GeometryTests.swift:80-238), `web/tests/stlImport.test.ts` (← STLImportTests.swift).
+Port-Hinweise: `fromJSON` = `decodeIfPresent ?? default` (inkl. `hollow ?? false`, `hangingClearance ?? 4`) und Typfehler wie `JSONDecoder` ablehnen; `normalized()` in der Reihenfolge :50-65 (Hanger-Clamps vor `height`, das von `loopHeight` abhängt); `panels` via `rounded`; Profil-Schleife mit `t <= 0.25`-Zweig; `Task.isCancelled` (:308) → optionales `isCancelled?: () => boolean` an derselben Stelle mit demselben leeren Mesh; `hypot` → `dmath.hypot`. `BalloonSTL.export`: SHA-256 über `header[0..<62] ‖ data[80...]`, erste 80 Bytes ersetzen; Legacy `BSTL0001` im Leser. ASCII-STL: Trennung nach Unicode-Newline/Whitespace, `Double(String)`-Grammatik strikt nachbilden.
+Abnahme: Harness `identical`/`ulp` für alle `balloon/*`-Fälle; portierte Assertions aus GeometryTests:124-238 (Maße, Euler-Charakteristik je Attachment-Kombination, Ösen-Bohrung/Dicke/Fillet/Fuß, Kronen-Pad, gefüllter Boden, LED-Öffnung, Wandstärken-Samples via `SurfaceQuery`, Normalisierungstabelle, Legacy-JSON-Migrationen, Round-Trips, Ablehnung beschädigter Meshes) und alle `STLImportTests` (Settings-Round-Trip für 4 Parametersätze, Legacy-Rekonstruktion mit Toleranzen für 6 Sätze, Legacy-Header, Ablehnungsfälle); die zwei Legacy-STLs (`output/hot_air_balloon_envelope_180x220mm.stl`, `output/Balloon-222x244mm-with-attachments.stl`) liegen im Pack, ihre Tests `skipIf` ohne Pack. Abh.: K1.
+
+### WP-K3 — Muster (Mesh-Seite) und 3MF
+Eingaben: `BalloonPatterns.swift` (`PatternSettings :26-122`, `PaintedBalloon :124-252`, `PurgeSettings/PurgeEstimate :254-315`), `ThreeMF.swift:3-54`, `BalloonText.swift:82-150` (`contains/crossesBoundary` über injizierte Maske, `BalloonTextLayout`), `NightFlight.swift:243-410` (`NightFlightRelief` über injiziertes Feld).
+Ausgaben: `core/patterns/*` mit dem Seam `raster.ts`:
+```ts
+export interface ReliefField { columns: number; rows: number; pixels: Float32Array }   // 0..1, Zeile 0 unten, VOR dem Blur
+export interface TextMask    { width: number; height: number; aspect: number; pixels: Uint8Array }
+export type ReliefArtwork   = (width, height, diameter, columns, rows, radius: (y: number) => number) => Float32Array;
+export type TextRasterizer  = (text: string, font: BalloonTextFont) => TextMask | null;
+```
+`PaintedBalloon.make(original, parameters, settings, {artwork, textRasterizer})`; `NightFlightRelief` und `BalloonTextLayout` erhalten die Raster per Konstruktor. R liefert die Implementierungen; K3 liefert einen `fileRaster(...)`-Adapter, der die Swift-Dumps aus dem Pack lädt.
+Port-Hinweise: `color(at:)` nutzt `rounded` (:78); Streifen `Int(floor(…))`; `refine` baut `marked` als Menge kanonischer Kantenschlüssel und iteriert in der sortierten Reihenfolge von :194; `split` behält die Einfügereihenfolge der `intersections`; `PurgeEstimate.schedule` sortiert mit dem Prädikat :302 stabil. `threeMF`: XML in derselben Reihenfolge, `\(v.x)` via `swiftDoubleDescription`, `paint_color` `4`/`8`, `balloon-settings.json` kompakt-sortiert, `pattern-settings.json` via `encodeJSONCompact`, Notiztext mit `description` für Gramm/Layer-Werte und Int-Interpolation für Changes. Float32-Emulation in `smooth` und `sample` (`fround` nach jeder Operation), `coverage/boundaries` als `Int32Array`.
+Abnahme: Harness `identical`/`ulp` für `pattern/*` (Stripes/Hearts/Dots/Diamonds, 24 Bänder hollow+hanger+tethers, Dots rows=1, dichte Hearts, Purge-Variante); mit injizierten Swift-Rastern erreichen auch `relief/*` und `text/*` `identical`/`ulp` (Beweis, dass die Mesh-Seite stimmt; R ist dann nur noch für Raster-Gleichheit zuständig); portierte PatternTests.swift:15-87 (Purge-Zählungen, `motifCount` 144/1, Streifen-Split erhält Attachments, Normalisierung, Round-Trip) und die rasterunabhängigen Strukturprüfungen aus `NightFlightTests.checkReliefShapes` (:6-78). Abh.: K1, K2 (Quell-Mesh).
+
+### WP-K4 — Lampen-Cluster (kritischer Pfad, ~3.200 Zeilen; drei Teilpakete mit am ersten Tag eingefrorenen Signaturen)
+- **K4a Umriss, Mesher, Kit-Texte:** `CloudGeometry.swift` (`CloudStyle/CloudProfile :3-62`, `CloudParameters :64-273`, `CloudCableParts :276-316`, `CloudKit :321-466`, `instructions :468-704`, `LampClips :710-744`, `CloudGenerator :754-1031`, `CloudMeshBuilder :1033-1052`), `SunGeometry.swift`, `LampSettingsFile.swift`, `CloudLEDLayout.swift` (`%.2f`-SVG, Cut-List). K4a portiert zuerst alle Parameter-Structs und `static let`-Konstanten und friert die Signaturen für K4b/K4c ein.
+- **K4b Beschläge:** `CableSeal.swift` (`CableOutlet` inkl. `Axis.reach :80-90`, `remainder` :103/190, `CableSealGenerator :246-340` mit `rounded` :284), `CableClamp.swift` (`CableClamp :16-260` inkl. `minimumWidth`-Stride :183, `stand :193-259`; `FlatRegion :264-348`; `annulus/bore/disk :350-596` mit `remainder` :362/364, `truncatingRemainder` :357), `NailInsert.swift`.
+- **K4c Skulptierte Front:** `LampSurface.swift` (`Field :19-132` mit `pow`-Exponenten 0.7/16/5/24/2.5, `sculpt :138-191` inkl. Float32-Vorrundung :186-188 und 14-Schritt-Bisektion gegen `SurfaceQuery`, `classify :195-218`, `refine :222-292` mit Kürzere-Diagonale-Regel :281).
+Port-Hinweise: `CloudMeshBuilder.vertex` schlüsselt über `IntKey3Map` mit `rounded(p·1e7)`; `unique()` (:848) und `columns()`-Reihenfolge; Zell-/Rand-Schleifen exakt in `k,j,i`-Reihenfolge (Einfügereihenfolge = Indizes); `coreScale` via `arrayMin`; `FlatRegion.triangles` behält die `cuts`-Einfügereihenfolge (`hole.indices × ring.indices` mit `filter{…}.count == 1`-Guard) und sortiert stabil nach Distanz; `sculpt` rundet Vertices mit `fround` exakt wie :186-188 (deshalb sind skulptierte Fronten die byte-stabilsten Ausgaben). Kit-Text (:471-704) mechanisch übernehmen, Datum `2026-09-28` und URL wörtlich; `mm()` = `formatFixed(v,1)`, `cutList` = `formatFixed(v,2)`.
+Abnahme: Harness `identical`/`ulp` für alle `cloud/*`- und `sun/*`-Fälle (je ZIP-Eintrag: 2–6 STLs, `LED-LAYOUT.svg`, `ASSEMBLY.md`, `cloud|sun-settings.json`); portierte `CloudTests` (ohne UserDefaults-Zeilen :94-98), `CloudShapeTests`, `SunTests` (inkl. „Soft star und Cones teilen die Rückseite" byte-gleich), `LampSettingsTests` (Legacy-Fixtures), `LampSurfaceTests.checkDiffuserShell`, `NailInsertTests`, `CableOutletTests.checkChainedOutlets` + `checkCableSettings`, `CableClampTests.checkClampSettings`; die Opt-in-Suites `outlets`/`clamp` werden das `full`-Tier. Abh.: K1.
+
+### WP-K5 — Ring-Cluster
+Eingaben: `RingGeometry.swift` (`RingParameters :3-112` inkl. `%g`-Dateiname :62, `RingGenerator :114-214` mit `loopAngles`-Join), `SegmentedRing.swift` (Kit :4-226 mit `instructions`, `RingArc :228-353` inkl. `cap`-Ear-Clipping :310-330 und `precondition`).
+Port-Hinweise: `kit-manifest.json` ist `JSONSerialization` pretty+sorted eines Dictionaries, dessen `parameters` die **geparste** JSONEncoder-Ausgabe ist (`450` bleibt `450`, `0.3` wird `0.29999999999999999`, `dimensions_mm` sind `%.17g` der Mesh-Ausdehnungen) → `encodeJSONPretty17g` mit Int/Double-Provenienz; `d.x+16<=256.001`-Guards; `onBed`-Zentrierung `-(min+max)/2` (Negationsreihenfolge wegen Vorzeichen-Null).
+Abnahme: Harness für `ring/*` (solid flat, solid uplight, 6-Sektionen-Kits, Uplight-Kits, Legacy-Fixture); portierte `checkRings` (65 Fälle), `checkSplitRings` flach und Reflektor (33+129), `checkSolidUplight`; `full`-Tier läuft die vollständigen 2⁷-Sweeps, `fast` die ersten 8 je Gruppe. Abh.: K1.
+
+### WP-K6 — Figuren
+Eingaben: `FigureGeometry.swift` (`FigureStyle/FigureSurface/FigureOutline :6-75`, `FigureOutlines :76-175`, `FigureParameters :177-243`, `FigureBody/FigureGenerator :245-559` Marching Squares + Chords + Refinement, `FigureSet :562-617`).
+Port-Hinweise: `SIMD2<Double>` → `{x,y}`; `rounded(.up)` = `Math.ceil`; `corner`-Grid-Einfügereihenfolge = Site-Indizes; `mate`/`chords` als Int-Maps; `marked` sortiert (:512); `faces: [UInt8]`-Kinds; `FIGURES.md` via `formatFixed`.
+Abnahme: Harness für `figure/*` und `figures/set-*`; portierte `FigureTests` (Defaults, Normalisierung, partielle/unbekannte JSON, Dateinamen, einfache Polygone, `checkFigure` für 7 Defaults + 6 Extreme + 21 Varianten in beiden Qualitäten, Set-Inhalt). Abh.: K1.
+
+### WP-K7 — Kabelclip (Pilot der ganzen Pipeline, Meilenstein M1)
+Eingaben: `CableClip.swift` (Parameter :19-88 mit `%g`, `CableClip :94-260`, `CableClipGenerator` inkl. `walls(skipping:)` :308 und `ys.sort()` :340, `CableClipKit :452-509` mit `%.<n>f` :496).
+Abnahme: Harness `identical` für alle 15 `clip/*`-Fälle (Tier A, je 40 KB); portierte `CableClipTests` (Settings, Problems/Notes, `checkCableClip`-Ray-Messungen für 15 Fälle). Abh.: K1.
+
+### WP-K8 — Korb
+Eingaben: `BasketGeometry.swift` (Parameter :19-44, `wickerDistance/wickerRelief :49-90` mit `pow/exp/cos`, Generator, `patchVertices` :236, `levels.sort()` :138).
+Abnahme: Harness für `basket/*` (3 Stile × Default export, small/large preview); portierte Korb-Schleife aus GeometryTests:58-79, `BasketHoleTests`, `WickerTests`. Abh.: K1.
+
+### WP-K9 — Performance und Worker-fähige API (`core/real/index.ts`)
+Implementiert `CoreApi` (WP-U2) über die Kernmodule: Normalizer/Derived, Preview-Bundles (de-indizierte, transferierbare `Float32Array/Uint32Array`-Puffer für Three.js), Export je Teil/Variante → `{filename, files: {name, bytes}[]}`, Import, Codecs; `isCancelled` wird an denselben Stellen gepollt wie Swift `Task.isCancelled`, `onProgress` optional und ergebnisneutral.
+Hot Paths von Anfang an typisiert/skalarisiert (sonst dominiert Allokation): `SurfaceQuery` (~3 M Abfragen bei hohlem Export), `validate`, `binarySTL`, Welding (`IntKey3Map`, keine String-Schlüssel), STL-Parsing, Relief-Sampling; `Point3`-Helfer als freie Funktionen; Closures, die Swift in Schleifen anlegt (`ringPoint`, `corePoint`), einmal pro `generate` hoisten; `BalloonMesh ⇄ MeshBuffers` nur an den Grenzen.
+Budgets (Node 26, M-Serie, ein Thread): Ballon classic export ≤ 1,5 s; hohl+tethered+hanger ≤ 5 s; Hearts-3MF ≤ 8 s; Cloud-230-Kit ≤ 6 s; Sun-Kit ≤ 12 s; skulptierte Sonne 500 (preview) ≤ 8 s; Figuren-Set ≤ 15 s; Wicker-Korb ≤ 6 s. `web/bench/*.ts` schreibt Zeiten neben Swifts `durationMs` in `references/report.json`; Regressionsgrenze +25 %. Abh.: K2–K8 (kann früh auf K2/K7 starten).
+
+## 6. U — Web-App: Shell, UI, Preview, Persistenz, I/O, Deploy
+
+### Querschnittsentscheidungen (U)
+
+| Thema | Entscheidung | Begründung |
+| --- | --- | --- |
+| Pakete | TS 5.9, React 19, Vite 8 (rolldown), three 0.186, zustand 5, vitest 5, @testing-library/react + user-event, jsdom, lucide-react (Icons). Node ≥ 22.12. | wie stacklamp, bewährtes CI |
+| Repo-Layout | wie Abschnitt 2; die sechs `*-settings.json` aus `output/` nach `references/fixtures/legacy-settings/` | Pages baut aus `web/`; `mac/scripts/*.sh` machen `cd "$(dirname "$0")/.."` und laufen in `mac/` weiter |
+| `output/` | nicht committen (296 MB alte Kits, PNGs, .blend); nur die sechs Settings-JSONs als Fixtures und `output/PRINT_NOTES.md`, `Solid-Ring-Uplight-Notes.md` nach `docs/history/` | regenerierbar |
+| Zahleneingabe | Eingabe: trim, `,`→`.`, ungültig → zurücksetzen. Anzeige: immer `.`-Dezimal ohne Tausendertrennung, `maximumFractionDigits = ceil(−log10(step))` | Mac akzeptiert faktisch beides; feste Anzeige vermeidet `1.500` vs `1,5` im 44-px-Feld; dokumentierte Abweichung |
+| Rundung im Feld | `roundHalfAway(n/step)·step`, dann clamp (wie Swift) | Parität |
+| Shortcuts | Export `Mod+E`, Open `Mod+O`, Reset `Alt+N` (⌥N) **plus sichtbarer „Reset part"-Button**; `Mod+N` ist im Browser nicht abfangbar. Hinweis zeigt `⌘E` auf Apple, sonst `Ctrl+E` | Browser-Reservierung |
+| „Show in Finder" | Footer-Status `"<Prefix> saved · <filename>"` (File-System-Access) bzw. `"… downloaded · <filename>"` (Blob-Fallback); gleiche Präfixe wie Mac (`File`, `Basket`, `Ring`, `Cloud`/`Sun`, `Saved`) | kein Web-API |
+| Speichern-Dialog | `ExportDialog` (`<dialog>`) mit Titel, Message, editierbarem Dateinamen, Prompt-Button; Klick ruft synchron `showSaveFilePicker` (User-Gesture) oder Blob-Download nach Generierung | alle Mac-Panel-Strings bleiben sichtbar |
+| Öffnen | `<input type=file accept=".stl,.json">` + Drag-and-drop-Overlay mit der Mac-Message | universell |
+| Dialoge | natives `<dialog>`/`showModal()`, Esc = Cancel, Enter = Default-Aktion | a11y |
+| Theme | nur hell (wie Mac); Tokens `--ink rgb(38 48 51)`, `--accent rgb(31 102 89)`, `--paper rgb(246 244 238)`, `--stage rgb(19 23 31)`; eigene Web-Typografie, Struktur spiegelt die Mac-App | erlaubt |
+| Accessibility | Swift `accessibilityIdentifier` → `data-testid` (gleiche Werte: `openFile`, `hollowMode`, `exportBalloon`, `patternStyle`, `ringConstruction`, `cloudStyle-<raw>`, …); `.help` → `title` + `aria-describedby`; `accessibilityLabel` → `aria-label` | Testbarkeit |
+| Commit-Editing | `commitEditing()` = aktives Element blurren; vor Export, Reset, Tabwechsel, Preset/Style-Buttons, Cross-Model-Aktionen, Open, loadSTL (genau wo Swift `.commitBalloonEditing` postet) | zustand ist synchron → Snapshot sieht den committeten Wert |
+| Worker | zwei Instanzen eines Worker-Skripts: `previewWorker` (Debounce, latest-wins) und `ioWorker` (Export, STL-Import, Settings-Decode). Keine Abbruch-Semantik im Rechenkern; veraltete Antworten per Request-Id verworfen | lange Exporte blockieren keine Previews |
+| Core-Umschalter | `VITE_CORE=stub|real` wählt `web/src/core/stub` oder `web/src/core/real` hinter einem `CoreApi`-Interface; M1 deployt auf Stub | UI-Arbeit entkoppelt vom Port |
+| Tab-Zustand | gewählter Tab nicht persistiert; Balloon-Ansichts-Toggles auf App-Ebene (bleiben beim Tabwechsel), andere Editoren lokal (reset beim Verlassen), wie SwiftUI-`@State` | Parität |
+
+### WP-U0 — Repo-Bootstrap, GitHub, Pages-Deploy
+Ziel: aus dem Ordner das öffentliche Repo mit CI-Deploy von `web/dist` machen.
+1. Verschieben: `Sources/ Tests/ scripts/` → `mac/`; `create_balloon.py` → `mac/blender/`; Fixtures/Docs aus `output/` wie oben; `result.json` löschen.
+2. `.gitignore`: `.DS_Store`, `*.log`, `output/`, `dist/`, `.build/`, `mac/.build/`, `mac/dist/`, `web/node_modules/`, `web/dist/`, `web/coverage/`, `web/.vite/`, `references/full/` (große Referenzdateien, lokal).
+3. `LICENSE` MIT (Annahme, wie stacklamp — **vom Nutzer zu bestätigen**); `web/THIRD_PARTY_NOTICES.md` (three MIT, lucide ISC, Fonts OFL).
+4. `README.md` neu (Web-App zuerst: URL, Funktionen, Tastatur, Browser-Support inkl. FS-Access-Hinweis, Persistenz; dann „Mac app" mit Link auf `docs/mac-app.md` = bisherige README wörtlich); `docs/architecture.md`; `docs/parity-checklist.md` (WP-U10).
+5. `git init -b main`; **repo-lokale Identität** `user.email jahoefne@gmail.com` (global ist eine Arbeitsadresse gesetzt); erster Commit.
+6. `gh repo create jahoefne/balloon-studio --public --source . --remote origin --push`; Pages auf „GitHub Actions" stellen (`gh api -X POST repos/jahoefne/balloon-studio/pages -f build_type=workflow`).
+7. `.github/workflows/deploy.yml` wie stacklamp (checkout@v7, setup-node@v7 `lts/*`, `cache-dependency-path: web/package-lock.json`, `npm ci`, `npm test`, `npm run test:reference`, `npm run build`, `npm run size`, configure-pages@v6, upload-pages-artifact@v5 `path: web/dist`, deploy-pages@v5; `permissions: contents: read, pages: write, id-token: write`; `concurrency: pages`), `defaults.run.working-directory: web`.
+8. `web/vite.config.ts`: `base: '/balloon-studio/'`, react-Plugin, `define __APP_VERSION__`, `worker: {format:'es'}`, sourcemaps, Code-Splitting-Gruppen `three` und `react`, Ports 5173/4173 strict.
+9. `web/scripts/check-bundle-size.mjs` wie stacklamp (gzip-Budget 2 MiB gesamt, 300 KiB Entry).
+10. `web/public/404.html` → Link auf `/balloon-studio/`. Keine COOP/COEP.
+11. `web/package.json`: name `balloon-studio`, version `1.29.3`, Scripts `dev/build/preview/typecheck/test/test:watch/test:reference/size`.
+Abnahme: Deploy grün, `curl -I https://jahoefne.github.io/balloon-studio/` → 200, 404-Seite, `npm run size` ok, `bash mac/scripts/test.sh lamp-settings` läuft aus `mac/`.
+
+### WP-U1 — Skeleton, Design-Tokens, UI-Primitive (`web/src/ui/`)
+- `tokens.css` (Farben, Typo, Radien 5/7/8/9/10/12/16 wie Swift, Abstände); `format.ts` (`formatNumber`, `fractionDigitsForStep`, `number01/number02`, `roundHalfAwayFromZero`, `parseDecimal`); `platform.ts` (`isApplePlatform`, `modKeyLabel`); `commitEditing.ts`; `shortcuts.ts` (`useGlobalShortcuts`, capture-Phase, `preventDefault`, ignoriert bei offenem `<dialog>`).
+- `ParameterControl.tsx` — **exakt** `BalloonStudioApp.swift:635-684`: Titel links, 44 px Monospace-Feld rechts (`inputmode=decimal`), Unit-Label 19 px, `<input type=range min=lower max=max(upper,lower+step) step=step>` darunter, `disabled` bei `lower===upper`; Feldtext folgt `value` nur ohne Fokus; Commit bei Enter/Blur: parse → round-from-zero → clamp → `onChange` → neu formatieren; ungültig → zurück; `aria-label` Titel / „Titel slider".
+- `SegmentedControl` (radiogroup, Pfeiltasten), `Switch` (Hollow), `Checkbox`, `Select` (native `<select>` für Menü-Picker), `ColorPicker` (14-px-Swatch + Select der 7 `FilamentColor` aus `BalloonPatterns.swift:10-24`), `DisclosureGroup` (`<details>`), `SectionLabel`, `Metric`, `AdviceRow`, `Dialog`/`AlertDialog`/`Sheet`, `Icon.tsx` (SF-Symbol→lucide-Mapping: folder→Folder, printer→Printer, lightbulb→Lightbulb, circle.dashed→CircleDashed, square.and.arrow.up→Upload, checkmark.circle.fill→CircleCheck, viewfinder→Scan, arrow.counterclockwise→RotateCcw, exclamationmark.triangle→TriangleAlert, info.circle→Info, link→Link, basket→ShoppingBasket, cylinder→Cylinder, shippingbox→Package, arrow.triangle.2.circlepath→RefreshCw, circle.lefthalf.filled→Contrast, square.stack.3d.up→Layers, cable.connector.horizontal→Cable, hand.tap→Pointer, arrow.up.and.down→ArrowUpDown; `balloon.fill` → eigenes Inline-SVG).
+- `fonts.ts`: `BalloonTextFont` → CSS-Familie der in WP-R gebündelten Fonts (Font-Select rendert jede Option in ihrer Schrift wie `PatternEditor.swift:56`).
+Tests (jsdom): ParameterControl (Eingabe `1,25` bei step 0.1 → `onChange(1.3)`, `abc` revertiert, Clamp, Blur-Commit, Range-Obergrenze, disabled, aria), `format.ts`-Stellen (steps 1/0.5/0.1/0.05/0.01/10 → 0/1/1/2/2/0), Shortcuts, Dialog-Tasten.
+
+### WP-U2 — Core-API-Vertrag, Worker-Protokoll, Stub-Core, Harness-Verdrahtung
+- `web/src/core/types.ts`: TS-Spiegel aller Parameter-Structs/Enums mit **identischen JSON-Feldnamen und Raw-Values** (`BalloonParameters` BalloonGeometry.swift:3-20, `PatternSettings` BalloonPatterns.swift:26-42, `PurgeSettings` :254-259, `BasketParameters`, `RingParameters` RingGeometry.swift:3-14, `CloudParameters` CloudGeometry.swift:64-90, `FigureParameters`, `CableClipParameters`; Enums `BalloonPattern` („Solid"|„Horizontal stripes"|…), `FilamentColor`, `BalloonTextFont`, `BasketStyle` wicker|ribbed|voyager, `CloudStyle` (6), `SunStyle` soft-star|cones|pinwheel|bold-eight, `LampSurface` flat|sculpted, `CableSide`, `WallLampKind`, `FigureStyle` (7), `FigureSurface` (3), `CableClipMount`); `MeshBuffers {positions: Float64Array; indices: Uint32Array; maxOverhang; innerVertexRange?}`.
+- `web/src/core/api.ts` — `interface CoreApi` (synchron, läuft im Worker): Normalizer/Derived je Teil (alle Getter, die die Editoren nutzen, z. B. Balloon `maximumHeight, minimumNeckDiameter, maximumNeckDiameter, minimumNeckHeight, maximumNeckHeight, openingDiameter, loopHeight, totalHeight, filename`; Ring `diameterRange, heightRange, cordRange, minimumBandWidth, maximumBandWidth, maximumChannelDepth, channelWidth, totalHeight, stripPathLength, fitsP2S, outerProfile, ledWallRadius, ledShelfZ, reflectorToeRadius, filename`; Cloud `height, minimumWidth, maximumSurfaceDepth, totalDepth, fitsP2S, displayName, filename, selectCableSide, setCableOutletCount, nailInsertProblem, clampMinimumWidth, clampFits, radius(angle,…)`; Figure `outline(style)`; Clip alle `CableClip`-Felder aus `CableClipEditor.swift:111-160,195-250`); Preview-Generatoren (`quality:'preview'`) liefern Bundles (Balloon: mesh+faceColors+estimate; Ring: assembled/exploded/parts[4]+Farben; Cloud: `views` je der 8 Ansichten, `ledPlan`, `nailInsert`, `clampCount`, `cablesWithoutClamp`, `printedParts`, `instructions`; Figure: print/hanging+holes-Flags; Clip: print/assembly+`clip`); Export (`quality:'export'`) je Teil/Variante → `Uint8Array`; Fehler als `CoreError` mit den Mac-Strings (`"The model could not be exported: …"` BalloonGeometry.swift:119-124); Import `stl.open(bytes)`, `lampSettings.decode(text)` (Fehlertext aus LampSettingsFile.swift); Codecs `decode` (lenient wie `decodeIfPresent` + Migration) / `encode`.
+- `web/src/worker/protocol.ts` (diskriminierte Unions `init|preview|export|importSTL|decodeLampSettings`, Transferables), `core.worker.ts`, `client.ts` (`createWorkerClient('preview'|'io')`, Coalescing: max. eine laufende Anfrage pro Teil, neuere ersetzt wartende, Stale-Ids verworfen).
+- `web/src/core/stub/`: billige Platzhaltergeometrie, aber **echte** Normalizer/Dateinamen/Derived-Formeln aus Swift, damit UI-Logik früh testbar ist.
+- Harness-Verdrahtung: `npm run test:reference` (eigene vitest-Config, skipped bei `VITE_CORE=stub`); Inhalte siehe Abschnitt V.
+Tests: Client-Coalescing mit Fake-Transport (3 schnelle Requests → 2 gepostet), Stale-Drop, Fehlerpfad; Stub-Codecs dekodieren alle `references/fixtures/legacy-settings/*.json`.
+
+### WP-U3 — Stores (zustand) und Persistenz
+- `web/src/persistence/settingsStorage.ts`: `loadSetting(key, decode, defaults)` (nie werfen), `saveSetting` (QuotaExceeded → einmaliger Toast), Schlüssel exakt wie Mac; injizierbarer Storage für Tests.
+- `createPartStore.ts` (generisch): `apply(p)` = normalize → Gleichheit → return; sonst `parameters` setzen, `exported=null`, **sofort speichern**, Timer löschen, `updating=true`, Debounce (Balloon/Cloud/Sun 100 ms; Basket/Ring/Figure/Clip 60 ms) → `previewClient.preview` → bei aktueller Request-Id `bundle`, `revision+1`, `updating=false`.
+- `balloonStore` (pattern, purge, faceColors, estimate, openedSTLName, importRevision, `setPattern/setPurge/setPanels/applyShape` (Feld-Übernahme `BalloonStudioApp.swift:141-156`), `addStringHoles`, `loadSTL` (:43-59: Pattern→Solid, Mesh übernehmen, Name setzen, speichern), `uses3MF`, `exportFormat`), `basketStore` (`match(balloon)` = round(d·0.35), round(d·0.27), round(h·0.19)), `ringStore` (`lighting(reflected)` erzwingt stripWidth 8, ledClearance 0.5, bandWidth ≥ 40), `createCloudStore(kind)` → `useCloudStore/useSunStore` (`selectStyle, selectSunStyle, mirror, selectCableSide, setCableOutlet` nach CloudGeometry.swift:161-178, `setStrainRelief, setNailInsert, selectSurface`; `apply` erzwingt `kind`), `figureStore`, `clipStore`, `importStore`, `appStore` (part, Balloon-View-Toggles).
+- Reset-Ziele (`BalloonStudioApp.swift:238-250`): balloon→classic, basket→defaults, ring→segmented ? large : solid, cloud→defaults, sun→kind.defaults (Breite 200), figure/clip→defaults.
+- Optional (nicht in M1–M3, nur nach Freigabe): per-Teil „Download settings (JSON)".
+Tests: Fake-Timer-Debounce, Stale-Drop, No-op bei gleichen Parametern, Speichern vor Debounce, Laden aller Fixtures, `loadSTL`-Effekte, Reset-Ziele, `lighting(true)`, Outlet-Reihenfolge.
+
+### WP-U4 — Three.js-Preview (SceneKit-Port, `web/src/preview/`)
+- `displayGeometry.ts` (rein, getestet): Port von `BalloonPreview.swift:108-154` — Cutaway = Dreiecke mit Schwerpunkt Modell-y < −0.0001 weglassen (kein Capping); flächengewichtete Vertex-Normalen; `sharpEdges`/`smoothAngle`/`smoothBelowHeight` (Korb); 4 Gruppen nach `faceColors[i]`; Abbildung `(x,y,z)→(x,z,−y)`.
+- `framing.ts` (rein, getestet): Port von `frame()` (:155-188) → `{position, target, orthographicScale, up}` für Default/Opening/Filled-Neck/Compact/Hanger/TopDown.
+- `Stage.tsx`: Props wie `BalloonPreview` (`mesh, geometryKey, color, showPlate, wireframe, resetCamera, cutaway, inspectOpening, neckDiameter, neckHeight, filledNeck, compactObject, inspectTop, faceColors, detailColor, accentColor, hardwareColor, minimumScale=32, topDown, objectName, sharpEdges, smoothAngle, smoothBelowHeight`); `geometryKey = \`${revision}:${viewKey}\`` ersetzt die numerische Revision-Mischung; Re-Framing nur bei `resetCamera`/`inspectOpening`/`inspectTop`/`topDown`/(`inspectOpening && filledNeck`).
+- `scene.ts`: `WebGLRenderer({antialias:true})`, `pixelRatio ≤ 2`, Hintergrund (0.075,0.09,0.12); 4 `MeshPhongMaterial` (specular 0x474747, shininess visuell abstimmen); Lichter als `AmbientLight` + 4 `PointLight` (decay 0) mit Intensität `π·sceneKit/1000` → ambient 0.408, omnis 2.67/0.565/1.73/0.503, Farben aus :93-97; Bauplatte Box 256×1.4×256 bei y −0.9 (0.12,0.15,0.19) + Raster 13+13 Linien à 20 mm, 248 lang, weiß 0.42 α 0.35; `OrthographicCamera(0.1, 4000)`.
+- `controls.ts`: OrbitControls mit Damping (Turntable), Zoom über `camera.zoom`, Render-on-demand, `ResizeObserver`.
+- Geometrie-Wiederverwendung (Attribute in-place überschreiben bei gleicher Größe), `dispose` beim Unmount; WebGL-Fallback-Text; `aria-label` „Interactive <name> preview. Drag to rotate, scroll to zoom."
+Tests (node): displayGeometry an Tetraeder (Gruppen, Cutaway, Normalenlänge, Mapping, De-Indexing); framing reproduziert alle fünf Swift-Zweige. Manuell: Screenshot-Vergleich mit Mac (Balloon Classic Saffron, Ring reflected, Cloud exploded), shininess/Intensitäten abstimmen.
+
+### WP-U5 — App-Shell, Balloon-Editor, Pattern-Editor, Import-Review (M1-Inhalt)
+- `App.tsx` (Routing wie `ContentView` :318-341, Alerts „Export failed"/„Couldn’t open file", `importRevision`-Effekt :342-344, `useGlobalShortcuts`), `Header.tsx` (Marke 43 px, Titel/Untertitel, 7 Segmente in Mac-Reihenfolge, Open-Button `openFile` mit `title` = Panel-Message `STLImportView.swift:28`, „Reset part"-Button, „Made for your P2S", About-Dialog mit Credits :269).
+- `editors/balloon/BalloonEditor.tsx`: alle Sektionen/Controls/Hilfetexte/Readouts aus `BalloonStudioApp.swift:380-493` in Reihenfolge mit den Bereichen aus Abschnitt 2 des UI-Inventars; Preset-Hervorhebung nach :605-623; Footer (`exportBalloon`, „Export {STL|3MF}…"/„Preparing …", Saved-Zeile oder „{fmt} · millimetres · checked before export").
+- `PatternEditor.tsx` + `PurgeSummary.tsx`: wörtlich aus `PatternEditor.swift:22-140` (Bereiche: bands 2–24; relief 1.2–4/0.1; cap 10–28 %; Text ≤ 64; Font-Select; repeats 1–24; text height 3…max; shapes 1–24; rows 1–6; size 3…max; Farbwähler mit relief-abhängigen Labels; Disclosure „P2S waste assumptions"; Bambu-Link; Gramm/Changes-Strings :128-139).
+- `BalloonPreviewColumn.tsx`: Titel, Status, `Stage`-Props :509-514, Badge, Hinweis, View-Buttons (Ausschlussregeln :530-543), Reset, Swatches (nur Solid), Cutaway (nur hollow), Build plate, Wireframe, `PurgeSummary`, Metriken, Advice-Row :583-596.
+- `open/ImportReviewDialog.tsx` (`STLImportView.swift:71-116`), `open/DropZone.tsx`.
+Tests: Header-Reihenfolge, Tabwechsel committet, Export-Label je Teil/Format/segmented, Hollow-Toggle, NECK/FLAT BASE, Preset-Highlighting, Swatches-Sichtbarkeit, Metrik-Umschaltung, Alt+N, Review-Dialog Enter → `loadSTL`.
+
+### WP-U6 — Basket- und Ring-Editor (+ SVG-Diagramme, Ring-Guide)
+- `BasketEditor.tsx` (`BasketEditor.swift:85-255`): Style-Karten (`BasketGeometry.swift:3-16`), „Match balloon", Bereiche, Cross-Model-Button-Regel :156-157, Footer, Preview (`compactObject, sharpEdges, smoothAngle π/6, smoothBelowHeight = holeCenter − cord/2 − 0.6`), Badge, Toggles, Metriken, Advice :232-239.
+- `RingEditor.tsx` (`RingEditor.swift:126-410`): alle Sektionen inkl. Guide-Buttons, LED-Panel, `LEDReflectorDiagram.tsx` (SVG-Port von `LEDReflectorDiagram.swift`), Cord-Diagramme :412-455, Preview-Teil-Select (:8-16), Badges :305-307, Top/Angled, Exploded-Toggle vs. Druckhinweis :330-331, Metriken :339-343, Kamera-Reset-Effekte :143-146 (auf `bundle.parameters.diameter`), `RingGuideSheet.tsx` (:363-392).
+Tests: ribbed versteckt Depth/benennt um; Hole-Button-Label; segmented-Umschaltungen; `lighting(true)`; Teil-Select-Metriken 3/6/12; Guide-Sheet.
+
+### WP-U7 — Cloud-/Sun-Editor (+ Silhouetten, Guide-Sheet)
+- `CloudEditor.tsx` (`kind`-Prop; `CloudEditor.swift:124-501`): Intro, Shape-Grids (`SunSilhouette`/`CloudSilhouette` als SVG aus `core.cloud.radius`, 480/240 Samples, Skalierung :506/:525-526; `data-testid=cloudStyle-<raw>`/`sunStyle-<raw>`, `cloudMirror`), Maße, LED-Panel (+ „View LED placement" → Back · inside + topDown), Clips, Wall mount (Nail, Slot insert + Problemtext aus `NailInsert.swift:85-101`), Kabel (Exit-Segmented, Outlets 2–4 mit Free-Side-Pickern :269-281, `cableExitNote`/`noClampNote` :457-486), Seal/Clamp-Buttons, Guide; Footer prominent; Preview-Select der 8 Ansichten (:119, Default Exploded), Farbregeln :410-416, Caption :418, Face/Angled, Fit-Zeile :435, Build plate (in Assembly-Ansichten versteckt, Default aus), Metriken :441-445, Schlusszeilen :447-453; Effekte :152-160.
+- `CloudGuideSheet.tsx` (700×650, `bundle.instructions`); Export-Message :98-100 (`parts = 2 + outlets + 2·clamps + insert`).
+Tests: Sun 4 Karten/„Diameter including rays"; Cloud 6 + Mirror; Flat versteckt Surface depth; Outlet-Picker-Logik; LED-Placement-Button; Seal-Caption; Export-Label/Dateiname; Bed-Warnung > 240.
+
+### WP-U8 — Figures- und Cable-clip-Editor
+- `FigureEditor.tsx` (`FigureEditor.swift:79-264`): 7 Karten mit `FigureSilhouette` (SVG evenodd 28×28), Bereiche, Warnungen :157-161, Footer inkl. „Export all seven as a set (ZIP)…", Preview Print/Hanging (Default hanging), 5 Swatches, Badge :204, Metriken :234-238.
+- `CableClipEditor.tsx` (`CableClipEditor.swift:80-276`): Bereiche, Readouts :138-142, problem/note (⚠/ⓘ), Strain-Label (orange > 0.022), „Print lying on the plate", Export disabled bei `problem`, Preview-Select, `Stage` (`minimumScale 14/10`, `smoothAngle π/5`), Caption :197-198, Swatches, Toggle-Label „Wall"/„Build plate", Metriken :246-250 (`number02`), Advice :252-259.
+Tests: Flat-Umbenennung/Dome-Controls; Chain-Hole-Text; Set-Export-Button; Adhesive versteckt Nagel-Controls; Export disabled; Strain-Ton; Toggle-Label.
+
+### WP-U9 — Open/Export-I/O-Modul (`web/src/io/`)
+- `exportTable.ts`: pro Teil/Variante `{title, prompt, suggestedName(snapshot), extension, mime, message(snapshot), footerLabel, preparingLabel, savedPrefix}` — Strings wörtlich: Balloon STL „Export Balloon STL"/„Export STL" (Message hollow/solid :172-174), Balloon 3MF (Name = STL-Name ohne `.stl` + `-night-flight|-summit-cable-car|-pattern` + `.3mf`), Basket, Ring solid/kit (`RingGeometry.swift:61-64`, Messages `RingEditor.swift:104-107`), Cloud/Sun (`CloudGeometry.swift:240-247`), Figure/Set (`FigureGeometry.swift:221-228`), Clip (`CableClip.swift:87`).
+- `ExportDialog.tsx`: `guard !exporting` → `commitEditing()` → **Snapshot jetzt** → Dialog → Prompt: `showSaveFilePicker` (AbortError = Cancel) oder Blob-Download; `exporting` setzen, `ioClient.export(snapshot)`, schreiben, `exported={filename, mode}`; Fehler → `setError`; kein Abbruch während Generierung (wie Mac).
+- `openFile.ts`: Guard, Endungsprüfung („Choose a balloon STL or a cloud or sun settings JSON file."), `.json` → `decodeLampSettings` → auf Sun/Cloud anwenden + Tab wechseln; `.stl` → `importSTL` → Review; Fehler → `importStore.error`.
+- Später optional: `manifest.webmanifest` mit `file_handlers`.
+Tests: Export-Tabelle Snapshot je Teil; Fallback-Download setzt `downloaded`; FS-Pfad setzt `saved`; AbortError ohne Zustandsänderung; Fehler → Alert; `.obj` abgelehnt; Sun-Fixture wechselt Tab.
+
+### WP-U10 — Accessibility, Paritäts-Checkliste, Testkonsolidierung
+- `docs/parity-checklist.md`: eine Zeile pro Tab × (Control | Readout | Warnung | Preview-Modus | Export-Name | Shortcut | Persistenz-Key) mit Web-Ort und Status; Agent prüft jede Zeile in der laufenden App.
+- `web/src/test/setup.ts` (jsdom-Polyfills `showModal/close`, `ResizeObserver`, `matchMedia`, `createObjectURL`), `vitest.config.ts` (jsdom für `*.test.tsx`, node für `*.test.ts`).
+- Tastatur-Durchgang, Fokus-Fallen, `aria-live` für Status/Saved-Zeile; `docs/manual-browser-checklist.md` (Chrome/Safari/Firefox, macOS/Windows: FS-API und Fallback, Drag-and-drop, Shortcuts, Reload-Persistenz, `defaults read`-JSON im localStorage, WebGL-aus, 980 px, Bundle-Budget).
+- Optional Playwright-Smoke auf Stub-Core.
+
+### Reihenfolge und Meilensteine (U)
+```
+U0 Bootstrap ──┐
+U1 Primitive ──┼──► U3 Stores ──► U5 Shell+Balloon ──► U9 I/O ──► M1: Deploy auf Stub-Core
+U2 Vertrag ────┘        ├──► U4 Preview ─────────────────┘
+                        ├──► U6 Basket+Ring ─┐
+                        ├──► U7 Cloud+Sun ───┼──► M2: alle Tabs (echter Kern wird eingehängt, sobald K/R liefern)
+                        └──► U8 Figure+Clip ─┘
+U10 a11y/Parität ───────────────────────────────────────► M3
+```
+Tag 1 parallel: U0, U1, U2 (U2 veröffentlicht `types.ts`/`api.ts` zuerst). U6/U7/U8 sind untereinander unabhängig und brauchen U1, U3, U4. Der Kern-Port hängt sich über `web/src/core/real/` (implementiert `CoreApi`) ein; WP-R liefert Fonts nach `web/public/fonts/` und nutzt `fonts.ts`.
+
+## 7. R — Deterministischer Rasterizer, Fonts, Text/Night Flight/Summit Cable Car
+
+### Befunde, die das Design festlegen
+- Rastergrößen sind durch den Swift-Code fixiert: `columns = min(3072, max(1024, ceil(width/0.20)))`, `rows = min(1200, max(256, ceil(height/0.18)))` (NightFlight.swift:264-265); Classic 180×220 → 2658×848 px; Textmasken ≤ 256 px hoch, ≤ 8192 px breit (BalloonText.swift:53).
+- Zeilenkonvention: beide Artworks und die Textmaske flippen den CG-Kontext, sodass **Speicherzeile 0 = Unterkante**. Im TS-Canvas gilt „Zeilenindex = Geräte-y, kein impliziter Flip"; die beiden Flip-Zeilen entfallen im Port, sonst ändert sich nichts an Vorzeichen oder Reihenfolge.
+- Blur-Radius ist bei diesen Pitches 1 (3-Tap-Box, horizontal wrap, vertikal clamp) → Kantenpixel überleben nahezu ungedämpft in die Höhenkarte, AA-Qualität zählt.
+- **Nichtdeterminismus der Engines:** V8/SpiderMonkey nutzen fdlibm-Ports, JavaScriptCore die System-libm; `Math.hypot`/`Math.pow` weichen in der Praxis ab. Folge (gilt für den **gesamten Kern**, siehe K): Transzendente nur über `dmath.ts` (pure-JS fdlibm, `@stdlib/math-base-special-{sin,cos,tan,atan,atan2,acos,asin,exp,pow}`; `hypot(x,y) = sqrt(x*x+y*y)`), `Math.sqrt/floor/ceil/trunc/abs/min/max/fround` sind korrekt gerundet und erlaubt. Lint-Regel verbietet rohes `Math.sin/cos/…`, `Math.hypot`, `Math.pow`, `**` im Kern.
+- **Rasterizer-Typ:** exakter Winding-Scanline-Rasterizer mit 16 Sub-Scanlines statt Flächen-Akkumulation (font-rs/stb-Stil), weil Summit und Night Flight auf der **Nonzero-Vereinigung überlappender Teilformen** beruhen (Stroker-Ausgabe, runde Joins, Mond aus zwei Bögen). Akkumulatoren verschmieren überlappende Abdeckung an Kantenpixeln; mit exaktem Winding kann der Stroker trivial korrekt sein (Segment-Rechteck + Join-Keil/Disc + Cap-Disc, alle CCW, Nonzero-Fill = Union).
+
+### Modul-Layout
+```
+web/src/raster/   dmath.ts affine.ts path.ts flatten.ts stroke.ts dash.ts scanline.ts clip.ts gradient.ts canvas.ts pgm.ts
+web/src/text/     fontFile.ts (opentype.js-Wrapper) fontSet.ts shaper.ts textMask.ts textLayout.ts
+web/src/patterns/ nightFlightArtwork.ts summitCableCarArtwork.ts relief.ts types.ts
+web/public/fonts/ *.ttf LICENSES.md
+```
+Kern-API (Auszug): `Affine` mit CG-Semantik (`concat(m1,m2)` = m1 zuerst; `translatedBy/scaledBy/rotatedBy` wie `CGAffineTransform`), `Path` (Verben + flache Koordinaten; `addArc` mit CG-Normalisierung, `addEllipse` 4 Kubiken κ = 0.5522847498307936 ab (maxX, midY), `addRoundedRect`, `transformed`, `controlBounds()` = `boundingBoxOfPath` **inkl. Kontrollpunkte**, `forEach` = `applyWithBlock`), `flatten(path, tol)` mit festen Formeln (`n = clamp(ceil(sqrt(0.75·dd/tol)),1,256)` kubisch, `sqrt(0.25·dd/tol)` quadratisch, Bernstein-Auswertung wie SummitCableCar.swift:50,56), `strokePath(path, {width, cap, join, miterLimit}, tol)` → linienbasierter Pfad, `dashPath`, `rasterize(edges, bounds, {antialias, subsamples:16, rule})` mit Differenz-Array pro Zeile, `ClipMask` (Rechteck + Uint8-Abdeckung, Schnitt = `round(a·b/255)`), `GrayGradient` linear/radial (konzentrisch, Startradius 0) mit Extend-Flags über inverse CTM pro Pixelmitte, `GrayCanvas` (gstate-Stack; `fillPath/strokePath/clip/fillEllipseIn/drawLinearGradient/drawRadialGradient`; Compositing `dst = floor(dst + (gray·255 − dst)·a + 0.5)` nach jedem Primitiv wie 8-bit DeviceGray; AA-aus = Pixelmittenregel für Text; Default-Join miter, Limit 10).
+Feste Konstanten: Flatten 0.1 px (Gerät), Stroke/Dash 0.1 px / max. CTM-Skala (Nutzerraum), Summit-Local-Stroke 0.02 mm, Dash-Flatten 0.01 mm, S = 16, Koordinaten-Snap 1/256 px vor dem Kantenaufbau (macht Last-ULP-Drift unsichtbar), Disc-Segmente `max(8, ceil(π/acos(1−tol/r)))` ≤ 64.
+
+### Fonts (OFL/permissiv, unverändert gebündelt, ≈ 1,0–1,3 MB)
+| Raw-Value (persistiert, unverändert) | Mac | Ersatz | Lizenz |
+| --- | --- | --- | --- |
+| `Rounded` | ArialRoundedMTBold | Nunito Bold (`Nunito-Bold.ttf`) | OFL 1.1 |
+| `Sans serif` | Helvetica-Bold | Arimo Bold (Arial-/Helvetica-metrisch) | Apache 2.0 bzw. OFL 1.1 (Release-Lizenzdatei kopieren) |
+| `Serif` | Georgia-Bold | Gelasio Bold (Georgia-metrisch) | OFL 1.1 |
+| `Handwritten` | ChalkboardSE-Bold | Comic Neue Bold (Alternative Kalam Bold) | OFL 1.1 |
+| `Monospaced` | Menlo-Bold | DejaVu Sans Mono Bold (Menlos Vorfahr) | Bitstream-Vera-Lizenz |
+| Fallback (optional, lazy) | CoreText-Fallback | Noto Sans JP Bold Subset (~1 MB, nur bei Han/Kana/Hangul laden, RFN → umbenennen) | OFL 1.1 |
+Parser: **opentype.js** (MIT; GPOS-Kerning + legacy `kern`, TrueType/CFF, kein DOM), gekapselt in `fontFile.ts`. Shaping: NFC, pro Codepoint erste Schrift der Kette mit cmap-Treffer (CoreText-Fallback), fehlende Zeichen in `missing` (UI-Hinweis), Advance + Kerning nur innerhalb derselben Schrift, keine Ligaturen (dokumentierte Abweichung), Glyphpfade mit Quads (damit `controlBounds` wie `boundingBoxOfPath`). Laden: Worker `loadFontSet(fetchLoader)` einmalig (`import.meta.env.BASE_URL` beachten), vitest `nodeLoader`. Die UI (`fonts.ts` in U1) nutzt dieselben TTFs per `@font-face` für den Font-Picker. Jede Datei muss prüfen: parst, PostScript-Name erwartet, cmap deckt U+0020–007E, U+00A0–00FF, U+0100–017F plus `ë é ü ß € & < 3`.
+
+### Port der Artworks und des Reliefs
+- `drawNightFlight(width,height,diameter,columns,rows): Float32Array` — Transliteration von NightFlight.swift:8-240 auf `GrayCanvas` mit denselben Helfern (`ellipse, fill, roundedFill, stroke, position, cloud, plane`), gleicher Zeichenreihenfolge und Konstanten; nur Flip-Zeilen weg, `Double.pi`/Trig über `dmath`, `CGMutablePath` → `Path`.
+- `drawSummitCableCar(width,height,diameter,columns,rows, radius)` — Warp-Maschinerie (SummitCableCar.swift:24-67) wörtlich: `meridian`, `local: Affine`, `k(y) = reach/max(8, radius(y))`, `map`, `warp` mit exakten Segmentzahlen `max(1, ceil(dist/0.8))` (Linien) bzw. `max(4, ceil(Kontrollpolygon/0.6))` (Kurven), `dist>1e-6`-Guard; Stroker/Dasher (`:87-94`, `:213`) vor dem Warp im Local-Raum (Tol 0.02 mm), Kabel (`:438-448`) auf dem Canvas im mm-Raum mit anisotroper CTM; `rounded()`/`linear()`/`groundFill()` 1:1 (Gradient durch inverse CTM, kein Sonderfall); `stride(from:-15,through:3,by:4.5)` → explizite Liste `[-15,-10.5,-6,-1.5,3]`.
+- `NightFlightRelief` (NightFlight.swift:243-411): `rings` als numerisch sortierte `Map`, `crest`, `smooth` zweimal mit **Float32-Emulation** (`Float32Array`, jede Operation `Math.fround`, Vergleiche gegen `fround(0.005)`/`fround(0.025)`), SATs als `Int32Array`; Schnittstelle zum Kern: `ReliefMeshInput {vertices, innerVertexRange?, triangles, maxOverhang}`; `PaintedBalloon.make/refine/split` bleiben im Kern und nutzen nur `BalloonTextLayout.{color, needsRefinement, origin}` und `NightFlightRelief.{needsRefinement, edgeNeedsRefinement, apply, artworkHeight, displacement, bottom, height, width, depth, columns, rows, resolution}`.
+
+### Verifikation (R)
+- Referenz-Dumps vom Mac (Teil des Referenz-Exporters, Abschnitt 8): `text --font-file <ttf> --text <s>` (CoreText mit den **gebündelten TTFs** via `CTFontManagerCreateFontDescriptorFromData`, damit nur Shaping/Rasterung verglichen werden), `relief --style … --shape classic|round|tall` (`.raw.pgm` = CG-Bitmap, `.field.f32` = Höhenfeld nach Blur, JSON mit `crest[rows]`, damit der Rastervergleich vom TS-Mesh-Port unabhängig ist), `primitives` (Kalibrier-Canvases 64×64: Kreis, AA-aus-Dreieck, Miter-Polyline, Round-Caps, Dash, RoundedRect-Stroke, radialer/linearer Gradient mit Clips, verschachtelte Clips, Mondpfad).
+- Fixtures gz-komprimiert unter `web/test/fixtures/{text,relief,primitives}/` mit README (Swift-Commit, macOS-Version).
+- Metriken/Schwellen: Raster vs. CG `pixelAgreement(±2/255) ≥ 0.97`, `(±16) ≥ 0.995`, `blockMeanDifference(8×8) ≤ 8/255`; Höhenfeld (×2.4 mm) `rms ≤ 0.03 mm`, `p99.9 ≤ 0.15 mm`, `max ≤ 0.4 mm`; Textmasken Maße ±1 px, Aspekt ±1 %, IoU ≥ 0.97 (20 Fälle: 5 Fonts × `F`, `Hello`, `O`, `Zoë & Léa <3`); Primitives `≥ 0.98`, Mond-Primitive ohne Tinte im Sichelzentrum (prüft die `addArc`-Normalisierung).
+- Blur/SAT **bit-identisch** zum Swift-`.field.f32`, wenn mit dem Swift-`.raw.pgm` gefüttert (isoliert die Float32-Emulation; Toleranz 0).
+- Portierte Property-Tests aus PatternTests.swift:88-170, NightFlightTests.swift:85-165, SummitCableCarTests.swift:23-99 (alle `artworkHeight`-Proben, Gegenseiten-Gleichheit < 0.12, Nahtkontinuität < 0.001 über 200 Zeilen usw.), zunächst gegen die Swift-`crest`-Arrays, dann gegen das TS-Mesh.
+- Ende-zu-Ende: TS schreibt `.build/pattern-tests/{text,night-flight,summit-cable-car}.3mf`; das **unveränderte** `scripts/verify-3mf.py` muss durchlaufen.
+- Determinismus: SHA-256 der Raster/Masken in `web/test/fixtures/hashes.json`; derselbe Test läuft in Node und `vitest --browser` auf Chromium, Firefox, WebKit; identische Hashes auf allen vier sind das Abnahmekriterium.
+
+### Performance-Budget
+Summit Classic ≈ 700 Primitive, ~18 Mpx Compositing, ~10 M Kreuzungen → erwartet 0,3–0,5 s in V8, Night Flight 0,2–0,35 s, Worst Case (3072×1200) 0,6–0,9 s, Textmasken < 20 ms; Speicher ~50 MB Peak (Canvas 3,7 MB, Feld 14,7 MB, zwei Int32-SATs 29,5 MB). Von Anfang an: Kantentabelle in Typed Arrays, Coverage-Zeile `Float32Array(width+2)` + Differenz-Array, Clip-Masken nur über ihre Bbox, Gradienten nur im Clip-Rechteck, Flatten im Geräteraum. `web/scripts/bench-patterns.ts` misst draw / blur+SAT / gesamt; lokal ≤ 1,5 s, CI-Soft-Gate 3 s.
+
+### Arbeitspakete (R)
+- **WP-R0 Konventionen & Typen** (klein, zuerst): `dmath.ts` (mit Swift→JS-Tabelle in Doc-Kommentaren, exhaustiver `fround(b/255)`-Test), `affine.ts`, `path.ts` (Datenmodell, `controlBounds`, `forEach`, `addPath/transformed`), `pgm.ts`, `patterns/types.ts`, `test/support/compare.ts`, Fixture-README, Paketzusätze (opentype.js, @stdlib, vitest-browser-Provider). Abnahme: Affine-Ketten reproduzieren Summits `local`/`place`; `controlBounds` enthält Kontrollpunkte; `roundHalfAway(-0.5) === -1`.
+- **WP-R1 Pfadgeometrie**: `addArc/addEllipse/addRoundedRect`, `flatten.ts`, `stroke.ts`, `dash.ts` + Tests (Segmentzahlen, Miter-Spitze, 100er-Linie mit `[8,5]` → 8 Dashes, Ellipse durch 4 Extrempunkte 1e-9, alle Stroker-Teile positiv orientiert, geschlossenes RoundedRect ohne Caps, Einzelpunkt + Round-Cap → Disc). Abh.: R0.
+- **WP-R2 Scanline/Clip/Gradient/Canvas** + Primitives-Vergleich (≥ 0.98), Tests: doppelt gezeichneter Kreis = einfacher (keine Konflation), AA-aus-Dreieck = Pixelmittenregel, Clips multiplizieren, radialer Gradient unter anisotroper CTM elliptisch, synthetische Worst-Case-Szene < 0,6 s in Node. Abh.: R0 (R1 nur für `strokePath()` auf dem Canvas).
+- **WP-R3 Fonts & Text**: Fonts + `LICENSES.md`, `fontFile/fontSet/shaper/textMask/textLayout`, Tests (Font-Checks, portierte Text-Properties, IoU ≥ 0.97 gegen 20 CoreText-Dumps, `missing`, Layout-Fitting). Abh.: R0, R2.
+- **WP-R4 Night Flight Artwork + Relief**: Raster-/Höhenfeld-Metriken auf classic/round/tall, alle Proben aus NightFlightTests.swift:85-165, Blur/SAT bit-identisch, Hash-Test. Abh.: R1, R2.
+- **WP-R5 Summit Cable Car Artwork**: Metriken auf drei Formen, alle Proben aus SummitCableCarTests.swift:23-99, `designWidth/Height`, Hälften < 0.12, Naht, Hash. Abh.: R1, R2, R4 (`relief.ts`).
+- **WP-R6 Fixtures & Vergleichs-Harness**: Vertrag mit dem Referenz-Exporter (Abschnitt 8), Fixtures erzeugen/committen, Loader (gz/PGM/f32), `hashes.test.ts` + `vitest.browser.config.ts`. Abh.: Exporter, R0.
+- **WP-R7 Integration**: Font-Preload im Core-Worker, `bench-patterns.ts`, `export-pattern-tests.ts` (drei 3MFs für `verify-3mf.py`), `@font-face` für den Picker, UI-/README-Texte zu Ersatzfonts und fehlenden Glyphen, Lint-Regel `no-restricted-globals`/`no-restricted-syntax` gegen DOM-APIs und rohe `Math.*`-Transzendente im Kern. Abh.: R3–R5, K (PaintedBalloon, ThreeMF).
+- **WP-R8 (optional) CJK-Fallback**: Noto-Sans-JP-Subset, lazy, `東京`-Test, ≤ 1,2 MB.
+Reihenfolge: R0 → {R1, R2, R6} → R3, R4 (Relief/Blur kann sofort gegen Swift-`.raw.pgm` starten) → R5 → R7 → R8.
+
+### Risiken (R)
+`addArc`-Normalisierung falsch (Mond-Fixture entscheidet, Zwei-Zeilen-Fix); Miter-Joins (Fallback round, Unterschied subpixel); 1/16-AA-Quantisierung (S auf 32 heben, eine Konstante); Engine-Nichtdeterminismus trotz stdlib (Snap 1/256 px, Cross-Engine-Hash-Gate, vendored fdlibm als Plan B); opentype.js-GPOS-Klassen-Kerning fehlerhaft (IoU pro Font deckt es auf; Fallback Kerning 0 oder vorberechnete Paare); CJK-Größe (lazy, sonst `missing`-Hinweis); dünne Features 0,2 mm/px (gleiches Budget wie CG, Tests proben genau diese); Lizenzdrift (unveränderte TTFs, Lizenztexte kopieren); sichtbar andere Lettern als die Mac-App (UI-/README-Hinweis).
+
+## 8. V — Referenz-Exporter, Proben, Fallraster, Vergleichs-Harness, Test-Tiering
+
+### WP-V1 — Swift-Referenz-Exporter, Proben, Fallraster, Referenz-Pack (Swift, unabhängig von K)
+Ziel: reproduzierbares Orakel `mac/cases/grid.json` → Dateien + `references/manifest.json`, Raster-Dumps für R, Proben-Fixtures für K1.
+Eingaben: die 23 Kern-Swift-Dateien (kompiliert wie `mac/scripts/test.sh:5-12`, aber mit `ReferenceExporter/main.swift` statt der Tests); die Export-Aufrufe der App: Balloon `BalloonSTL.export(BalloonGenerator.generate(p,quality:.export),parameters:p)` / `PaintedBalloon.make(…).threeMF(settings:purge:)` (BalloonStudioApp.swift:182-183), Basket (BasketEditor:74), Ring (RingEditor:115), Cloud/Sun (CloudEditor:108), Figures (FigureEditor:68), Clip `printView.binarySTL()` (CableClipEditor:64).
+Ausgaben: `mac/ReferenceExporter/main.swift`, `mac/Probes/*`, `mac/cases/grid.json`, `mac/scripts/{build-reference-exporter.sh, make-references.sh, verify-swift-patches.sh, build-probes.sh}`, `mac/Sources/BalloonStudio/StableJSON.swift`, `references/manifest.json`, `references/files/**`, `references/probes/*`, `references/patch-proof.json`, Tier-B-Pack als GitHub-Release-Asset (`refs-v1`, SHA-256 im Manifest), `references/PACK.md` (+ `fetch-pack.sh`).
+- **CLI:** `reference-exporter --cases mac/cases/grid.json --out references/build [--only id,…] [--jobs N] [--rasters] [--geometry-only]`; Fälle parallel (`DispatchQueue.concurrentPerform`, Kern ist rein). Je Fall: `parameters` per `JSONDecoder` dekodieren (übt die `init(from:)`-Migrationen), exakt den App-Exportpfad aufrufen, `files/<id>/<filename>` schreiben, bei ZIP zusätzlich `entries/<id>/<entryName>`. Manifest je Ausgabe: `kind` (`stl|zip|3mf|json|text|svg|model`), `bytes`, `sha256`; je STL `triangles`, `bbox`; je ZIP-Eintrag `name, bytes, sha256, crc32, localHeaderOffset`; außerdem `normalized` (= sortierter JSONEncoder von `.normalized()`), `filename`, `durationMs`; Kopf: Toolchain-Versionen, `sourcesSha256` über die 23 Dateien, Pack-URL+Hash.
+- **Fallschema:** `{id, part: balloon|pattern|basket|ring|cloud|figure|figureSet|clip, quality: preview|export, parameters: {…roh}, pattern?, purge?, group: identity|relief|text, rasters?: true}`.
+- **Raster-Dumps** (`--rasters`, für `group ≠ identity`): für Relief `<id>.raw.pgm` (8-bit-CG-Bitmap vor `/255`, P5, Zeile 0 = unten), `<id>.field.f32` (Höhenfeld nach Blur, LE-Float32) und JSON `{width,height,columns,rows,bottom,depth,diameter,crest:[rows]}`; für Text `<id>.pgm` + JSON `{width,height,aspect,bounds,glyphCount}`; Text-Fälle werden mit den **gebündelten TTFs** gerendert (`CTFontManagerCreateFontDescriptorFromData` → `CTFontCreateWithFontDescriptor(·,100)`), damit nur Shaping/Rasterung verglichen wird; zusätzlich `primitives/*.pgm` (Kalibrier-Canvases aus Abschnitt 7).
+- **Proben** (`mac/Probes/*`, Ausgaben committet): `Libm` (sin, cos, atan2, hypot, atan, asin, acos, tan, exp, pow mit den im Kern vorkommenden Exponenten, sqrt, cbrt, log auf je 1 M Argumenten aus den realen Verteilungen → Float64) — der TS-Test misst die ULP-Abweichungsrate von `dmath` gegenüber Apple-libm (informativ, dokumentiert das erwartete `ulp`-Aufkommen); `Arith` (kein FMA, `Float(x)` vs `fround`, `.rounded()`, `remainder`, `min/max` mit Vorzeichen-Nullen, `Sequence.min/max` erstes-von-gleichen, Sort-Stabilität auf 10 k Ties); `Format` (`description`, `%.1f`, `%.2f`, `%g`, `%.17g` auf 100 k Werten inkl. dyadischer Ties `2.25`, `0.125`, `1.5e-5`, `1e15`, `9007199254740992`, `1e16`, `-0.0`); `Json` (JSONEncoder mit/ohne sortedKeys, JSONSerialization pretty+sorted mit allen Werttypen, Strings mit `/ " \ \n \t \u{1} \u{7f} é 😀 \u{2028}`, leeres Array, verschachtelt, Int vs Double, nil); `PatternSettings.normalized` für Kombinationszeichen/Emoji-ZWJ/NBSP.
+- **Swift-Patches (die einzigen):** `StableJSON.swift` mit `enum StableJSON { static func encode<T:Encodable>(_:) }` (`.sortedKeys`), eingesetzt an CloudGeometry.swift:464, FigureGeometry.swift:570, ThreeMF.swift:49 (und SegmentedRing.swift:79, wo es `JSONSerialization` speist). Kein Geometrie-, kein Sort-Patch.
+- **Patch-Beweis** (`verify-swift-patches.sh`): `git worktree` auf den unveränderten Import-Commit, Exporter aus beiden Bäumen bauen, beide mit `--geometry-only` über das volle Raster laufen lassen, jede `.stl`- und `3D/3dmodel.model`-Prüfsumme identisch, jedes JSON nach Parsen deep-equal → `references/patch-proof.json`.
+- **Fallraster** (≈ 120 Fälle, ≈ 1 GB roh, ≈ 5 min mit `--jobs 4`; E = export, P = preview; Migrations-Fixtures als rohes JSON):
+
+| Teil | Fälle | Qualität | Größe |
+| --- | --- | --- | --- |
+| balloon (BalloonSTL) | classic, round, tall; bounds 80-60-50, 80-240-75, 250-60-75, 250-240-50; smooth; panel-count-normalization (17); minimum-neck; hollow-classic; hollow-thin-small; hollow-thick-wide; tethered-classic; filled-tethers; hanger-filled-plain; hanger-hollow-tethers; hanger-small; hanger-adjusted-16-8-5; legacy `{"height":215,…}`; legacy hanger `{"height":244,"hangingLoop":true,"hangingClearance":4}` | 8 E (classic, round, tall, hollow-classic, tethered-classic, hanger-hollow-tethers, hanger-small, bounds-250-240-50), Rest P | ≈ 235 MB |
+| pattern (3MF) | classic × stripes/hearts/dots/diamonds; stripes 24 Bänder auf hollow+hanger+tethers; dots rows=1; hearts dicht (24×6×3) auf 80×60×8; Purge-Variante (0.1/100/700/0.5/1.1) | 4 E, 4 P | ≈ 200 MB |
+| relief/text (`--rasters`) | night-flight classic/round/tall, summit classic/round/tall, text 5 Fonts × {`F`, `Hello`, `O`, `Zoë & Léa <3`} (+ `東京` bei CJK) | P | ≈ 60 MB + Raster |
+| basket | wicker/ribbed/voyager × default (E), small, large (P) | 3 E, 6 P | ≈ 100 MB |
+| ring | solid default; solid bounds ×2; `.solid` uplight 450; Prototyp 240 uplight; uplight bounds ×2; 6-Sektionen-Kit 450/24/12/6 + bounds ×2; uplight-Kit `.large` + bounds ×2; legacy `{"diameter":220,…}` | E | ≈ 15 MB |
+| cloud (Kit) | classic 230; klein 100/16; drift/billow/twin/breeze/cotton unmirrored + billow/cotton mirrored (Kabelseite rotierend); classic mit top/bottom/left; Outlets left+right, drei Seiten, vier Seiten; Breite 125 (Clamp passt nicht); strainRelief=false; nailInsert; sculpted classic 18; sculpted billow min-width; Extreme (fit 0.5, cable 6, strip 12/6, nail 10/5, depth 40); 500 breit (P); LED-Variante (cut 15.625, spacing 25); legacy `{"width":100,"depth":16,"diffuserThickness":0.8,"stripThickness":4}` | E außer 500 | ≈ 150 MB |
+| sun (Kit) | soft-star/cones/pinwheel/bold-eight defaults; 160 breit; bottom cable; nailInsert; sculpted soft-star; sculpted pinwheel 500/30 (P); ehemals `"sunStyle":"halo"` | E außer 500 | ≈ 110 MB |
+| figure / figureSet | Set defaults (E); Set two-sided (E); star default, cloud default, moon small, balloon large-chain, heart flat, raindrop puffy-chain, sun two-sided; partiell `{"style":"moon","height":75}` | E | ≈ 75 MB |
+| clip | die 15 `CableClipTests`-Fälle + smallHead | E | 0,6 MB (Tier A) |
+
+- **Speicherung:** Tier A = Manifest + jede Ausgabe/jeder Eintrag ≤ 300 KB content-addressed unter `references/files/` (dedupliziert identische Seals/Bars/Anvils/Pins); Tier B = `tar --zstd` von `references/build/{files,entries,rasters}` als Release-Asset, in Actions gecacht (`actions/cache` nach `pack.sha256`, sonst `gh release download` + Verifikation). Kein Git LFS.
+Abnahme: `make-references.sh` idempotent (zwei Läufe → identische Manifeste bis auf `generatedAt`/`durationMs`); Patch-Beweis ohne Geometrie-Differenz; `mac/scripts/test.sh` läuft auf den gepatchten Quellen; die `normalized`-Strings der Migrations-Fixtures entsprechen den Erwartungen der Swift-Tests (z. B. Legacy-Ring `jointFit` 0.3, Pattern `reliefDepth` 2.4 ohne `flightCompositionVersion`). Abh.: U0.
+
+### WP-V2 — Vergleichs-Harness (`web/harness/`)
+Ziel: vitest-lauffähiger Vergleich der TS-Ausgaben mit Manifest/Pack nach den vereinbarten Toleranzen, mit lesbarem Report.
+Algorithmus je Ausgabe: (1) `sha256(ts) === manifest.sha256` → `identical`. (2) Sonst Referenzkörper laden (Tier A inline oder Tier B Pack; fehlt das Pack → Status `unverified-needs-pack`, schlägt in CI fehl, warnt lokal) und nach Art verzweigen:
+- **STL:** Dreieckszahl gleich; je Ecke Float32-Bitmuster gleich oder benachbart (|Δbits| = 1, gleiches Vorzeichen; `+0/-0` eigene Klasse → Fehler); Attribut-Bytes gleich. Topologie: beide Meshes unabhängig exakt verschweißen und identische Indexarrays verlangen (ein ULP-Shift, der Vertices zusammenlegt/trennt, ist ein Fehler). Normalen: `normalFrom(tsVertices) === tsNormal` bitweise (Writer), `normalFrom(refVertices) === refNormal` bitweise (Sanity), `dot(ts, ref) ≥ 1−1e-6`; Sliver-Dreiecke, die nur (c) verfehlen, mit minimalem Winkel melden. Header: bei `BalloonSTL` Signatur, Flags, Panels und 13 Float32-Settings exakt; TS-Digest selbstkonsistent (`sha256(tsHeader[0..62] ‖ tsBody[80..])[0..16]`), Digest-Bytes dürfen genau dann abweichen, wenn der Body per ULP abweicht.
+- **ZIP:** beide Central Directories parsen; Namen und Reihenfolge gleich; Version/Flags/Zeit/Datum gleich; CRC gleich gdw. Bytes gleich; je Eintrag nach Endung rekursiv.
+- **JSON:** byte-gleich erwartet; bei Abweichung parsen und ersten abweichenden Schlüsselpfad melden, mit Hinweis „numerisch gleich (Writer-Fehler)" vs. „Wert anders (Port-Fehler)".
+- **Text (`.md`, `.txt`, `.svg`):** exakt; Unified Diff.
+- **3MF:** ZIP-Vergleich + `3D/3dmodel.model` zeilenweise: Kopf/Fuß exakt; `<vertex …/>` numerisch (≤ 1e-12 relativ) und Zählung textgleicher Zeilen (Ziel 100 %); `<triangle …/>` exakt (Indizes, `pid`, `p1-3`, `paint_color`).
+Report: `references/report.json` + Konsolentabelle `id | status (identical|ulp|mismatch|unverified) | maxUlp | ulpCount | tsMs | swiftMs | note`. CI schlägt fehl bei `mismatch`/`unverified` und bei `ulpCount > 0` für Dateien mit `strict: true` (JSON/Text/SVG immer strict).
+CI: `deploy.yml` Jobs `unit`, `compare-smoke` (Defaults jedes Teils, ~12 Fälle, Tier A + gecachtes Pack), `build`, `deploy`; `compare-full.yml` (Matrix 4 Shards, Pack aus Cache/Release) auf Push nach `main`, nächtlich und per Label `full-compare`.
+Abnahme (Selbsttest mit synthetischen Fixtures): identische Datei → `identical`; eine Koordinate +1 ULP → `ulp` (count 1); +2 ULP → `mismatch`; vertauschte Dreiecke → `mismatch (topology)`; `-0`-Flip → `mismatch (signed zero)`; JSON-Schlüssel umgeordnet → `mismatch (json)`. Abh.: K1 (ZIP-Leser, SHA-256, STL-Parser), V1 (Manifest-Schema; Entwicklung gegen Manifest-Stub möglich).
+
+### WP-V3 — Test-Tiering und Assertion-Zensus
+vitest-Projekte `fast` (jeder PR, ≤ 8 min auf ubuntu-latest mit 4 Workern: alle Settings-/Normalisierungs-/Migrations-Assertions, Preview-Qualität für jede Suite, Export-Qualität nur für Defaults, Harness-Smoke) und `full` (main/nightly/Label, ≤ 40 min in 4 Shards: alle Swift-Sweeps inkl. Opt-in `outlets`/`clamp`, alle Export-Assertions, volles Harness-Raster). Schwere Sweeps über `describe.skipIf(!FULL)`. Jede Swift-Assertion wird ein `check(…)` mit derselben Meldung; `web/scripts/assertion-census.ts` zählt `require|check(` in `mac/Tests` und `check(` in `web/tests` und schlägt fehl, wenn die TS-Zahl unter Swift minus Allowlist liegt (UserDefaults CloudTests:94-98, `setbuf`, Dateischreib-Zeilen, Blender-Skripte). Tests, die Kits nach `.build/test-output` schrieben, prüfen stattdessen gegen den Harness. Abh.: K2–K8.
+
+### WP-V4 — Integration und Abnahme
+Volles Raster grün (`identical` oder `ulp` ≤ 1 mit gleicher Topologie; null `mismatch`); Assertion-Zensus grün; `references/report.json` je Pack-Version committet; `docs/mac-app.md` Abschnitt „Referenzen regenerieren"; Entscheidungsvermerk, ob die ULP-Statistik eine Eskalation (gemeinsamer fdlibm-Port in Swift **und** TS) rechtfertigt — nur, falls tatsächlich ein Schwellen-Flip auftritt.
+
+## 9. Gesamtreihenfolge, Parallelität, Meilensteine
+
+```
+U0 Bootstrap (Repo, CI, mac/ Import)
+ ├─ K1 Kompat+Primitive ─────────┬─ K7 Clip (Pilot) ──┐
+ ├─ V1 Exporter+Proben+Raster+Pack┤  K2 Balloon ────────┤
+ ├─ V2 Harness (gegen Manifest-Stub)┤  K5 Ring ──────────┤
+ ├─ R0 Raster-Typen ─┬─ R1 Pfade ─┤  K6 Figuren ───────┼─ K3 Muster (Mesh-Seite, injizierte Raster) ─┐
+ │                   ├─ R2 Canvas─┤  K8 Korb ──────────┤                                              ├─ V3 Tiering ─ K9 Perf/API ─ R7 ─ U10 ─ V4
+ │                   └─ R6 Fixtures┤  K4a→K4b/K4c Lampen┘  R3 Text, R4 Night Flight → R5 Summit ────┘
+ └─ U1 Primitive ─┬─ U3 Stores ─ U5 Shell+Balloon ─ U9 I/O ─┬─ U6 Basket+Ring ─┐
+    U2 Vertrag ───┘  U4 Preview ────────────────────────────┼─ U7 Cloud+Sun ───┼─ (echter Kern wird eingehängt, sobald K liefert)
+                                                            └─ U8 Figur+Clip ──┘
+```
+Parallele Spuren nach U0: **Spur A** K1 (Fundament, blockiert alle K-WPs), **Spur B** V1 (Swift, unabhängig), **Spur C** V2 (Harness gegen Stub), **Spur D** R0→R1/R2/R6, **Spur E** U1+U2→U3/U4→U5→U9. Nach K1: K7, K2, K5, K6, K8, K4a gleichzeitig (sechs Agenten); K4b/K4c, sobald K4a die Structs eingefroren hat (Tag 1 von K4a); K3, sobald K2s Generator steht; U6/U7/U8, sobald U1/U3/U4 stehen.
+
+Meilensteine:
+- **M0** Repo öffentlich, Pages deployt eine Platzhalterseite, `mac/` baut und testet aus dem neuen Ort, Proben committet.
+- **M1** (Pilot) K1 + V1 + V2 + K7: alle 15 Clip-Fälle `identical` Ende-zu-Ende, Patch-Beweis grün; parallel U1–U5+U9: Shell, Balloon-Tab, Open/Export, Persistenz auf Stub-Core auf Pages.
+- **M2** K2/K5/K6/K8 grün mit portierten Tests; U6/U7/U8 fertig; Balloon/Ring/Figuren/Korb laufen im Browser auf dem echten Kern.
+- **M3** K4 Lampen-Cluster grün (Cloud/Sun-Kits inkl. SVG/ASSEMBLY/Settings byte-gleich); Cloud-/Sun-Tabs auf echtem Kern.
+- **M4** K3 Muster-Mesh grün mit injizierten Swift-Rastern; R1–R5 erfüllen die Rastermetriken, Cross-Engine-Hashes identisch, TS-3MFs bestehen `verify-3mf.py`; Text/Night Flight/Summit im Browser.
+- **M5** V3 Tiering, K9 Budgets, U10 Paritäts-Checkliste 100 % + a11y + Browser-Checkliste, V4 Abnahme; README dokumentiert Web-App, Mac-App als Referenz und die bewussten Abweichungen (Fonts, Alt+N, Zahlenanzeige, „Saved" statt Finder).
+
+## 10. Verifikation Ende-zu-Ende
+1. **Proben** (`bash mac/scripts/build-probes.sh`) → `references/probes/*`; `npm test -- swift` prüft jede Kompat-Funktion dagegen.
+2. **Referenzen** (`bash mac/scripts/make-references.sh`, Mac, ~5 min) → Manifest + Tier A committen, Pack als Release hochladen; `verify-swift-patches.sh` einmal je Patch.
+3. **Harness** (`npm run compare -- --cases <teil>/*`) lokal mit Pack; Report lesen: nur `identical`/`ulp`.
+4. **Portierte Tests** (`npm test` = fast, `FULL=1 npm test` = full) und Assertion-Zensus.
+5. **Raster** (`npm test -- raster text patterns`, `vitest --browser` auf Chromium/Firefox/WebKit für die Hash-Tests), `python3 mac/scripts/verify-3mf.py` auf den TS-3MFs.
+6. **UI** (`npm test` jsdom-Suiten, `docs/parity-checklist.md` Zeile für Zeile, `docs/manual-browser-checklist.md` in Chrome/Safari/Firefox), Deploy auf Pages, Stichprobe: in der Web-App und in der Mac-App denselben Cloud-Kit exportieren und per `shasum -a 256` je ZIP-Eintrag vergleichen; eine exportierte `cloud-settings.json` in der jeweils anderen App öffnen.
+7. **Externe Prüfer unverändert:** `verify-cloud-blender.py -- <entpacktes Web-Kit>`, `verify-cable-clip-blender.py` (mit den test-only `seated-*`-Dateien aus dem Harness), Bambu Studio Import eines Web-3MF (Farbzuordnung, P2S-Slice).
+
+## 11. Risiken und Gegenmaßnahmen
+| Risiko | Gegenmaßnahme |
+| --- | --- |
+| libm-Last-Bit-Abweichungen (Apple vs. fdlibm) → seltene 1-ULP-Float32-Koordinaten, theoretisch Schwellen-Flips | Kriterium erlaubt ≤ 1 ULP bei gleicher Topologie; Libm-Probe quantifiziert; Harness zählt ULP-Fälle je Datei; Eskalation nur bei realem Flip (gemeinsamer fdlibm-Port in Swift + TS, neuer Patch-Beweis) |
+| Browserabhängige `Math.*` | kernweit `dmath` (pure JS); Cross-Engine-Hash-Test auf Chromium/Firefox/WebKit als Gate; Lint |
+| Vorzeichen-Null/Tie-Semantik (`min/max`, `round`, `Sequence.min`) | Kompat-Helfer + Proben + Lint-Verbot der rohen Funktionen |
+| printf-Ties und `description`-Layout (`2.25 → "2.2"`, `1e-05`, `1e+16`) | BigInt-exakte Formatierung + Proben; alle Textartefakte strict |
+| Zwei Foundation-JSON-Writer, String-Escaping, Int/Double-Provenienz | Proben-Fixtures aus echter Swift-Ausgabe; `normalized`-Strings je Fall; JSON immer strict |
+| Float32-Vorrundung der skulptierten Front, Float32-Arithmetik im Relief | `fround` nach jeder Operation; `smooth`/`sample` bit-identisch gegen Swift-Dumps |
+| Ear-Clipping-Ties (CableClamp:317, SegmentedRing:316-327) | identische Konstruktionsreihenfolge + stabiler Sort + strikte `<`-Komparatoren; `nil`-Fallbacks gespiegelt |
+| Hash-Reihenfolge | auditiert (Abschnitt 3); TS sortiert explizit, sonst Einfügereihenfolge |
+| Performance im Worker (hohler Export ≈ 3 M BVH-Abfragen, Relief-Meshes bis 2,5 M Dreiecke) | typisierte Hot Paths von Anfang an, Budgets + Benchmarks (K9), Preview-Qualität ~5× günstiger |
+| Referenz-Staleness/Größe (~1 GB) | `sourcesSha256` + Pack-Hash im Manifest; Tier A prüft Byte-Identität ohne Pack; Pack nur für ULP-Diagnose; Regeneration idempotent |
+| Rasterizer: `addArc`-Normalisierung, Miter-Joins, 1/16-AA, GPOS-Kerning, CJK-Größe, Lizenzen | siehe Abschnitt 7 (Mond-Fixture, Round-Fallback, S=32, IoU je Font, Lazy-Chunk, unveränderte TTFs) |
+| UI-Parität schleicht weg (Strings, Bereiche) | Strings/Bereiche nur aus Swift-Zeilen kopieren; Paritäts-Checkliste als Pflichtartefakt; `data-testid` = Swift-Identifier |
+| Browser-Shortcuts (`Mod+N` nicht abfangbar), kein „Show in Finder", FS-Access nur Chromium | Alt+N + sichtbarer Button; „saved/downloaded"-Status; Blob-Fallback |
+| Mehrere Agenten kollidieren | ein WP = ein Branch, Dateibesitz, eingefrorene Verträge zuerst (U2/K1/R0) |
+
+## 12. Annahmen (im Plan getroffen, vom Nutzer bei Freigabe zu bestätigen oder zu ändern)
+- Lizenz **MIT** für das öffentliche Repo (wie stacklamp); Fonts/Bibliotheken mit eigenen Lizenztexten in `THIRD_PARTY_NOTICES.md` / `fonts/LICENSES.md`.
+- Repo-lokale Git-Identität `jahoefne@gmail.com` (global ist eine Arbeitsadresse gesetzt).
+- Reset-Shortcut **Alt+N** (⌥N) plus sichtbarer Button, weil `Cmd/Ctrl+N` im Browser nicht abfangbar ist.
+- Zahlenanzeige in den Feldern immer mit `.`, Eingabe akzeptiert `,` und `.` (Mac zeigt locale-abhängig).
+- `output/` (296 MB alte Kits, Renders, .blend) kommt **nicht** ins Repo; nur die sechs Settings-JSONs und zwei Notiz-Markdowns.
+- Per-Teil „Download settings (JSON)" ist optional und wird nur nach Freigabe gebaut.
+- Die Mac-App bleibt baubar und bekommt nur den `StableJSON`-Patch; sie wird nicht weiterentwickelt, sondern dient als Referenz. Ihre eigenen Kit-JSONs werden dadurch (gewollt) deterministisch sortiert.
+- `verify-3mf.py` und die Blender-Verifier bleiben unverändert und werden auf TS-Ausgaben angewandt.

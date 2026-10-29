@@ -1,0 +1,14 @@
+:root {
+  --ink: rgb(38 48 51);
+  --accent: rgb(31 102 89);
+  --paper: rgb(246 244 238);
+  --stage: rgb(19 23 31);
+  color-scheme: light;
+}
+html, body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+.shell { max-width: 720px; margin: 0 auto; padding: 48px 22px; }
+.header h1 { font-size: 21px; font-weight: 600; margin: 0; }
+.subtitle { margin: 2px 0 24px; font-size: 12px; opacity: 0.7; }
+.notice { border: 2px solid var(--ink); padding: 18px 22px; background: white; }
+.notice ul { padding-left: 20px; }
+.version { font-size: 12px; opacity: 0.7; margin-bottom: 0; }
