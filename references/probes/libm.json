@@ -1,0 +1,267 @@
+{
+  "exponents" : [
+    0.65000000000000002,
+    2,
+    0.69999999999999996,
+    1.25,
+    0.59999999999999998,
+    0.75,
+    0.5,
+    24,
+    0.041666666666666664,
+    16,
+    2.5,
+    0.3125,
+    5,
+    0.20000000000000001,
+    3
+  ],
+  "format" : "little-endian Float64 records, series after series at the given byte offsets",
+  "prng" : "SplitMix64: state += 0x9E3779B97F4A7C15; z = state; z = (z ^ z>>30) * 0xBF58476D1CE4E5B9; z = (z ^ z>>27) * 0x94D049BB133111EB; z ^ z>>31 (wrapping UInt64). unit() = Double(next() >> 11) * 2^-53; uniform(lo, hi) = lo + (hi - lo) * unit(). Each call to next/unit/uniform is one draw, in the order written in arguments.",
+  "probe" : "mac/Probes/Libm/main.swift",
+  "series" : [
+    {
+      "arguments" : "i%4: 0 uniform(-2pi,2pi); 1 Double(k)*(2*Double.pi)/Double(n), n=3+next()%4094, k=next()%(n+1); 2 uniform(-0.25,0.25); 3 uniform(-60,60)",
+      "arity" : 1,
+      "count" : 4096,
+      "full" : {
+        "count" : 1000000,
+        "file" : "probes/libm/sin.bin",
+        "sha256" : "9e696243bd6de1b5babbff967803166ca85a21cc236296763dd989026e5a4283"
+      },
+      "function" : "sin",
+      "layout" : "[x, f(x)]",
+      "name" : "sin",
+      "offset" : 0,
+      "recordBytes" : 16,
+      "seed" : 1,
+      "sha256" : "71476b7e0e5d13bebdb7f6e80c22f155d04e20d41fa2e785d80046c366bed108"
+    },
+    {
+      "arguments" : "same arguments as sin",
+      "arity" : 1,
+      "count" : 4096,
+      "full" : {
+        "count" : 1000000,
+        "file" : "probes/libm/cos.bin",
+        "sha256" : "86b4a635a821677189267cee8a651f704e15505d1ec36662579fa88d3c99e248"
+      },
+      "function" : "cos",
+      "layout" : "[x, f(x)]",
+      "name" : "cos",
+      "offset" : 65536,
+      "recordBytes" : 16,
+      "seed" : 1,
+      "sha256" : "89eeafd7dc5d90cb3f3ebbeef7a70d5e3fee83c30167d0ea0fac6cea0e6e41b7"
+    },
+    {
+      "arguments" : "uniform(-1.4,1.4)",
+      "arity" : 1,
+      "count" : 4096,
+      "full" : {
+        "count" : 1000000,
+        "file" : "probes/libm/tan.bin",
+        "sha256" : "faeeead5bfb8fb8d366f0bdab074b7156fd5c748dc96eb1b470be662614ebb49"
+      },
+      "function" : "tan",
+      "layout" : "[x, f(x)]",
+      "name" : "tan",
+      "offset" : 131072,
+      "recordBytes" : 16,
+      "seed" : 2,
+      "sha256" : "092a1bc6fc5d1218e36f9085364ee51d149405a3a0cacfc3c138573ed45f533d"
+    },
+    {
+      "arguments" : "i%2: 0 uniform(-10,10); 1 uniform(-1000,1000)",
+      "arity" : 1,
+      "count" : 4096,
+      "full" : {
+        "count" : 1000000,
+        "file" : "probes/libm/atan.bin",
+        "sha256" : "d305b574ff91ab68ce7144f1d125ce389311958ca9c71bf5384e5c7d6f5f59d1"
+      },
+      "function" : "atan",
+      "layout" : "[x, f(x)]",
+      "name" : "atan",
+      "offset" : 196608,
+      "recordBytes" : 16,
+      "seed" : 3,
+      "sha256" : "780f9a8733bc6a18777cf6d8404de2c586228d34997cc3684f770dc5afdc24b2"
+    },
+    {
+      "arguments" : "(y, x) = (uniform(-300,300), uniform(-300,300)); i%16 == 0: y = +0 or -0 (alternating with i/16); i%16 == 8: x = +0 or -0",
+      "arity" : 2,
+      "count" : 4096,
+      "full" : {
+        "count" : 1000000,
+        "file" : "probes/libm/atan2.bin",
+        "sha256" : "a483e303d45728c5d14d3032fa2903ed52241effdf04940e9e392b22f816e970"
+      },
+      "function" : "atan2",
+      "layout" : "[a, b, f(a, b)]",
+      "name" : "atan2",
+      "offset" : 262144,
+      "recordBytes" : 24,
+      "seed" : 4,
+      "sha256" : "b307cacb11952421bc88fda183593fe6da66b8511bb179f116d79ec6a86f8910"
+    },
+    {
+      "arguments" : "uniform(-1,1)",
+      "arity" : 1,
+      "count" : 4096,
+      "full" : {
+        "count" : 1000000,
+        "file" : "probes/libm/asin.bin",
+        "sha256" : "bcb76aee3d262bd68d9dc67d72048be9619b791bade66e104d4296e49e21542e"
+      },
+      "function" : "asin",
+      "layout" : "[x, f(x)]",
+      "name" : "asin",
+      "offset" : 360448,
+      "recordBytes" : 16,
+      "seed" : 5,
+      "sha256" : "752d57d3ffe7fd171835f4a2ff665b89612a677567a85aa40373e2bae3513dd6"
+    },
+    {
+      "arguments" : "uniform(-1,1)",
+      "arity" : 1,
+      "count" : 4096,
+      "full" : {
+        "count" : 1000000,
+        "file" : "probes/libm/acos.bin",
+        "sha256" : "49e0302fdbdcf7ba803b8a9c762808868a5a4e19bbebb415efc3a48b69d09f9b"
+      },
+      "function" : "acos",
+      "layout" : "[x, f(x)]",
+      "name" : "acos",
+      "offset" : 425984,
+      "recordBytes" : 16,
+      "seed" : 6,
+      "sha256" : "07a885121e293e87caec22fa677410b95ab284f42df9e62e637c1ffaf84503ea"
+    },
+    {
+      "arguments" : "uniform(-40,2)",
+      "arity" : 1,
+      "count" : 4096,
+      "full" : {
+        "count" : 1000000,
+        "file" : "probes/libm/exp.bin",
+        "sha256" : "a34efb2f0877d3d81259109b39c8fad767fddb187b219a2f57e4e738a56b574e"
+      },
+      "function" : "exp",
+      "layout" : "[x, f(x)]",
+      "name" : "exp",
+      "offset" : 491520,
+      "recordBytes" : 16,
+      "seed" : 7,
+      "sha256" : "201608d5785bbd4599791caba2bb9cc8dd94a847db33b06058a2b52b76611765"
+    },
+    {
+      "arguments" : "e = exponents[i%15]; x: e == 2 uniform(-300,300), e == 3 uniform(-1,1), else (i/15)%4 == 3 uniform(0,4) else unit()",
+      "arity" : 2,
+      "count" : 4096,
+      "full" : {
+        "count" : 1000000,
+        "file" : "probes/libm/pow.bin",
+        "sha256" : "a2983c60d2d69b03164a71b5749d836a3ae70913e437862be0d7d32c2543871c"
+      },
+      "function" : "pow",
+      "layout" : "[a, b, f(a, b)]",
+      "name" : "pow",
+      "offset" : 557056,
+      "recordBytes" : 24,
+      "seed" : 8,
+      "sha256" : "294fb774b1a0d1cbfe1ce84bc9c0715e1db84e98a446800d59a2d85490dd7f00"
+    },
+    {
+      "arguments" : "i%2: 0 uniform(0,1e5); 1 unit()",
+      "arity" : 1,
+      "count" : 4096,
+      "full" : {
+        "count" : 1000000,
+        "file" : "probes/libm/sqrt.bin",
+        "sha256" : "14e7f554b3f6f14f5a832c68426d371e1cc1af41daa494fe8015155b66629fb1"
+      },
+      "function" : "sqrt",
+      "layout" : "[x, f(x)]",
+      "name" : "sqrt",
+      "offset" : 655360,
+      "recordBytes" : 16,
+      "seed" : 9,
+      "sha256" : "2b68377cd059fb58c080e148b8b93b9b79dfedae3a919fafa62adb26c846e285"
+    },
+    {
+      "arguments" : "(uniform(-300,300), uniform(-300,300))",
+      "arity" : 2,
+      "count" : 4096,
+      "full" : {
+        "count" : 1000000,
+        "file" : "probes/libm/hypot.bin",
+        "sha256" : "ed95ed2dd39139feb06242ee4c4c502ab8e919c12d7a027233af453bd955a246"
+      },
+      "function" : "hypot",
+      "layout" : "[a, b, f(a, b)]",
+      "name" : "hypot",
+      "offset" : 720896,
+      "recordBytes" : 24,
+      "seed" : 10,
+      "sha256" : "452a92665f35539b3c6cec5490caf37fe1f897a500d93cefc3d510e496bfda24"
+    },
+    {
+      "arguments" : "uniform(-1000,1000)",
+      "arity" : 1,
+      "count" : 4096,
+      "full" : {
+        "count" : 1000000,
+        "file" : "probes/libm/cbrt.bin",
+        "sha256" : "5770281dde363e65da75240c9e8d7fd2f59be672e3d6899a93581201d1539443"
+      },
+      "function" : "cbrt",
+      "layout" : "[x, f(x)]",
+      "name" : "cbrt",
+      "offset" : 819200,
+      "recordBytes" : 16,
+      "seed" : 11,
+      "sha256" : "cfbb03a5b824ee26e3b5a35b20dab00bc84e8b08016d94c8178d35b35edc4d7f"
+    },
+    {
+      "arguments" : "i%2: 0 uniform(0x1p-30,1); 1 uniform(1,1000)",
+      "arity" : 1,
+      "count" : 4096,
+      "full" : {
+        "count" : 1000000,
+        "file" : "probes/libm/log.bin",
+        "sha256" : "b5e7fe6aecdb0990cb9ebbf6d7ea65ab433882fe859e87815f39512b5b456445"
+      },
+      "function" : "log",
+      "layout" : "[x, f(x)]",
+      "name" : "log",
+      "offset" : 884736,
+      "recordBytes" : 16,
+      "seed" : 12,
+      "sha256" : "4420002c94a9b8a4c8e151f50fedd2420b7c02ab497b7739b74c78198f42f028"
+    },
+    {
+      "arguments" : "fixed list, see edgeFunctions",
+      "arity" : 2,
+      "count" : 68,
+      "function" : "f(name)",
+      "functions" : [
+        "sin",
+        "cos",
+        "asin",
+        "acos",
+        "atan",
+        "exp",
+        "sqrt",
+        "cbrt",
+        "log"
+      ],
+      "layout" : "[function index into functions, x, f(x)]",
+      "name" : "edges",
+      "offset" : 950272,
+      "recordBytes" : 24,
+      "sha256" : "f790a9f9ffeaeb63d89b7a19c4095a1cfc20a2db107962f38e67872dc3e67bcc"
+    }
+  ]
+}
