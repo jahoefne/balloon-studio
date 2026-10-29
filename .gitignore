@@ -1,0 +1,14 @@
+.DS_Store
+*.log
+# Mac app build products and local exports (regenerable; the old kits in mac/output are ~300 MB)
+mac/.build/
+mac/dist/
+mac/output/
+# web
+web/node_modules/
+web/dist/
+web/coverage/
+web/.vite/
+# reference pack (Tier B, ~1 GB) and exporter scratch; Tier A under references/files is committed
+references/pack/
+references/build/
