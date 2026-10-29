@@ -36,11 +36,32 @@ export function sortDoubles(values: number[]): void {
 
 const INSERTION_LIMIT = 16;
 
+/** Reusable buffers for stableSortIndexRange (grow on demand). */
+export class IndexSortScratch {
+  keys: Float64Array;
+  keysTmp: Float64Array;
+  indicesTmp: Int32Array;
+
+  constructor(capacity = 0) {
+    this.keys = new Float64Array(capacity);
+    this.keysTmp = new Float64Array(capacity);
+    this.indicesTmp = new Int32Array(capacity);
+  }
+
+  ensure(n: number): void {
+    if (this.keys.length >= n) return;
+    this.keys = new Float64Array(n);
+    this.keysTmp = new Float64Array(n);
+    this.indicesTmp = new Int32Array(n);
+  }
+}
+
 /**
  * Stable in-place sort of `order[start..<end]` by `keys[order[i]·stride + offset]` with `<`,
  * the typed-array form of Swift `order[start..<end].sort { key($0) < key($1) }` for hot paths
- * (SurfaceQuery.build). Merge sort with insertion-sorted runs; no closures, no allocation
- * beyond the optional `scratch` buffer (length ≥ end - start).
+ * (SurfaceQuery.build). The keys are gathered into a contiguous buffer first, then sorted
+ * together with the indices (merge sort over insertion-sorted runs); no closures, and no
+ * allocation when a large enough `scratch` is passed. Keys must not be NaN.
  */
 export function stableSortIndexRange(
   order: Int32Array,
@@ -49,59 +70,62 @@ export function stableSortIndexRange(
   keys: Float64Array,
   stride = 1,
   offset = 0,
-  scratch?: Int32Array,
+  scratch: IndexSortScratch = new IndexSortScratch(),
 ): void {
   const n = end - start;
   if (n < 2) return;
-  if (n <= INSERTION_LIMIT) {
-    insertionSort(order, start, end, keys, stride, offset);
-    return;
-  }
-  const buffer = scratch !== undefined && scratch.length >= n ? scratch : new Int32Array(n);
-  mergeSort(order, start, end, keys, stride, offset, buffer);
+  scratch.ensure(n);
+  const k = scratch.keys;
+  for (let i = 0; i < n; i++) k[i] = keys[(order[start + i] as number) * stride + offset] as number;
+  const indices = order.subarray(start, end);
+  mergeSort(k, indices, 0, n, scratch.keysTmp, scratch.indicesTmp);
 }
 
-function insertionSort(order: Int32Array, start: number, end: number, keys: Float64Array, stride: number, offset: number): void {
+function insertionSort(k: Float64Array, ix: Int32Array, start: number, end: number): void {
   for (let i = start + 1; i < end; i++) {
-    const v = order[i] as number;
-    const kv = keys[v * stride + offset] as number;
+    const kv = k[i] as number;
+    const v = ix[i] as number;
     let j = i - 1;
-    while (j >= start) {
-      const w = order[j] as number;
-      if (!(kv < (keys[w * stride + offset] as number))) break;
-      order[j + 1] = w;
+    while (j >= start && kv < (k[j] as number)) {
+      k[j + 1] = k[j] as number;
+      ix[j + 1] = ix[j] as number;
       j--;
     }
-    order[j + 1] = v;
+    k[j + 1] = kv;
+    ix[j + 1] = v;
   }
 }
 
-function mergeSort(order: Int32Array, start: number, end: number, keys: Float64Array, stride: number, offset: number, buffer: Int32Array): void {
+function mergeSort(k: Float64Array, ix: Int32Array, start: number, end: number, kTmp: Float64Array, ixTmp: Int32Array): void {
   if (end - start <= INSERTION_LIMIT) {
-    insertionSort(order, start, end, keys, stride, offset);
+    insertionSort(k, ix, start, end);
     return;
   }
   const middle = (start + end) >>> 1;
-  mergeSort(order, start, middle, keys, stride, offset, buffer);
-  mergeSort(order, middle, end, keys, stride, offset, buffer);
-  // Already ordered: the last of the left run does not exceed the first of the right run.
-  if (!((keys[(order[middle] as number) * stride + offset] as number) < (keys[(order[middle - 1] as number) * stride + offset] as number))) return;
+  mergeSort(k, ix, start, middle, kTmp, ixTmp);
+  mergeSort(k, ix, middle, end, kTmp, ixTmp);
+  // Already ordered: the first of the right run is not below the last of the left run.
+  if (!((k[middle] as number) < (k[middle - 1] as number))) return;
   const leftLength = middle - start;
-  for (let i = 0; i < leftLength; i++) buffer[i] = order[start + i] as number;
+  for (let i = 0; i < leftLength; i++) {
+    kTmp[i] = k[start + i] as number;
+    ixTmp[i] = ix[start + i] as number;
+  }
   let i = 0;
   let j = middle;
-  let k = start;
+  let o = start;
   while (i < leftLength && j < end) {
-    const right = order[j] as number;
-    const left = buffer[i] as number;
     // Take from the right only when strictly smaller: equal keys keep their input order.
-    if ((keys[right * stride + offset] as number) < (keys[left * stride + offset] as number)) {
-      order[k++] = right;
-      j++;
+    if ((k[j] as number) < (kTmp[i] as number)) {
+      k[o] = k[j] as number;
+      ix[o++] = ix[j++] as number;
     } else {
-      order[k++] = left;
-      i++;
+      k[o] = kTmp[i] as number;
+      ix[o++] = ixTmp[i++] as number;
     }
   }
-  while (i < leftLength) order[k++] = buffer[i++] as number;
+  while (i < leftLength) {
+    k[o] = kTmp[i] as number;
+    ix[o++] = ixTmp[i++] as number;
+  }
 }
