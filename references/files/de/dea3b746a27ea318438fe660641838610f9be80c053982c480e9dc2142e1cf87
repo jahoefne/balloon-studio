@@ -1,0 +1,80 @@
+# 600 mm mobile ring — six-section PLA prototype
+
+All STL dimensions are in millimetres. Import at 100%; do not scale the parts.
+The assembled ring is larger than the print bed. Each exported part is already
+centred, rotated to fit a 256 × 256 mm bed, and placed at Z = 0.
+
+## Print quantities
+- A-cord-guide-print-3.stl: 3 copies, each with one large central cord guide.
+- B-plain-section-print-3.stl: 3 copies, with only the two small alignment holes.
+- C-underside-plate-print-6.stl: 6 copies, one beneath every seam.
+- D-alignment-pin-print-12.stl: 12 copies, two for each plate.
+There are four unique STL files and 24 physical printed pieces.
+
+Ring band: 36.0 mm wide × 16.0 mm base thickness.
+Full section height including the light mount: 16.0 mm.
+Plates: 60 mm arc length at the pin radius × 34.0 mm wide × 4 mm thick.
+Each plate overlaps about 30 mm either side of a seam.
+Assembled height at plates: 20.0 mm.
+Guide throat clearance: 8.0 mm, with 0.8 mm bevels at both openings.
+Alignment pins: 4 mm across flats × 19.6 mm long; hole fit allowance
+is 0.6 mm total across flats. Pins align the glue-up; they are not locking fasteners.
+
+## Print and fit
+Print A and B flat, LED channel up; C flat; D upright on its small flat end.
+No modeled overhang requires support. Inspect the sliced result before printing.
+A starting PLA prototype profile is 0.2 mm layers, 6 walls, 6 top/bottom layers,
+and 40% infill for A/B. Make C/D solid using a slicer modifier or 100% infill.
+These settings are a starting point, not a strength rating.
+Print one C plate and one D pin first to check fit. Adjust Joint fit in the app
+if needed and re-export the entire matching kit. Never force a tight pin into PLA.
+
+## Permanent assembly
+1. Dry-fit A–B–A–B–A–B around the circle with all LED channels up. The three
+   large cord guides will be 120° apart. Small end holes are for alignment pins only.
+2. Centre a C plate below each seam. Its two holes align with one small hole
+   in each neighbouring section. Insert two D pins; they should sit about
+   0.2 mm below the outer faces when centred through the plate and ring.
+3. Bond the broad plate-to-ring surfaces, seam faces and alignment pins with
+   an adhesive explicitly compatible with your PLA. Follow the adhesive
+   manufacturer's surface preparation, bond-gap, clamping and full-cure directions.
+   Keep glue out of the three large cord guides and the LED channel.
+4. Hold the assembly flat and circular while curing. Check every seam and
+   channel transition. The pins are for registration, not proof of joint strength.
+
+## Continuous-cord suspension — read before loading
+Intended arrangement: three balloons estimated at 1 kg each, plus ring and LEDs.
+This is NOT a tested or rated 3 kg assembly.
+Run three separate, continuous main cords from suitable rated ceiling hardware,
+through the three LARGE guides in the A sections, down to the respective balloons.
+Each main cord must stay unbroken through the guide; do not terminate it on the
+printed ring and start a separate balloon cord underneath. Use a stopper/retainer
+below each guide to locate and support the ring's own weight on the main cords.
+Follow the cord maker's guidance for terminations, knots and working loads.
+Keep the three upper legs reasonably steep and balanced: shallow legs increase
+tension and inward guide forces. Allow for ring/LED weight and unequal loading.
+The ring still carries its own weight and lateral guide forces, despite the
+direct cord connection to the balloons. Keep every cord clear of LED components.
+Use proven attachments on each balloon and basket; existing printed eyelets in
+Balloon Studio have NOT been validated for a 1 kg balloon assembly.
+
+Test the actual printed, bonded and fully rigged assembly at low height over a
+clear area before overhead use. Check joints, cord wear, deformation and LED
+operating temperature under sustained load. Mesh checks only verify geometry;
+they do not establish strength or lifetime. PLA can creep under sustained load.
+
+## LED strip
+Flat channel: 4.5 mm wide × 3.0 mm deep for
+a 3.5 mm strip. A normal strip cannot follow this curve sideways:
+use a strip explicitly made for that bend direction, or wired straight pieces.
+Install after gluing and full cure. Smooth the mounting face across every seam.
+Green in the preview marks the mounting surface, not a supplied LED component.
+Approximate mounting path: 1858 mm; final strip length
+must follow its marked cut points. Leave an end gap rather than overlapping or
+folding the tape. Route the lead over the outer rim, secure it against pulling,
+and keep all wiring and joints clear of the suspension cords.
+Check the strip maker's bending, adhesive and cooling requirements. PLA is not
+a heat sink. Test operating temperature with the actual strip and adhesive.
+
+kit-manifest.json records the exact settings and quantities. Settings are saved
+in the app; the balloon STL importer cannot reopen ring parts or this ZIP.

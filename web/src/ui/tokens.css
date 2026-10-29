@@ -1,0 +1,92 @@
+/*
+ * Design tokens for Balloon Studio. Light theme only, like the Mac app
+ * (`.preferredColorScheme(.light)`, BalloonStudioApp.swift:215).
+ *
+ * Colors, type sizes, radii and spacing are taken from the SwiftUI sources in
+ * mac/Sources/BalloonStudio/: the three brand colors from BalloonStudioApp.swift:196-198,
+ * the stage from the SceneKit background, everything else from the editor files.
+ * Numeric names (--radius-12, --space-14) keep the Swift value visible at the call site.
+ */
+:root {
+  color-scheme: light;
+
+  /* Brand colors */
+  --ink: rgb(38 48 51); /* Color(red:0.15,green:0.19,blue:0.20) */
+  --accent: rgb(31 102 89); /* Color(red:0.12,green:0.40,blue:0.35) */
+  --paper: rgb(246 244 238); /* Color(red:0.965,green:0.958,blue:0.935) */
+  --stage: rgb(19 23 31); /* preview background (0.075,0.09,0.12) */
+
+  /* Derived colors. SwiftUI's `.secondary` is ink at reduced opacity; 0.68 keeps 10 px
+     captions above 4.5:1 on paper. Swift's `.orange` is darkened for the same reason. */
+  --ink-secondary: rgb(38 48 51 / 0.68);
+  --warning: rgb(168 84 0);
+  --fit-badge: rgb(135 212 173); /* checkmark.circle.fill on the stage (0.53,0.83,0.68) */
+  --accent-wash: rgb(31 102 89 / 0.07); /* panels: accent.opacity(0.07) */
+  --accent-mark: rgb(31 102 89 / 0.09); /* header mark: accent.opacity(0.09) */
+  --accent-focus: rgb(31 102 89 / 0.6); /* focused field stroke: accent.opacity(0.6) */
+  --accent-ring: rgb(31 102 89 / 0.18);
+  --field-stroke: rgb(0 0 0 / 0.08); /* idle field stroke: .black.opacity(0.08) */
+  --divider: rgb(0 0 0 / 0.1);
+  --surface: rgb(255 255 255);
+  --surface-metric: rgb(255 255 255 / 0.8); /* metric rows: .white.opacity(0.8) */
+  --surface-pill: rgb(255 255 255 / 0.7); /* "Made for your P2S": .white.opacity(0.7) */
+  --stage-control: rgb(255 255 255 / 0.12); /* buttons on the stage: .white.opacity(0.12) */
+  --stage-badge: rgb(0 0 0 / 0.27); /* "Fits P2S" capsule: .black.opacity(0.27) */
+  --stage-hint: rgb(255 255 255 / 0.65);
+  --control-track: rgb(0 0 0 / 0.07);
+  --backdrop: rgb(19 23 31 / 0.38);
+
+  /* Typography. Families: system UI, SF Rounded where available, monospaced digits. */
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-rounded: ui-rounded, 'SF Pro Rounded', 'Arial Rounded MT Bold', var(--font-ui);
+  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --text-8: 8px; /* metric titles */
+  --text-9: 9px; /* section labels */
+  --text-10: 10px; /* captions, units, help text */
+  --text-11: 11px; /* toggles, advice rows, disclosure */
+  --text-12: 12px; /* parameter titles, fields, buttons */
+  --text-13: 13px; /* sheet body */
+  --text-17: 17px; /* sheet titles (.title2) */
+  --text-18: 18px; /* preview titles */
+  --text-21: 21px; /* app title */
+  --text-22: 22px; /* metric values, dialog titles */
+  --text-24: 24px; /* header mark */
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --tracking-section: 1.3px; /* .tracking(1.3) */
+  --tracking-metric: 1px; /* .tracking(1) */
+
+  /* Corner radii used in the Swift views */
+  --radius-5: 5px; /* parameter fields */
+  --radius-7: 7px; /* stage buttons, segmented controls */
+  --radius-8: 8px; /* preset buttons */
+  --radius-9: 9px;
+  --radius-10: 10px; /* accent panels */
+  --radius-12: 12px; /* metric rows, header mark, cards */
+  --radius-16: 16px; /* preview stage */
+  --radius-pill: 999px;
+
+  /* Spacing used in the Swift stacks and paddings */
+  --space-2: 2px;
+  --space-3: 3px;
+  --space-4: 4px;
+  --space-5: 5px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-9: 9px;
+  --space-10: 10px;
+  --space-12: 12px;
+  --space-13: 13px;
+  --space-14: 14px;
+  --space-15: 15px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-22: 22px;
+  --space-24: 24px;
+  --space-25: 25px;
+}

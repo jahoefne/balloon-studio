@@ -76,7 +76,7 @@ struct SegmentedRingKit:Sendable {
             entries.append((part.name,try part.mesh.binarySTL()))
             parts.append(["file":part.name,"quantity":part.quantity,"dimensions_mm":[d.x,d.y,d.z]])
         }
-        let settings=try JSONSerialization.jsonObject(with:JSONEncoder().encode(parameters))
+        let settings=try JSONSerialization.jsonObject(with:StableJSON.encode(parameters))
         let manifest:[String:Any]=["format_version":2,"units":"millimetres","parameters":settings,"parts":parts,
                                    "led_mount":parameters.reflectedLED ? "vertical_outer_wall_with_white_45_degree_reflector":"flat_top_channel",
                                    "load_rated":false,"rigging":"Three continuous main cords from rated ceiling hardware to the balloons; ring holes guide the cords."]

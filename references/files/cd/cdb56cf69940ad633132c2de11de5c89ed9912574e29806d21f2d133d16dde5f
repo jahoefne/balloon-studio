@@ -1,0 +1,176 @@
+# Cloud wall lamp · 239.0 × 138.6 × 22.8 mm
+
+Shape: Classic. Keep the parts of this kit together: different
+shapes, mirrored outlines and cable exits need their own matching parts.
+Surface: Flat.
+
+Print one back, one front and one of each fitting listed below:
+- C-cable-seal-TPU.stl
+- D-cable-clamp-bar.stl
+- E-cable-clamp-anvil.stl
+All STLs are in millimetres,
+at 100% scale, with their lowest point at Z = 0. Do not scale in the
+slicer: change the dimensions in Balloon Studio to preserve the cable,
+nail and clip fit.
+All pieces fit the P2S with an 8 mm brim.
+
+## Materials and printing
+A: Use opaque filament for the back, or an opaque coating on its outside
+and keyhole pocket. A white back can transmit light. A white reflective
+lining may be added inside the main light chamber, keeping the seal's
+pocket, the cable window and all mating surfaces clear.
+B: White PLA, 0.8 mm nominal shell thickness.
+Print the flat diffuser face down, with the skirt and four clips pointing up.
+The skirt passes above the seals' pockets without a notch.
+Print the shell material fully solid to avoid an infill pattern showing
+through the face. Begin with 0.2 mm layers and enough walls to fill the
+1.6 mm clip beams, their 2.0 mm roots and 2.4 mm back walls. Keep supports out of the cable
+window, nail pocket, retention groove and clip slots. Inspect the short
+bridges over the window (4.4 mm) and nail chamber (8.0 mm)
+in the slicer. They must print cleanly; internal support is hard to remove.
+C: Flexible TPU, about 95A, in black or another fully opaque color. White
+or translucent TPU glows and must not be used. Print the seal as
+supplied: standing on its flat end, nozzle up, without supports. Print
+it solid, with 0.2 mm layers or finer, slowly enough for a clean bore
+and an open slit. If the 0.4 mm slit has fused, open it with a sharp blade.
+D, E: The filament of the back, or PETG where the lamp runs warm. Print
+both as supplied, without supports: the bar on its side, with its
+screw holes lying and the ribs rising at 45°, the anvil flat with its
+ribs up. Print them solid, with 0.2 mm layers or finer. Keep supports
+out of the holes of the two posts in the back as well.
+
+## LED strip
+Attach straight sections to the flat 3 mm floor, with LEDs facing the
+diffuser. The colored rectangles
+in the app are placement guides, not printed pockets or extra parts.
+LED-LAYOUT.svg is a numbered, full-size placement template; print at 100%
+and check its 50 mm scale bar. All section lengths are multiples of the
+selected 16.0 mm cut interval. Confirm that interval on
+your actual strip and cut ONLY at its marked copper pads; online listings
+for Aclorol B0BP7SVX5T have varied. The Amazon.de listing checked on
+2026-09-28 specifies 8 mm width, 5 V, 320 LEDs/m, 9 W/m and 16 mm cuts.
+Source: https://www.amazon.de/dp/B0BP7SVX5T
+
+Cut list (numbers match LED-LAYOUT.svg):
+1. 48.00 mm
+2. 96.00 mm
+3. 64.00 mm
+4. 64.00 mm
+5. 80.00 mm
+6. 80.00 mm
+7. 192.00 mm
+8. 192.00 mm
+
+Row centers are 18.0 mm apart. Layout reserves 3 mm at
+each section end for soldered flexible wire links and keeps strips clear
+of the skirt, the nail pocket, every cable seal and clamp. Test the layout loose behind your printed
+front before sticking it down. Keep wires low on the floor and away from
+clips; bulky solderless connectors may need more space than this plan.
+For this single-color 5 V strip, connect all + pads to +5 V and all - pads
+to ground (electrically parallel), using insulated flexible wire. Do not
+connect a section's + to another section's - as an electrical series chain.
+Solder and insulate the links outside the lamp, then attach the sections.
+
+Selected strip thickness including LEDs and tape: 4.0 mm.
+Minimum LED-to-front gap: 15.0 mm. The row layout is
+a starting point, not an optical simulation: lobes and the raised fittings
+may still show brightness differences. Adjust row spacing and test your
+actual PLA; 22 mm back depth provides more mixing room than 16 mm.
+A matte white inner finish over an opaque backing helps recycle light;
+keep the seal's pocket and the mating surfaces clear.
+
+Total strip: 816.0 mm. At the listing's nominal 9 W/m,
+full-power demand is approximately 7.3 W / 1.5 A at 5 V.
+Check the USB supply and lead ratings against this demand.
+These estimates do not validate cooling or wiring. Use dimming to reduce
+output and heat, size the supply and wiring for the installed load, and
+keep the supply outside. Larger layouts may need separate power feeds and
+a suitable heat-spreading mount; PLA is not a heat sink. Check the closed
+lamp at the intended brightness until its temperature stabilizes.
+
+## Cable outlet and light seal
+The cable leaves through a 4.4 mm square window low in the
+side wall, on the right as you face the lamp. Its center is 6.1 mm
+above the rear face, so the back sits flat on the wall without spacers.
+The floor has no opening. Inside, two printed cheeks form a pocket for
+the flexible seal (C-cable-seal-TPU.stl). The seal does the work of the former duct,
+baffle and sealant:
+- Its 2.7 mm bore is 0.3 mm smaller than the nominal 3.0 mm
+  cable and closes around the jacket.
+- Its 4.6 mm nozzle fills the window, 0.2 mm oversize, and ends 0.4 mm
+  inside the outer surface.
+- Its flange covers the wall around the window from the inside.
+- The pocket is 0.6 mm narrower than the seal and presses the slit shut.
+Fit it before the LEDs go in:
+1. Pass the bare end of the lead through the window from outside and
+   pull through as much as the wiring needs, with some slack.
+2. Open the seal's slit and press the lead into the bore. The nozzle
+   points to the window, the slit to the floor.
+3. Pinch the seal and slide it along the floor between the cheeks, until
+   the nozzle is in the window and the flange rests against the wall.
+   A gentle pull on the lead from outside helps to seat it.
+4. Look at the window from outside: the nozzle fills it all round.
+Use a round, flexible lead. The seal cannot close around a flat or
+ribbed cable, or around one much thinner than the diameter set in the
+app. The seal holds the lead lightly; the clamp behind it takes the
+pull. Do not glue the seal, so the lamp stays serviceable.
+The floor in front of the pocket stays free of LEDs to slide the seal in.
+
+## Strain relief
+Behind the seal two posts stand on the floor, 8.6 mm apart. The anvil
+(E-cable-clamp-anvil.stl) and the bar (D-cable-clamp-bar.stl) clamp the lead between them. You need
+two screws M3 × 10.0 mm with a pan head or a button head: machine
+screws, or screws for plastic of 3 mm. Heads up to 6.0 mm wide and
+2.6 mm tall fit under the front. The screws form their own thread in
+the posts' 2.8 mm holes, which are 7.8 mm deep: longer screws
+reach the bottom before the bar is down.
+Fit the clamp once the seal is seated:
+1. Lift the lead and drop the anvil between the posts, ribs up. Its
+   cross bars lie before and behind the posts. It fits either way round.
+2. Lay the lead between the two rails of the anvil.
+3. Set the bar across the posts, its tongue on the lead. It fits
+   either way round too.
+4. Turn the screws in by turns, a little at a time, until the bar
+   rests on both posts. Stop there. The posts set how far the lead
+   is squeezed: to 2.4 mm under the ribs, from 3.0 mm. More
+   torque only strains the thread.
+5. Pull the lead from outside. It must not move in the seal.
+The ribs are made for a lead of 3.0 mm. A thinner lead slips, a
+thicker one keeps the bar off the posts: measure the lead and set
+its diameter in the app. Back, seal, bar and anvil are made for it.
+To take the lead out, remove bar and anvil first, then the seal.
+The thread is formed in the print and holds for a few assemblies:
+take the clamp apart only when needed.
+
+## Blind nail pocket
+On the rear, a square 8.0 mm entry opens into a captive head
+chamber, with a 3.5 mm shaft slot extending upward by 8 mm.
+Settings are clear dimensions: include printing allowance around your
+actual nail. The retaining lip is 2.4 mm thick and head space is 3 mm deep.
+A solid 3 mm cap isolates the entire pocket from the light chamber.
+Fit the head in the entry and slide the lamp down into the narrow slot.
+The back rests on the wall. Set nail projection for the 2.4 mm retaining
+lip and actual head thickness (under 3 mm); verify engagement before use.
+The mount supports this lamp only; hang the balloons independently.
+
+## Clip the front on
+Align the cloud outlines with the keyhole at the top. Four slotted, 1.6 mm-thick spring tabs engage
+the groove inside the back. Each tab thickens inward to a 2.0 mm root,
+tapering to the working thickness over 4 mm. Their lead-in ramps deflect the
+tabs inward; their shoulders retain the front. The radial running fit is
+0.3 mm and nominal catch interference is 0.35 mm. The skirt
+overlaps the opaque sidewall by 12 mm to hide the seam and clip slots.
+Press gently near each tab until seated. Test fit before installing LEDs;
+PLA clips can crack if forced. Adjust clip fit in the app and reprint if
+needed. For occasional removal, carefully ease the front out one catch
+at a time; these are prototype clips, not validated for repeated cycling.
+
+## Check the actual print
+Geometry is checked for connected, closed material before export. Physical
+clip strength, nail retention, the seal's fit, the clamp's hold, opacity, light uniformity
+and temperature have not been validated. Illuminate the assembled lamp
+in a dark room and check the cable outlet, the side walls and the rear
+surface. Light at the outlet means the seal is not seated, the slit is
+open or the cable is thinner than set: reseat it or print a seal for the
+measured diameter. Correct any pinholes or translucent areas before
+wall mounting.

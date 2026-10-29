@@ -1,0 +1,374 @@
+{
+  "canvas" : {
+    "background" : 0,
+    "height" : 64,
+    "space" : "DeviceGray",
+    "transform" : "translate(0,64) scale(1,-1): storage row 0 is y = 0",
+    "width" : 64
+  },
+  "primitives" : [
+    {
+      "antialias" : true,
+      "gray" : 0.69999999999999996,
+      "name" : "circle-r20-gray07",
+      "op" : "fillEllipse",
+      "rect" : [
+        12,
+        12,
+        40,
+        40
+      ],
+      "sha256" : "f66d8208963c35ccae0f10eafb6c47596f5614826a950aa93a5cf4e7815aec10"
+    },
+    {
+      "antialias" : false,
+      "closed" : true,
+      "gray" : 1,
+      "name" : "triangle-aa-off",
+      "op" : "fillPath",
+      "path" : [
+        [
+          6.2999999999999998,
+          8.5999999999999996
+        ],
+        [
+          58.200000000000003,
+          20.399999999999999
+        ],
+        [
+          21.699999999999999,
+          57.100000000000001
+        ]
+      ],
+      "sha256" : "397be23beba6189162e40d4e03b0e90590d384422859a59a7162fafc90dba7fc"
+    },
+    {
+      "cap" : "butt",
+      "gray" : 1,
+      "join" : "miter",
+      "miterLimit" : 10,
+      "name" : "polyline-miter-w6",
+      "op" : "strokePath",
+      "points" : [
+        [
+          8,
+          12
+        ],
+        [
+          30,
+          52
+        ],
+        [
+          40,
+          20
+        ],
+        [
+          57,
+          30
+        ]
+      ],
+      "sha256" : "ce8e160018517f18b4102bcd5fb2993f7fe150ca9a9b3c58a25fd118fbb5e4f6",
+      "width" : 6
+    },
+    {
+      "cap" : "round",
+      "gray" : 0.80000000000000004,
+      "join" : "round",
+      "name" : "polyline-round-w6",
+      "op" : "strokePath",
+      "points" : [
+        [
+          8,
+          12
+        ],
+        [
+          30,
+          52
+        ],
+        [
+          40,
+          20
+        ],
+        [
+          57,
+          30
+        ]
+      ],
+      "sha256" : "3d71d2fbf144aeb24edd1906c792713a42bfc547fb4219ce62c0f8e452275406",
+      "width" : 6
+    },
+    {
+      "cap" : "butt",
+      "curve" : [
+        [
+          10,
+          62
+        ],
+        [
+          54,
+          2
+        ],
+        [
+          58,
+          54
+        ]
+      ],
+      "dash" : {
+        "lengths" : [
+          8,
+          5
+        ],
+        "phase" : 0
+      },
+      "gray" : 1,
+      "join" : "miter",
+      "move" : [
+        6,
+        10
+      ],
+      "name" : "cubic-dash-8-5-w4",
+      "op" : "strokePath",
+      "sha256" : "12ab1b57391312839a01f12e3f7a696116fbaeeabea9cb0d78f4e0dd4282e0fa",
+      "width" : 4
+    },
+    {
+      "cornerHeight" : 8,
+      "cornerWidth" : 8,
+      "gray" : 0.90000000000000002,
+      "name" : "roundedrect-stroke-w2",
+      "op" : "strokePath",
+      "roundedRect" : [
+        10,
+        14,
+        44,
+        36
+      ],
+      "sha256" : "90ddf7489eee7fed5600da20ba2266e495268dd4c1f54c2213db882335ee52f2",
+      "width" : 2
+    },
+    {
+      "clipEllipse" : [
+        8,
+        8,
+        48,
+        48
+      ],
+      "colors" : [
+        0.90000000000000002,
+        0.59999999999999998
+      ],
+      "endCenter" : [
+        26,
+        38
+      ],
+      "endRadius" : 20,
+      "locations" : [
+        0,
+        1
+      ],
+      "name" : "radial-gradient-circle-clip",
+      "op" : "drawRadialGradient",
+      "options" : [
+        "drawsAfterEndLocation"
+      ],
+      "sha256" : "380651d783014ef5e48bab28b7939eeeed3adb234b255f795617ac35ae8ec6fe",
+      "startCenter" : [
+        26,
+        38
+      ],
+      "startRadius" : 0
+    },
+    {
+      "clipEllipse" : [
+        4,
+        14,
+        56,
+        36
+      ],
+      "colors" : [
+        0.94999999999999996,
+        0.20000000000000001
+      ],
+      "comment" : "as SummitCableCar.rounded(): clip, then translate and scale x",
+      "endCenter" : [
+        0,
+        0
+      ],
+      "endRadius" : 12,
+      "locations" : [
+        0,
+        1
+      ],
+      "name" : "radial-gradient-anisotropic",
+      "op" : "drawRadialGradient",
+      "options" : [
+        "drawsAfterEndLocation"
+      ],
+      "scale" : [
+        2.2000000000000002,
+        1
+      ],
+      "sha256" : "a0c451f2ca6cf2678355b18ad7e71727f63fdb45ac2431dd013a9bee4dd1429a",
+      "startCenter" : [
+        0,
+        0
+      ],
+      "startRadius" : 0,
+      "translate" : [
+        32,
+        32
+      ]
+    },
+    {
+      "clipPathRect" : [
+        8,
+        12,
+        48,
+        40
+      ],
+      "colors" : [
+        0.20000000000000001,
+        1
+      ],
+      "end" : [
+        44,
+        44
+      ],
+      "locations" : [
+        0,
+        1
+      ],
+      "name" : "linear-gradient-rect-clip",
+      "op" : "drawLinearGradient",
+      "options" : [
+        "drawsBeforeStartLocation",
+        "drawsAfterEndLocation"
+      ],
+      "sha256" : "aec5d41db6d29b2f1218c3b72c102882eca548c49455e531481d7bcaae903405",
+      "start" : [
+        20,
+        20
+      ]
+    },
+    {
+      "clipEllipses" : [
+        [
+          6,
+          10,
+          40,
+          44
+        ],
+        [
+          20,
+          6,
+          38,
+          46
+        ]
+      ],
+      "gray" : 1,
+      "name" : "nested-aa-clips",
+      "op" : "fillRect",
+      "rect" : [
+        0,
+        0,
+        64,
+        64
+      ],
+      "sha256" : "53ae48c9cdafc62b22cfa900646408415bb9e4605f92e5e2dffe13158eb71b79"
+    },
+    {
+      "center" : [
+        32,
+        32
+      ],
+      "closed" : true,
+      "gray" : 0.90000000000000002,
+      "innerArc" : {
+        "center" : [
+          43.519999999999996,
+          38.719999999999999
+        ],
+        "clockwise" : true,
+        "endAngle" : 2.2010561135435358,
+        "radius" : 21.359999999999999,
+        "startAngle" : -1.1449072166908163
+      },
+      "name" : "moon-r24",
+      "op" : "fillPath",
+      "outerArc" : {
+        "clockwise" : false,
+        "endAngle" : 5.7239975107600287,
+        "startAngle" : 1.6153366932722775
+      },
+      "radius" : 24,
+      "sha256" : "947be03e0fe2874d6b63ffad0495bd654888aed77df134e4730ea2edeb3a9a58",
+      "source" : "NightFlight.swift:84-93"
+    },
+    {
+      "comment" : "SummitCableCar.line(): CG's stroker output filled",
+      "gray" : 0.75,
+      "name" : "stroked-copy-fill",
+      "of" : "copy(strokingWithWidth: 5, lineCap: round, lineJoin: round, miterLimit: 4)",
+      "op" : "fillPath",
+      "points" : [
+        [
+          8,
+          12
+        ],
+        [
+          30,
+          52
+        ],
+        [
+          40,
+          20
+        ],
+        [
+          57,
+          30
+        ]
+      ],
+      "sha256" : "7609ab9d64d3b8cecdc4d518ca21ad3d923ae086775318e3aacd9984fe262d86"
+    },
+    {
+      "comment" : "SummitCableCar.swift:213",
+      "curve" : [
+        [
+          20,
+          58
+        ],
+        [
+          44,
+          6
+        ],
+        [
+          58,
+          32
+        ]
+      ],
+      "gray" : 0.32000000000000001,
+      "move" : [
+        6,
+        32
+      ],
+      "name" : "dashed-copy-stroke",
+      "of" : "copy(dashingWithPhase: 0, lengths: [3.4, 2.8]) then copy(strokingWithWidth: 1.4, round, round, 4)",
+      "op" : "fillPath",
+      "sha256" : "55cc793fe0c2e9f0b63278e87d444b851e5542af225701f9f992d9ed123d9ede"
+    },
+    {
+      "comment" : "drawn twice; equal to circle-r20-gray07 only without conflation",
+      "gray" : 0.69999999999999996,
+      "name" : "overlap-twice-circle",
+      "op" : "fillEllipse",
+      "rect" : [
+        12,
+        12,
+        40,
+        40
+      ],
+      "sha256" : "4e939425a95a87d549745f93cce3fdaf802d6ca318a54f1d3bb1158a5ba097fc",
+      "times" : 2
+    }
+  ]
+}

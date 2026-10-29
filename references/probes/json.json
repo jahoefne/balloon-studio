@@ -1,0 +1,404 @@
+{
+  "jsonDecoder" : {
+    "balloon" : [
+      {
+        "input" : "{\"panels\":17}",
+        "output" : "{\"cordClearance\":3,\"diameter\":180,\"hangingClearance\":4,\"hangingCrownThickness\":5,\"hangingFillet\":4,\"hangingLoop\":false,\"hangingThickness\":12,\"hangingWall\":6,\"height\":220,\"hollow\":false,\"neckDiameter\":32,\"neckHeight\":6,\"panelDepth\":4,\"panels\":17,\"shoulder\":65,\"stringHoles\":false,\"wallThickness\":1.2}"
+      },
+      {
+        "input" : "{\"panels\":17.0}",
+        "output" : "{\"cordClearance\":3,\"diameter\":180,\"hangingClearance\":4,\"hangingCrownThickness\":5,\"hangingFillet\":4,\"hangingLoop\":false,\"hangingThickness\":12,\"hangingWall\":6,\"height\":220,\"hollow\":false,\"neckDiameter\":32,\"neckHeight\":6,\"panelDepth\":4,\"panels\":17,\"shoulder\":65,\"stringHoles\":false,\"wallThickness\":1.2}"
+      },
+      {
+        "error" : "DecodingError.dataCorrupted: Data was corrupted. Debug description: The given data was not valid JSON.. Underlying error: Error Domain=NSCocoaErrorDomain Code=3840 \"Number 17.5 is not representable in Swift.\" UserInfo={NSDebugDescription=Number 17.5 is not representable in Swift.}",
+        "input" : "{\"panels\":17.5}"
+      },
+      {
+        "error" : "DecodingError.typeMismatch: expected value of type Double. Path: height. Debug description: Expected to decode Double but found a string instead.",
+        "input" : "{\"height\":\"220\"}"
+      },
+      {
+        "error" : "DecodingError.typeMismatch: expected value of type Bool. Path: hollow. Debug description: Expected to decode Bool but found number instead.",
+        "input" : "{\"hollow\":1}"
+      },
+      {
+        "input" : "{\"height\":null}",
+        "output" : "{\"cordClearance\":3,\"diameter\":180,\"hangingClearance\":4,\"hangingCrownThickness\":5,\"hangingFillet\":4,\"hangingLoop\":false,\"hangingThickness\":12,\"hangingWall\":6,\"height\":220,\"hollow\":false,\"neckDiameter\":32,\"neckHeight\":6,\"panelDepth\":4,\"panels\":20,\"shoulder\":65,\"stringHoles\":false,\"wallThickness\":1.2}"
+      },
+      {
+        "error" : "DecodingError.dataCorrupted: Data was corrupted. Debug description: The given data was not valid JSON.. Underlying error: Error Domain=NSCocoaErrorDomain Code=3840 \"Number 1e400 is not representable in Swift.\" UserInfo={NSDebugDescription=Number 1e400 is not representable in Swift.}",
+        "input" : "{\"height\":1e400}"
+      },
+      {
+        "input" : "{\"height\":220,\"unknown\":[1,2]}",
+        "output" : "{\"cordClearance\":3,\"diameter\":180,\"hangingClearance\":4,\"hangingCrownThickness\":5,\"hangingFillet\":4,\"hangingLoop\":false,\"hangingThickness\":12,\"hangingWall\":6,\"height\":220,\"hollow\":false,\"neckDiameter\":32,\"neckHeight\":6,\"panelDepth\":4,\"panels\":20,\"shoulder\":65,\"stringHoles\":false,\"wallThickness\":1.2}"
+      },
+      {
+        "error" : "DecodingError.typeMismatch: expected value of type Dictionary<String, Any>. Debug description: Expected to decode Dictionary<String, Any> but found an array instead.",
+        "input" : "[]"
+      },
+      {
+        "input" : "{\"diameter\":-0.0}",
+        "output" : "{\"cordClearance\":3,\"diameter\":-0,\"hangingClearance\":4,\"hangingCrownThickness\":5,\"hangingFillet\":4,\"hangingLoop\":false,\"hangingThickness\":12,\"hangingWall\":6,\"height\":220,\"hollow\":false,\"neckDiameter\":32,\"neckHeight\":6,\"panelDepth\":4,\"panels\":20,\"shoulder\":65,\"stringHoles\":false,\"wallThickness\":1.2}"
+      }
+    ],
+    "basket" : [
+      {
+        "error" : "DecodingError.keyNotFound: Key 'width' not found in keyed decoding container. Debug description: No value associated with key CodingKeys(stringValue: \"width\", intValue: nil) (\"width\").",
+        "input" : "{\"style\":\"ribbed\"}"
+      },
+      {
+        "input" : "{\"style\":\"wicker\",\"width\":64,\"depth\":48,\"height\":42,\"wallThickness\":2.4,\"cordClearance\":3,\"texture\":0.7}",
+        "output" : "{\"cordClearance\":3,\"depth\":48,\"height\":42,\"style\":\"wicker\",\"texture\":0.7,\"wallThickness\":2.4,\"width\":64}"
+      }
+    ],
+    "cloud" : [
+      {
+        "input" : "{\"sunStyle\":\"halo\",\"kind\":\"sun\"}",
+        "output" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"sun\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"soft-star\",\"surface\":\"flat\",\"surfaceDepth\":18,\"width\":200}"
+      },
+      {
+        "input" : "{\"sunStyle\":7}",
+        "output" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"cloud\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"soft-star\",\"surface\":\"flat\",\"surfaceDepth\":18,\"width\":230}"
+      },
+      {
+        "error" : "DecodingError.dataCorrupted: Data was corrupted. Path: cableSide. Debug description: Cannot initialize CableSide from invalid String value middle",
+        "input" : "{\"cableSide\":\"middle\"}"
+      },
+      {
+        "input" : "{\"secondCableSide\":null}",
+        "output" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"cloud\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"soft-star\",\"surface\":\"flat\",\"surfaceDepth\":18,\"width\":230}"
+      }
+    ],
+    "figure" : [
+      {
+        "input" : "{\"style\":7}",
+        "output" : "{\"chainHole\":false,\"dome\":3.2,\"doubleSided\":false,\"edge\":1.6,\"height\":60,\"holeDiameter\":2,\"holeMargin\":2.5,\"style\":\"star\",\"surface\":\"pillow\"}"
+      },
+      {
+        "error" : "DecodingError.typeMismatch: expected value of type Double. Path: height. Debug description: Expected to decode Double but found a string instead.",
+        "input" : "{\"surface\":\"velvet\",\"height\":\"75\"}"
+      }
+    ],
+    "note" : "output is the decoded value re-encoded with sorted keys (not normalized); error is the Swift DecodingError",
+    "purge" : [
+      {
+        "error" : "DecodingError.keyNotFound: Key 'baseToDetail' not found in keyed decoding container. Debug description: No value associated with key CodingKeys(stringValue: \"baseToDetail\", intValue: nil) (\"baseToDetail\").",
+        "input" : "{\"layerHeight\":0.1}"
+      },
+      {
+        "error" : "DecodingError.keyNotFound: Key 'layerHeight' not found in keyed decoding container. Debug description: No value associated with key CodingKeys(stringValue: \"layerHeight\", intValue: nil) (\"layerHeight\").",
+        "input" : "{}"
+      }
+    ]
+  },
+  "jsonEncoder" : {
+    "doubles" : [
+      {
+        "bits" : "0",
+        "output" : "[0]"
+      },
+      {
+        "bits" : "8000000000000000",
+        "output" : "[-0]"
+      },
+      {
+        "bits" : "3ff0000000000000",
+        "output" : "[1]"
+      },
+      {
+        "bits" : "407c200000000000",
+        "output" : "[450]"
+      },
+      {
+        "bits" : "3fd3333333333333",
+        "output" : "[0.3]"
+      },
+      {
+        "bits" : "3ee4f8b588e368f1",
+        "output" : "[1e-05]"
+      },
+      {
+        "bits" : "3e7ad7f29abcaf48",
+        "output" : "[1e-07]"
+      },
+      {
+        "bits" : "4341c37937e08000",
+        "output" : "[1e+16]"
+      },
+      {
+        "bits" : "444b1ae4d6e2ef50",
+        "output" : "[1e+21]"
+      },
+      {
+        "bits" : "7e41eb2d66005835",
+        "output" : "[1.5e+300]"
+      },
+      {
+        "bits" : "1",
+        "output" : "[5e-324]"
+      },
+      {
+        "bits" : "40652e750b355010",
+        "output" : "[169.45178757107396]"
+      },
+      {
+        "bits" : "3fd5555555555555",
+        "output" : "[0.3333333333333333]"
+      },
+      {
+        "bits" : "4005666666666666",
+        "output" : "[2.675]"
+      }
+    ],
+    "floats" : [
+      {
+        "bits" : "3e99999a",
+        "output" : "[0.3]"
+      },
+      {
+        "bits" : "3727c5ac",
+        "output" : "[1e-05]"
+      },
+      {
+        "bits" : "4b800000",
+        "output" : "[16777216]"
+      },
+      {
+        "bits" : "3dcccccd",
+        "output" : "[0.1]"
+      }
+    ],
+    "nonFinite" : {
+      "error" : "EncodingError.invalidValue: nan (Double). Path: [0]. Debug description: Unable to encode Double.nan directly in JSON."
+    },
+    "sortedKeys" : "{\"big\":1e+16,\"double\":0.3,\"empty\":[],\"flag\":true,\"float\":0.3,\"int\":450,\"integral\":450,\"list\":[0.1,2,1e-07],\"negativeZero\":-0,\"nested\":{\"a\":[1,2],\"b\":2.5},\"precise\":169.45178757107396,\"present\":2.5,\"slash\":\"a\\/b\",\"small\":1e-05,\"third\":0.3333333333333333}",
+    "strings" : [
+      {
+        "input" : "/",
+        "output" : "\"\\/\""
+      },
+      {
+        "input" : "\"",
+        "output" : "\"\\\"\""
+      },
+      {
+        "input" : "\\",
+        "output" : "\"\\\\\""
+      },
+      {
+        "input" : "\n",
+        "output" : "\"\\n\""
+      },
+      {
+        "input" : "\t",
+        "output" : "\"\\t\""
+      },
+      {
+        "input" : "\r",
+        "output" : "\"\\r\""
+      },
+      {
+        "input" : "\u0000",
+        "output" : "\"\\u0000\""
+      },
+      {
+        "input" : "\u0001",
+        "output" : "\"\\u0001\""
+      },
+      {
+        "input" : "\b",
+        "output" : "\"\\b\""
+      },
+      {
+        "input" : "\f",
+        "output" : "\"\\f\""
+      },
+      {
+        "input" : "\u001f",
+        "output" : "\"\\u001f\""
+      },
+      {
+        "input" : "",
+        "output" : "\"\""
+      },
+      {
+        "input" : "é",
+        "output" : "\"é\""
+      },
+      {
+        "input" : "é",
+        "output" : "\"é\""
+      },
+      {
+        "input" : "😀",
+        "output" : "\"😀\""
+      },
+      {
+        "input" : "👩‍👩‍👧",
+        "output" : "\"👩‍👩‍👧\""
+      },
+      {
+        "input" : " ",
+        "output" : "\" \""
+      },
+      {
+        "input" : " ",
+        "output" : "\" \""
+      },
+      {
+        "input" : " ",
+        "output" : "\" \""
+      },
+      {
+        "input" : "<>&'",
+        "output" : "\"<>&'\""
+      },
+      {
+        "input" : "Zoë & Léa <3",
+        "output" : "\"Zoë & Léa <3\""
+      },
+      {
+        "input" : "東京",
+        "output" : "\"東京\""
+      }
+    ],
+    "unsorted" : {
+      "equalAfterParsing" : true,
+      "note" : "JSONEncoder without .sortedKeys orders keys differently in every process",
+      "sameLength" : true
+    }
+  },
+  "jsonSerialization" : {
+    "balloonSettingsPath" : "{\"filament_colour\":[\"#DB6E2E\",\"#F5EAD2\"],\"filament_density\":[\"1.24\",\"1.1\"]}",
+    "compactSorted" : "{\"bool\":true,\"emptyArray\":[],\"emptyObject\":{},\"falseBool\":false,\"nested\":{\"a\":{\"k\":\"v\"},\"z\":[1,[2,[3]]]},\"nsNumberDouble\":0.29999999999999999,\"null\":null,\"parsed\":{\"big\":10000000000000000,\"half\":2.5,\"int\":450,\"integralDouble\":450,\"negativeZero\":-0,\"pointThree\":0.29999999999999999,\"precise\":169.45178757107396,\"tiny\":1.0000000000000001e-05},\"settingsReparsed\":{\"bandWidth\":40,\"channelDepth\":1.5,\"cordClearance\":6,\"diameter\":450,\"height\":12,\"jointFit\":0.29999999999999999,\"ledClearance\":0.5,\"reflectedLED\":true,\"segmented\":true,\"stripThickness\":3,\"stripWidth\":8},\"string\":\"\\/\\\"\\\\\\n\\t\\r\\u0000\\u0001\\b\\f\\u001féé😀👩‍👩‍👧   <>&'Zoë & Léa <3東京\",\"swiftBig\":10000000000000000,\"swiftDimensions\":[165.31068284943365,165.3106828494337,12],\"swiftDouble\":0.29999999999999999,\"swiftFloat\":0.30000001192092896,\"swiftInt\":450,\"swiftIntegralDouble\":450,\"swiftNegativeZero\":-0,\"swiftPrecise\":169.45178757107396,\"swiftTiny\":1.0000000000000001e-05}",
+    "kitManifestPath" : "{\n  \"format_version\" : 2,\n  \"parameters\" : {\n    \"bandWidth\" : 40,\n    \"channelDepth\" : 1.5,\n    \"cordClearance\" : 6,\n    \"diameter\" : 450,\n    \"height\" : 12,\n    \"jointFit\" : 0.29999999999999999,\n    \"ledClearance\" : 0.5,\n    \"reflectedLED\" : true,\n    \"segmented\" : true,\n    \"stripThickness\" : 3,\n    \"stripWidth\" : 8\n  },\n  \"parts\" : [\n    {\n      \"dimensions_mm\" : [\n        165.31068284943365,\n        165.3106828494337,\n        12\n      ],\n      \"file\" : \"A.stl\",\n      \"quantity\" : 3\n    }\n  ]\n}",
+    "note" : "values: Swift literals bridged to NSNumber; parsed: the same values read back by JSONSerialization.jsonObject",
+    "prettySorted" : "{\n  \"bool\" : true,\n  \"emptyArray\" : [\n\n  ],\n  \"emptyObject\" : {\n\n  },\n  \"falseBool\" : false,\n  \"nested\" : {\n    \"a\" : {\n      \"k\" : \"v\"\n    },\n    \"z\" : [\n      1,\n      [\n        2,\n        [\n          3\n        ]\n      ]\n    ]\n  },\n  \"nsNumberDouble\" : 0.29999999999999999,\n  \"null\" : null,\n  \"parsed\" : {\n    \"big\" : 10000000000000000,\n    \"half\" : 2.5,\n    \"int\" : 450,\n    \"integralDouble\" : 450,\n    \"negativeZero\" : -0,\n    \"pointThree\" : 0.29999999999999999,\n    \"precise\" : 169.45178757107396,\n    \"tiny\" : 1.0000000000000001e-05\n  },\n  \"settingsReparsed\" : {\n    \"bandWidth\" : 40,\n    \"channelDepth\" : 1.5,\n    \"cordClearance\" : 6,\n    \"diameter\" : 450,\n    \"height\" : 12,\n    \"jointFit\" : 0.29999999999999999,\n    \"ledClearance\" : 0.5,\n    \"reflectedLED\" : true,\n    \"segmented\" : true,\n    \"stripThickness\" : 3,\n    \"stripWidth\" : 8\n  },\n  \"string\" : \"\\/\\\"\\\\\\n\\t\\r\\u0000\\u0001\\b\\f\\u001féé😀👩‍👩‍👧   <>&'Zoë & Léa <3東京\",\n  \"swiftBig\" : 10000000000000000,\n  \"swiftDimensions\" : [\n    165.31068284943365,\n    165.3106828494337,\n    12\n  ],\n  \"swiftDouble\" : 0.29999999999999999,\n  \"swiftFloat\" : 0.30000001192092896,\n  \"swiftInt\" : 450,\n  \"swiftIntegralDouble\" : 450,\n  \"swiftNegativeZero\" : -0,\n  \"swiftPrecise\" : 169.45178757107396,\n  \"swiftTiny\" : 1.0000000000000001e-05\n}"
+  },
+  "patternText" : [
+    {
+      "characters" : 2,
+      "input" : "éé",
+      "normalized" : "{\"bands\":6,\"base\":\"Saffron\",\"capHeight\":18,\"detail\":\"Cream\",\"flightBody\":\"Cream\",\"flightCap\":\"Midnight blue\",\"flightCompositionVersion\":3,\"reliefDepth\":2.4,\"repeats\":8,\"rows\":2,\"size\":18,\"style\":\"Text\",\"text\":\"éé\",\"textFont\":\"Rounded\",\"textHeight\":24,\"textRepeats\":3}",
+      "scalars" : 4,
+      "text" : "éé",
+      "utf8" : 6
+    },
+    {
+      "characters" : 8,
+      "input" : "👩‍👩‍👧 family",
+      "normalized" : "{\"bands\":6,\"base\":\"Saffron\",\"capHeight\":18,\"detail\":\"Cream\",\"flightBody\":\"Cream\",\"flightCap\":\"Midnight blue\",\"flightCompositionVersion\":3,\"reliefDepth\":2.4,\"repeats\":8,\"rows\":2,\"size\":18,\"style\":\"Text\",\"text\":\"👩‍👩‍👧 family\",\"textFont\":\"Rounded\",\"textHeight\":24,\"textRepeats\":3}",
+      "scalars" : 12,
+      "text" : "👩‍👩‍👧 family",
+      "utf8" : 25
+    },
+    {
+      "characters" : 3,
+      "input" : "a b",
+      "normalized" : "{\"bands\":6,\"base\":\"Saffron\",\"capHeight\":18,\"detail\":\"Cream\",\"flightBody\":\"Cream\",\"flightCap\":\"Midnight blue\",\"flightCompositionVersion\":3,\"reliefDepth\":2.4,\"repeats\":8,\"rows\":2,\"size\":18,\"style\":\"Text\",\"text\":\"a b\",\"textFont\":\"Rounded\",\"textHeight\":24,\"textRepeats\":3}",
+      "scalars" : 3,
+      "text" : "a b",
+      "utf8" : 3
+    },
+    {
+      "characters" : 5,
+      "input" : "x\ty\nz",
+      "normalized" : "{\"bands\":6,\"base\":\"Saffron\",\"capHeight\":18,\"detail\":\"Cream\",\"flightBody\":\"Cream\",\"flightCap\":\"Midnight blue\",\"flightCompositionVersion\":3,\"reliefDepth\":2.4,\"repeats\":8,\"rows\":2,\"size\":18,\"style\":\"Text\",\"text\":\"x y z\",\"textFont\":\"Rounded\",\"textHeight\":24,\"textRepeats\":3}",
+      "scalars" : 5,
+      "text" : "x y z",
+      "utf8" : 5
+    },
+    {
+      "characters" : 10,
+      "input" : "line break",
+      "normalized" : "{\"bands\":6,\"base\":\"Saffron\",\"capHeight\":18,\"detail\":\"Cream\",\"flightBody\":\"Cream\",\"flightCap\":\"Midnight blue\",\"flightCompositionVersion\":3,\"reliefDepth\":2.4,\"repeats\":8,\"rows\":2,\"size\":18,\"style\":\"Text\",\"text\":\"line break\",\"textFont\":\"Rounded\",\"textHeight\":24,\"textRepeats\":3}",
+      "scalars" : 10,
+      "text" : "line break",
+      "utf8" : 10
+    },
+    {
+      "characters" : 2,
+      "input" : "🇩🇪🇫🇷",
+      "normalized" : "{\"bands\":6,\"base\":\"Saffron\",\"capHeight\":18,\"detail\":\"Cream\",\"flightBody\":\"Cream\",\"flightCap\":\"Midnight blue\",\"flightCompositionVersion\":3,\"reliefDepth\":2.4,\"repeats\":8,\"rows\":2,\"size\":18,\"style\":\"Text\",\"text\":\"🇩🇪🇫🇷\",\"textFont\":\"Rounded\",\"textHeight\":24,\"textRepeats\":3}",
+      "scalars" : 4,
+      "text" : "🇩🇪🇫🇷",
+      "utf8" : 16
+    },
+    {
+      "characters" : 18,
+      "input" : "  lead and trail  ",
+      "normalized" : "{\"bands\":6,\"base\":\"Saffron\",\"capHeight\":18,\"detail\":\"Cream\",\"flightBody\":\"Cream\",\"flightCap\":\"Midnight blue\",\"flightCompositionVersion\":3,\"reliefDepth\":2.4,\"repeats\":8,\"rows\":2,\"size\":18,\"style\":\"Text\",\"text\":\"  lead and trail  \",\"textFont\":\"Rounded\",\"textHeight\":24,\"textRepeats\":3}",
+      "scalars" : 18,
+      "text" : "  lead and trail  ",
+      "utf8" : 18
+    },
+    {
+      "characters" : 12,
+      "input" : "　ideographic",
+      "normalized" : "{\"bands\":6,\"base\":\"Saffron\",\"capHeight\":18,\"detail\":\"Cream\",\"flightBody\":\"Cream\",\"flightCap\":\"Midnight blue\",\"flightCompositionVersion\":3,\"reliefDepth\":2.4,\"repeats\":8,\"rows\":2,\"size\":18,\"style\":\"Text\",\"text\":\" ideographic\",\"textFont\":\"Rounded\",\"textHeight\":24,\"textRepeats\":3}",
+      "scalars" : 12,
+      "text" : " ideographic",
+      "utf8" : 12
+    },
+    {
+      "characters" : 64,
+      "input" : "abababababababababababababababababababababababababababababababababababababababab",
+      "normalized" : "{\"bands\":6,\"base\":\"Saffron\",\"capHeight\":18,\"detail\":\"Cream\",\"flightBody\":\"Cream\",\"flightCap\":\"Midnight blue\",\"flightCompositionVersion\":3,\"reliefDepth\":2.4,\"repeats\":8,\"rows\":2,\"size\":18,\"style\":\"Text\",\"text\":\"abababababababababababababababababababababababababababababababab\",\"textFont\":\"Rounded\",\"textHeight\":24,\"textRepeats\":3}",
+      "scalars" : 64,
+      "text" : "abababababababababababababababababababababababababababababababab",
+      "utf8" : 64
+    },
+    {
+      "characters" : 64,
+      "input" : "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+      "normalized" : "{\"bands\":6,\"base\":\"Saffron\",\"capHeight\":18,\"detail\":\"Cream\",\"flightBody\":\"Cream\",\"flightCap\":\"Midnight blue\",\"flightCompositionVersion\":3,\"reliefDepth\":2.4,\"repeats\":8,\"rows\":2,\"size\":18,\"style\":\"Text\",\"text\":\"éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé\",\"textFont\":\"Rounded\",\"textHeight\":24,\"textRepeats\":3}",
+      "scalars" : 128,
+      "text" : "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+      "utf8" : 192
+    },
+    {
+      "characters" : 64,
+      "input" : "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+      "normalized" : "{\"bands\":6,\"base\":\"Saffron\",\"capHeight\":18,\"detail\":\"Cream\",\"flightBody\":\"Cream\",\"flightCap\":\"Midnight blue\",\"flightCompositionVersion\":3,\"reliefDepth\":2.4,\"repeats\":8,\"rows\":2,\"size\":18,\"style\":\"Text\",\"text\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\",\"textFont\":\"Rounded\",\"textHeight\":24,\"textRepeats\":3}",
+      "scalars" : 64,
+      "text" : "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+      "utf8" : 256
+    },
+    {
+      "characters" : 12,
+      "input" : "Zoë & Léa <3",
+      "normalized" : "{\"bands\":6,\"base\":\"Saffron\",\"capHeight\":18,\"detail\":\"Cream\",\"flightBody\":\"Cream\",\"flightCap\":\"Midnight blue\",\"flightCompositionVersion\":3,\"reliefDepth\":2.4,\"repeats\":8,\"rows\":2,\"size\":18,\"style\":\"Text\",\"text\":\"Zoë & Léa <3\",\"textFont\":\"Rounded\",\"textHeight\":24,\"textRepeats\":3}",
+      "scalars" : 12,
+      "text" : "Zoë & Léa <3",
+      "utf8" : 14
+    }
+  ],
+  "probe" : "mac/Probes/Json/main.swift",
+  "storedZip" : {
+    "bytes" : 646,
+    "entries" : [
+      {
+        "bytes" : 6,
+        "content" : "hello\n",
+        "name" : "a.txt"
+      },
+      {
+        "bytes" : 2,
+        "content" : "{}",
+        "name" : "dir/ü.json"
+      },
+      {
+        "bytes" : 0,
+        "content" : "",
+        "name" : "empty"
+      },
+      {
+        "bytes" : 256,
+        "content" : "bytes 0...255",
+        "name" : "bin.dat"
+      }
+    ],
+    "file" : "zip-sample.zip"
+  }
+}
