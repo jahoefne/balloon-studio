@@ -1,0 +1,58 @@
+{
+  "format_version" : 2,
+  "led_mount" : "vertical_outer_wall_with_white_45_degree_reflector",
+  "load_rated" : false,
+  "parameters" : {
+    "bandWidth" : 60,
+    "channelDepth" : 1.5,
+    "cordClearance" : 8,
+    "diameter" : 600,
+    "height" : 16,
+    "jointFit" : 0.59999999999999998,
+    "ledClearance" : 1,
+    "reflectedLED" : true,
+    "segmented" : true,
+    "stripThickness" : 6,
+    "stripWidth" : 12
+  },
+  "parts" : [
+    {
+      "dimensions_mm" : [
+        227.66117706211548,
+        227.66117706211548,
+        31
+      ],
+      "file" : "A-cord-guide-print-3.stl",
+      "quantity" : 3
+    },
+    {
+      "dimensions_mm" : [
+        227.66117706211548,
+        227.66117706211548,
+        31
+      ],
+      "file" : "B-plain-section-print-3.stl",
+      "quantity" : 3
+    },
+    {
+      "dimensions_mm" : [
+        69.836374253166596,
+        59.646250242946053,
+        4
+      ],
+      "file" : "C-underside-plate-print-6.stl",
+      "quantity" : 6
+    },
+    {
+      "dimensions_mm" : [
+        5.6568542494923797,
+        5.6568542494923797,
+        19.600000000000001
+      ],
+      "file" : "D-alignment-pin-print-12.stl",
+      "quantity" : 12
+    }
+  ],
+  "rigging" : "Three continuous main cords from rated ceiling hardware to the balloons; ring holes guide the cords.",
+  "units" : "millimetres"
+}

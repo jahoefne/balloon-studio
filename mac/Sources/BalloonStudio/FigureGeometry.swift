@@ -567,7 +567,7 @@ enum FigureSet {
             var q = p; q.style = style
             parts.append((q.filename, try FigureGenerator.generate(q, quality:.export).mesh.binarySTL()))
         }
-        return parts+[("FIGURES.md", Data(notes(p).utf8)), ("figure-settings.json", try JSONEncoder().encode(p))]
+        return parts+[("FIGURES.md", Data(notes(p).utf8)), ("figure-settings.json", try StableJSON.encode(p))]
     }
     static func archive(_ p: FigureParameters) throws -> Data { StoredZIP.archive(try entries(p)) }
 

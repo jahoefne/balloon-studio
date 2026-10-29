@@ -1,0 +1,8 @@
+Balloon Studio: two-color surface-painted model, millimetres, neck down.
+Import in Bambu Studio, use the color-mapping dialog to add or map both colors, choose your P2S printer/process,
+and inspect sliced colors and flushing volumes. This file contains no printer G-code.
+Pattern: Text. Estimated changes: 78–154.
+Estimated change-related chute waste: 38.688–76.384 g.
+Assumed layer height: 0.2 mm; base to pattern: 400.0 mm³;
+pattern to base: 400.0 mm³; multiplier: 1.0; density: 1.24 g/cm³.
+Excludes startup purge, prime tower, supports, and flushing into the model. Confirm after slicing.

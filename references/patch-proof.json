@@ -1,0 +1,1003 @@
+{
+ "base": {
+  "commit": "cbda68d7c445bb3ecde78539f124ba04343c0db8",
+  "sourcesSha256": "945778121562546bd86818ade72c16d29afeb01ae9a28786a8a4caf1774b185f"
+ },
+ "cases": [
+  {
+   "id": "balloon-classic",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-round",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-tall",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-bounds-80-60-50",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-bounds-80-240-75",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-bounds-250-60-75",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-bounds-250-240-50",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-smooth",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-panel-count-normalization",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-minimum-neck",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-hollow-classic",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-hollow-thin-small",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-hollow-thick-wide",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-tethered-classic",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-filled-tethers",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-hanger-filled-plain",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-hanger-hollow-tethers",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-hanger-small",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-hanger-adjusted-16-8-5",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-legacy-v1",
+   "status": "identical"
+  },
+  {
+   "id": "balloon-legacy-hanger",
+   "status": "identical"
+  },
+  {
+   "id": "pattern-stripes",
+   "status": "identical"
+  },
+  {
+   "id": "pattern-hearts",
+   "status": "identical"
+  },
+  {
+   "id": "pattern-dots",
+   "status": "identical"
+  },
+  {
+   "id": "pattern-diamonds",
+   "status": "identical"
+  },
+  {
+   "id": "pattern-stripes-24-rigged",
+   "status": "identical"
+  },
+  {
+   "id": "pattern-dots-one-row",
+   "status": "identical"
+  },
+  {
+   "id": "pattern-hearts-dense",
+   "status": "identical"
+  },
+  {
+   "id": "pattern-purge",
+   "status": "identical"
+  },
+  {
+   "id": "pattern-hearts-same-colors",
+   "status": "identical"
+  },
+  {
+   "id": "pattern-legacy-hearts",
+   "status": "identical"
+  },
+  {
+   "id": "relief-night-flight-classic",
+   "status": "identical"
+  },
+  {
+   "id": "relief-night-flight-round",
+   "status": "identical"
+  },
+  {
+   "id": "relief-night-flight-tall",
+   "status": "identical"
+  },
+  {
+   "id": "relief-summit-classic",
+   "status": "identical"
+  },
+  {
+   "id": "relief-summit-round",
+   "status": "identical"
+  },
+  {
+   "id": "relief-summit-tall",
+   "status": "identical"
+  },
+  {
+   "id": "relief-night-flight-legacy",
+   "status": "identical"
+  },
+  {
+   "id": "relief-night-flight-v2",
+   "status": "identical"
+  },
+  {
+   "id": "relief-summit-saved",
+   "status": "identical"
+  },
+  {
+   "id": "text-rounded-f",
+   "status": "identical"
+  },
+  {
+   "id": "text-rounded-hello",
+   "status": "identical"
+  },
+  {
+   "id": "text-rounded-o",
+   "status": "identical"
+  },
+  {
+   "id": "text-rounded-zoe-lea",
+   "status": "identical"
+  },
+  {
+   "id": "text-sans-f",
+   "status": "identical"
+  },
+  {
+   "id": "text-sans-hello",
+   "status": "identical"
+  },
+  {
+   "id": "text-sans-o",
+   "status": "identical"
+  },
+  {
+   "id": "text-sans-zoe-lea",
+   "status": "identical"
+  },
+  {
+   "id": "text-serif-f",
+   "status": "identical"
+  },
+  {
+   "id": "text-serif-hello",
+   "status": "identical"
+  },
+  {
+   "id": "text-serif-o",
+   "status": "identical"
+  },
+  {
+   "id": "text-serif-zoe-lea",
+   "status": "identical"
+  },
+  {
+   "id": "text-handwritten-f",
+   "status": "identical"
+  },
+  {
+   "id": "text-handwritten-hello",
+   "status": "identical"
+  },
+  {
+   "id": "text-handwritten-o",
+   "status": "identical"
+  },
+  {
+   "id": "text-handwritten-zoe-lea",
+   "status": "identical"
+  },
+  {
+   "id": "text-mono-f",
+   "status": "identical"
+  },
+  {
+   "id": "text-mono-hello",
+   "status": "identical"
+  },
+  {
+   "id": "text-mono-o",
+   "status": "identical"
+  },
+  {
+   "id": "text-mono-zoe-lea",
+   "status": "identical"
+  },
+  {
+   "id": "text-rounded-tokyo",
+   "status": "identical"
+  },
+  {
+   "id": "text-legacy-milo",
+   "status": "identical"
+  },
+  {
+   "id": "basket-wicker-default",
+   "status": "identical"
+  },
+  {
+   "id": "basket-wicker-small",
+   "status": "identical"
+  },
+  {
+   "id": "basket-wicker-large",
+   "status": "identical"
+  },
+  {
+   "id": "basket-ribbed-default",
+   "status": "identical"
+  },
+  {
+   "id": "basket-ribbed-small",
+   "status": "identical"
+  },
+  {
+   "id": "basket-ribbed-large",
+   "status": "identical"
+  },
+  {
+   "id": "basket-voyager-default",
+   "status": "identical"
+  },
+  {
+   "id": "basket-voyager-small",
+   "status": "identical"
+  },
+  {
+   "id": "basket-voyager-large",
+   "status": "identical"
+  },
+  {
+   "id": "basket-partial-settings",
+   "status": "identical"
+  },
+  {
+   "id": "basket-no-settings",
+   "status": "identical"
+  },
+  {
+   "id": "ring-solid-default",
+   "status": "identical"
+  },
+  {
+   "id": "ring-solid-low",
+   "status": "identical"
+  },
+  {
+   "id": "ring-solid-high",
+   "status": "identical"
+  },
+  {
+   "id": "ring-uplight-solid-450",
+   "status": "identical"
+  },
+  {
+   "id": "ring-uplight-prototype-240",
+   "status": "identical"
+  },
+  {
+   "id": "ring-uplight-solid-low",
+   "status": "identical"
+  },
+  {
+   "id": "ring-uplight-solid-high",
+   "status": "identical"
+  },
+  {
+   "id": "ring-kit-450",
+   "status": "identical"
+  },
+  {
+   "id": "ring-kit-low",
+   "status": "identical"
+  },
+  {
+   "id": "ring-kit-high",
+   "status": "identical"
+  },
+  {
+   "id": "ring-uplight-kit-large",
+   "status": "identical"
+  },
+  {
+   "id": "ring-uplight-kit-low",
+   "status": "identical"
+  },
+  {
+   "id": "ring-uplight-kit-high",
+   "status": "identical"
+  },
+  {
+   "id": "ring-legacy",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-classic",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-small-100-16",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-drift",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-billow",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-twin",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-breeze",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-cotton",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-billow-mirrored",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-cotton-mirrored",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-cable-top",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-cable-bottom",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-cable-left",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-outlets-left-right",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-outlets-three",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-outlets-four",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-width-125",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-no-strain-relief",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-nail-insert",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-sculpted-classic",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-sculpted-billow-min",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-extremes",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-width-500",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-led-variant",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-legacy-100",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-legacy-188",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-fixture-cloud-lamp-100",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-fixture-cloud-lamp-100-led-rows",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-fixture-cloud-lamp-230",
+   "status": "identical"
+  },
+  {
+   "id": "cloud-fixture-cloud-lamp-239-led-rows",
+   "status": "identical"
+  },
+  {
+   "id": "sun-fixture-sun-lamp-200",
+   "status": "identical"
+  },
+  {
+   "id": "sun-soft-star",
+   "status": "identical"
+  },
+  {
+   "id": "sun-cones",
+   "status": "identical"
+  },
+  {
+   "id": "sun-pinwheel",
+   "status": "identical"
+  },
+  {
+   "id": "sun-bold-eight",
+   "status": "identical"
+  },
+  {
+   "id": "sun-width-160",
+   "status": "identical"
+  },
+  {
+   "id": "sun-cable-bottom",
+   "status": "identical"
+  },
+  {
+   "id": "sun-nail-insert",
+   "status": "identical"
+  },
+  {
+   "id": "sun-sculpted-soft-star",
+   "status": "identical"
+  },
+  {
+   "id": "sun-sculpted-pinwheel-500",
+   "status": "identical"
+  },
+  {
+   "id": "sun-legacy-halo",
+   "status": "identical"
+  },
+  {
+   "id": "sun-legacy-188",
+   "status": "identical"
+  },
+  {
+   "id": "figureset-defaults",
+   "status": "identical"
+  },
+  {
+   "id": "figureset-two-sided",
+   "status": "identical"
+  },
+  {
+   "id": "figure-star-default",
+   "status": "identical"
+  },
+  {
+   "id": "figure-cloud-default",
+   "status": "identical"
+  },
+  {
+   "id": "figure-moon-small",
+   "status": "identical"
+  },
+  {
+   "id": "figure-balloon-large-chain",
+   "status": "identical"
+  },
+  {
+   "id": "figure-heart-flat",
+   "status": "identical"
+  },
+  {
+   "id": "figure-raindrop-puffy-chain",
+   "status": "identical"
+  },
+  {
+   "id": "figure-sun-two-sided",
+   "status": "identical"
+  },
+  {
+   "id": "figure-moon-partial",
+   "status": "identical"
+  },
+  {
+   "id": "figure-unknown-style",
+   "status": "identical"
+  },
+  {
+   "id": "clip-default",
+   "status": "identical"
+  },
+  {
+   "id": "clip-adhesive",
+   "status": "identical"
+  },
+  {
+   "id": "clip-flat",
+   "status": "identical"
+  },
+  {
+   "id": "clip-small",
+   "status": "identical"
+  },
+  {
+   "id": "clip-big",
+   "status": "identical"
+  },
+  {
+   "id": "clip-thin-adhesive",
+   "status": "identical"
+  },
+  {
+   "id": "clip-long-tall-head",
+   "status": "identical"
+  },
+  {
+   "id": "clip-thick-strap",
+   "status": "identical"
+  },
+  {
+   "id": "clip-deep-overlap",
+   "status": "identical"
+  },
+  {
+   "id": "clip-big-flat",
+   "status": "identical"
+  },
+  {
+   "id": "clip-thick-plate",
+   "status": "identical"
+  },
+  {
+   "id": "clip-thin-plate-tall-head",
+   "status": "identical"
+  },
+  {
+   "id": "clip-tight-nail",
+   "status": "identical"
+  },
+  {
+   "id": "clip-roomy-nail",
+   "status": "identical"
+  },
+  {
+   "id": "clip-four",
+   "status": "identical"
+  },
+  {
+   "id": "clip-tall-head",
+   "status": "identical"
+  },
+  {
+   "id": "clip-thin-deep",
+   "status": "identical"
+  },
+  {
+   "id": "clip-small-head",
+   "status": "identical"
+  },
+  {
+   "id": "clip-legacy-two-part",
+   "status": "identical"
+  }
+ ],
+ "counts": {
+  "archives": 90,
+  "archivesDiffer": 84,
+  "cases": 158,
+  "errors": 1,
+  "json": 131,
+  "jsonReordered": 84,
+  "model": 41,
+  "other": 213,
+  "stl": 328
+ },
+ "differences": [],
+ "grid": {
+  "cases": 158,
+  "path": "mac/cases/grid.json",
+  "sha256": "e68a64b20ea61b05f0de83b804000bb75785f3d1748ddbf4cc7611bc716d06fb"
+ },
+ "jsonReordered": [
+  {
+   "case": "pattern-stripes",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "pattern-hearts",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "pattern-dots",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "pattern-diamonds",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "pattern-stripes-24-rigged",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "pattern-dots-one-row",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "pattern-hearts-dense",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "pattern-purge",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "pattern-hearts-same-colors",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "pattern-legacy-hearts",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "relief-night-flight-classic",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "relief-night-flight-round",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "relief-night-flight-tall",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "relief-summit-classic",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "relief-summit-round",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "relief-summit-tall",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "relief-night-flight-legacy",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "relief-night-flight-v2",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "relief-summit-saved",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-rounded-f",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-rounded-hello",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-rounded-o",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-rounded-zoe-lea",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-sans-f",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-sans-hello",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-sans-o",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-sans-zoe-lea",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-serif-f",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-serif-hello",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-serif-o",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-serif-zoe-lea",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-handwritten-f",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-handwritten-hello",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-handwritten-o",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-handwritten-zoe-lea",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-mono-f",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-mono-hello",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-mono-o",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-mono-zoe-lea",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-rounded-tokyo",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "text-legacy-milo",
+   "output": "Metadata/pattern-settings.json"
+  },
+  {
+   "case": "cloud-classic",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-small-100-16",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-drift",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-billow",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-twin",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-breeze",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-cotton",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-billow-mirrored",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-cotton-mirrored",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-cable-top",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-cable-bottom",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-cable-left",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-outlets-left-right",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-outlets-three",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-outlets-four",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-width-125",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-no-strain-relief",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-nail-insert",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-sculpted-classic",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-sculpted-billow-min",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-extremes",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-width-500",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-led-variant",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-legacy-100",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-legacy-188",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-fixture-cloud-lamp-100",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-fixture-cloud-lamp-100-led-rows",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-fixture-cloud-lamp-230",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "cloud-fixture-cloud-lamp-239-led-rows",
+   "output": "cloud-settings.json"
+  },
+  {
+   "case": "sun-fixture-sun-lamp-200",
+   "output": "sun-settings.json"
+  },
+  {
+   "case": "sun-soft-star",
+   "output": "sun-settings.json"
+  },
+  {
+   "case": "sun-cones",
+   "output": "sun-settings.json"
+  },
+  {
+   "case": "sun-pinwheel",
+   "output": "sun-settings.json"
+  },
+  {
+   "case": "sun-bold-eight",
+   "output": "sun-settings.json"
+  },
+  {
+   "case": "sun-width-160",
+   "output": "sun-settings.json"
+  },
+  {
+   "case": "sun-cable-bottom",
+   "output": "sun-settings.json"
+  },
+  {
+   "case": "sun-nail-insert",
+   "output": "sun-settings.json"
+  },
+  {
+   "case": "sun-sculpted-soft-star",
+   "output": "sun-settings.json"
+  },
+  {
+   "case": "sun-sculpted-pinwheel-500",
+   "output": "sun-settings.json"
+  },
+  {
+   "case": "sun-legacy-halo",
+   "output": "sun-settings.json"
+  },
+  {
+   "case": "sun-legacy-188",
+   "output": "sun-settings.json"
+  },
+  {
+   "case": "figureset-defaults",
+   "output": "figure-settings.json"
+  },
+  {
+   "case": "figureset-two-sided",
+   "output": "figure-settings.json"
+  }
+ ],
+ "patched": {
+  "commit": "41a2ab1d39b877256d9d4067f50d08cadd09909f",
+  "sourcesSha256": "5c0599851f448f72370ed828b3b5ebda4850ac5346d9b971f535323c57245338",
+  "uncommittedSourceChanges": 0
+ },
+ "result": "pass",
+ "rule": "every .stl, 3D/3dmodel.model and non-JSON entry has the same SHA-256; every JSON is equal after parsing; errors, filenames and normalized settings are equal",
+ "tool": "mac/scripts/verify-swift-patches.sh"
+}
