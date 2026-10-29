@@ -240,6 +240,14 @@ private enum NightFlightArtwork {
     }
 }
 
+// The reference exporter (mac/ReferenceExporter) dumps this raster for the web port.
+// The drawing stays private; this only forwards to it.
+enum NightFlightArtworkReference {
+    static func draw(width:Double,height:Double,diameter:Double,columns:Int,rows:Int)->[Float] {
+        NightFlightArtwork.draw(width:width,height:height,diameter:diameter,columns:columns,rows:rows)
+    }
+}
+
 struct NightFlightRelief:Sendable {
     let width:Double
     let height:Double

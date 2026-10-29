@@ -46,7 +46,7 @@ extension PaintedBalloon {
             """.utf8)),
             ("3D/3dmodel.model",Data(xml.utf8)),
             ("Metadata/balloon-settings.json",try JSONSerialization.data(withJSONObject:config,options:.sortedKeys)),
-            ("Metadata/pattern-settings.json",try JSONEncoder().encode(settings)),
+            ("Metadata/pattern-settings.json",try StableJSON.encode(settings)),
             ("Metadata/balloon-studio.txt",Data(note.utf8))
         ]
         return StoredZIP.archive(entries)

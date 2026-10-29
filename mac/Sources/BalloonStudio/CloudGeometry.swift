@@ -461,7 +461,7 @@ struct CloudKit: Sendable {
         if let insertMesh { parts.append((CloudParameters.insertFilename,try insertMesh.binarySTL())) }
         return parts + [("LED-LAYOUT.svg", Data(ledPlan.svg.utf8)),
                         ("ASSEMBLY.md", Data(instructions.utf8)),
-                        ("\(parameters.kind.rawValue)-settings.json", try JSONEncoder().encode(parameters))]
+                        ("\(parameters.kind.rawValue)-settings.json", try StableJSON.encode(parameters))]
     }
     func archive() throws -> Data { StoredZIP.archive(try entries()) }
 
