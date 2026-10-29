@@ -3,6 +3,16 @@
   "version": "1.29.3",
   "private": true,
   "type": "module",
+  "imports": {
+    "#core": {
+      "balloon-core-real": "./src/core/real/index.ts",
+      "default": "./src/core/stub/index.ts"
+    },
+    "#core/parameters": {
+      "balloon-core-real": "./src/core/real/parameters.ts",
+      "default": "./src/core/stub/parameters.ts"
+    }
+  },
   "license": "MIT",
   "description": "Parametric balloons, baskets, mobile rings, hanging figures, cloud and sun lamps and cable clips for 3D printing. Configure and download print files in the browser.",
   "engines": {
@@ -15,7 +25,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:reference": "node -e \"console.log('reference harness: not available yet (WP-V2); skipping')\"",
+    "test:reference": "vitest run --config vitest.reference.config.ts",
     "size": "node scripts/check-bundle-size.mjs"
   },
   "dependencies": {
