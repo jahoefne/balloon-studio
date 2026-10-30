@@ -116,7 +116,7 @@ The relief and text groups are exempt from the byte criterion (plan §1), so the
 
 `core/real` honors two `ExportOptions` the app does not use (`GridRunOptions` in `exportCase.ts`): `quality` for the 59 preview-quality cases, and `ignoreExportProblem` for `clip-small-head`, which the app refuses to export but the reference keeps.
 
-**Skip list** (`skipList.ts`): the parts `core/real` still takes from the stub (`cloud`, `sun`, `pattern`, the groups `relief`, `text`) are left out and count as `skipped (WP-K3)` / `skipped (WP-K4)` in the table and in `summary.skipped`. WP-K3 and WP-K4 delete their lines when they hook into `core/real`.
+**Skip list** (`skipList.ts`): the parts `core/real` still takes from the stub (`pattern`, the groups `relief`, `text`) are left out and count as `skipped (WP-K3)` in the table and in `summary.skipped`. Single archive entries that cannot pass the rules are left out of a case that otherwise runs, each with its reason: the fronts of `cloud-sculpted-classic` and `cloud-sculpted-billow-min`.
 
 ## Files
 

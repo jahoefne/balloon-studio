@@ -2,20 +2,22 @@
 // ported modules, imported on the main thread via `#core/parameters`. The codecs read through
 // `JSONKeyedContainer`, so a text decodes as JSONDecoder decodes it, not as JSON.parse does.
 
-import type { BalloonParameterApi, BasketParameterApi, ClipParameterApi, CoreParameterApi, FigureParameterApi, RingParameterApi } from '../api';
+import { CoreFailure, LAMP_SETTINGS_ERROR, type BalloonParameterApi, type BasketParameterApi, type ClipParameterApi, type CloudDerived, type CloudParameterApi, type CoreParameterApi, type FigureParameterApi, type LampProfileRef, type LampSettingsApi, type RingParameterApi } from '../api';
 import * as balloonModel from '../balloon/balloonParameters';
 import { maximumBytes, maximumTriangles } from '../balloon/balloonStl';
 import { actualDepth, basketDefaults, basketFilename, floorThickness, holeCenter, normalizedBasket } from '../basket/basketGeometry';
 import { CableClip, cableRange, cableText, defaultParameters, displayName, filename as clipFilename, headHeightRange, headRange, lengthRange, nailGapRange, nailRange, normalized as normalizedClip, overlapRange, plateRange, toJSON as clipToJSON, wallRange } from '../clip/cableClip';
 import { keyedCodec, lenientEnumeration, settingsCodec } from '../codec';
 import { encodeFigureParameters, figureParameterApi } from '../figures/figureGeometry';
+import { CableClamp } from '../lamp/cableClamp';
+import * as lamp from '../lamp/cloudGeometry';
+import { NailInsert } from '../lamp/nailInsert';
+import { sunProfile, wallLampDefaults } from '../lamp/sunGeometry';
 import { encodeRingParameters, filename as ringFilename, normalized as normalizedRing, OUTER_LIP, RING_DEFAULTS, RING_LARGE, RING_SOLID, ringDerived } from '../ring/ringGeometry';
-import type { JSONKeyedContainer } from '../swift/json';
+import { JSONKeyedContainer } from '../swift/json';
 import { rounded } from '../swift/rounding';
 import { balloonExportFilename, balloonExportFormat, balloonParameters as stubBalloon } from '../stub/balloon';
-import { cloudParameters } from '../stub/cloud';
-import { lampSettings } from '../stub/lampSettings';
-import { BASKET_STYLES, CABLE_CLIP_MOUNTS, FIGURE_STYLES, FIGURE_SURFACES, type BasketParameters, type CableClipDerived, type CableClipParameters, type FigureParameters, type RingParameters } from '../types';
+import { BASKET_STYLES, CABLE_CLIP_MOUNTS, CABLE_SIDES, CLOUD_STYLES, FIGURE_STYLES, FIGURE_SURFACES, LAMP_SURFACES, SUN_STYLES, WALL_LAMP_KINDS, type BasketParameters, type CableClipDerived, type CableClipParameters, type CloudParameters, type FigureParameters, type NailInsertInfo, type RingParameters } from '../types';
 
 const balloon: BalloonParameterApi = {
   defaults: balloonModel.classic,
@@ -187,16 +189,133 @@ const clip: ClipParameterApi = {
   clip: (p) => clipDerived(new CableClip(p)),
 };
 
+/** CloudGeometry.swift:104-133, fields in its order. A sun saved with a former design opens as the first sun. */
+const decodeCloud = (c: JSONKeyedContainer): CloudParameters => {
+  const p = lamp.cloudParameters();
+  p.kind = c.enumerationIfPresent('kind', WALL_LAMP_KINDS) ?? 'cloud';
+  p.width = p.kind === 'sun' ? 200 : p.width;
+  p.style = c.enumerationIfPresent('style', CLOUD_STYLES) ?? p.style;
+  p.sunStyle = lenientEnumeration(c, 'sunStyle', SUN_STYLES) ?? p.sunStyle;
+  p.mirrored = c.boolIfPresent('mirrored') ?? p.mirrored;
+  p.width = c.doubleIfPresent('width') ?? p.width;
+  p.depth = c.doubleIfPresent('depth') ?? p.depth;
+  p.diffuserThickness = c.doubleIfPresent('diffuserThickness') ?? p.diffuserThickness;
+  p.surface = c.enumerationIfPresent('surface', LAMP_SURFACES) ?? 'flat';
+  p.surfaceDepth = c.doubleIfPresent('surfaceDepth') ?? p.surfaceDepth;
+  p.stripWidth = c.doubleIfPresent('stripWidth') ?? p.stripWidth;
+  p.stripThickness = c.doubleIfPresent('stripThickness') ?? p.stripThickness;
+  p.stripCutLength = c.doubleIfPresent('stripCutLength') ?? p.stripCutLength;
+  p.ledRowSpacing = c.doubleIfPresent('ledRowSpacing') ?? p.ledRowSpacing;
+  p.clipFit = c.doubleIfPresent('clipFit') ?? p.clipFit;
+  p.cableDiameter = c.doubleIfPresent('cableDiameter') ?? p.cableDiameter;
+  p.cableSide = c.enumerationIfPresent('cableSide', CABLE_SIDES) ?? p.cableSide;
+  p.secondCableSide = c.enumerationIfPresent('secondCableSide', CABLE_SIDES) ?? null;
+  p.thirdCableSide = c.enumerationIfPresent('thirdCableSide', CABLE_SIDES) ?? null;
+  p.fourthCableSide = c.enumerationIfPresent('fourthCableSide', CABLE_SIDES) ?? null;
+  p.strainRelief = c.boolIfPresent('strainRelief') ?? p.strainRelief;
+  p.nailHead = c.doubleIfPresent('nailHead') ?? p.nailHead;
+  p.nailShaft = c.doubleIfPresent('nailShaft') ?? p.nailShaft;
+  p.nailInsert = c.boolIfPresent('nailInsert') ?? p.nailInsert;
+  p.nailDiameter = c.doubleIfPresent('nailDiameter') ?? p.nailDiameter;
+  p.nailHeadDiameter = c.doubleIfPresent('nailHeadDiameter') ?? p.nailHeadDiameter;
+  return p;
+};
+
+const cloudDerived = (p: CloudParameters): CloudDerived => ({
+  cableSides: lamp.cableSides(p),
+  height: lamp.height(p),
+  reliefDepth: lamp.reliefDepth(p),
+  maximumSurfaceDepth: lamp.maximumSurfaceDepth(p),
+  totalDepth: lamp.totalDepth(p),
+  minimumWidth: lamp.minimumWidth(p),
+  layoutHeightBasis: lamp.layoutHeightBasis(p),
+  verticalScale: lamp.verticalScale(p),
+  compactBlend: lamp.compactBlend(p),
+  coreLowY: lamp.coreLowY(p),
+  coreHighY: lamp.coreHighY(p),
+  coreHalfWidth: lamp.coreHalfWidth(p),
+  cableStartY: lamp.cableStartY(p),
+  cableBossTop: lamp.cableBossTop(p),
+  nailCenterY: lamp.nailCenterY(p),
+  ledCenterY: lamp.ledCenterY(p),
+  ledLength: lamp.ledLength(p),
+  ledChannelWidth: lamp.ledChannelWidth(p),
+  cableClearance: lamp.cableClearance(p),
+  fitsP2S: lamp.fitsP2S(p),
+  displayName: lamp.displayName(p),
+  frontFilename: lamp.frontFilename(p),
+  filename: lamp.filename(p),
+});
+
+/** The fields of a `NailInsert` the editor reads. */
+export const nailInsertInfo = (insert: NailInsert): NailInsertInfo => ({
+  halfWidth: insert.halfWidth,
+  tipHalfWidth: insert.tipHalfWidth,
+  height: insert.height,
+  slotHalfWidth: insert.slotHalfWidth,
+  mouthHalfWidth: insert.mouthHalfWidth,
+  cheek: insert.cheek,
+  top: insert.top,
+  slotCenter: insert.slotCenter,
+  nailY: insert.nailY,
+  nearestHead: insert.nearestHead,
+  headRoom: insert.headRoom,
+});
+
+const profileOf = (ref: LampProfileRef): lamp.CloudProfile => {
+  if (ref.kind === 'sun') return sunProfile(ref.sunStyle);
+  const profile = lamp.cloudStyleProfile(ref.style);
+  return ref.mirrored ? profile.mirrored : profile;
+};
+
+const cloud: CloudParameterApi = {
+  defaults: wallLampDefaults,
+  normalize: lamp.normalized,
+  codec: keyedCodec(decodeCloud, lamp.encodeCloudParameters),
+  filename: lamp.filename,
+  derived: cloudDerived,
+  constants: lamp.CloudConstants,
+  withCableSides: lamp.withCableSides,
+  selectCableSide: lamp.selectCableSide,
+  setCableOutletCount: lamp.setCableOutletCount,
+  cableConfigurations: lamp.cableConfigurations,
+  nailInsertProblem: (p) => NailInsert.problem(p),
+  nailInsert: (p) => {
+    const insert = NailInsert.create(p);
+    return insert === null ? null : nailInsertInfo(insert);
+  },
+  clampFits: (p) => CableClamp.create(p) !== null,
+  clampMinimumWidth: (p) => CableClamp.minimumWidth(p),
+  profileExtent: (ref) => {
+    const { lowY, highY } = profileOf(ref);
+    return { lowY, highY };
+  },
+  radius: (angle, ref, options) => lamp.CloudGenerator.radius(angle, options?.inset ?? 0, options?.width ?? 1, options?.verticalScale ?? 1, profileOf(ref)),
+};
+
+/** `LampSettingsFile.decode`: an opened file must identify a lamp before the defaults may fill in the rest. */
+const lampSettings: LampSettingsApi = {
+  decode(text) {
+    try {
+      const c = JSONKeyedContainer.fromJSON(text);
+      c.double('width');
+      c.double('depth');
+      c.double('diffuserThickness');
+      return lamp.normalized(decodeCloud(c));
+    } catch {
+      throw new CoreFailure('invalid-lamp-settings', LAMP_SETTINGS_ERROR);
+    }
+  },
+};
+
 export const core: CoreParameterApi = {
   implementation: 'real',
   balloon,
   basket,
   ring,
-  // TODO(WP-K4): core/lamp, once K4c is on main (LampSurface still throws).
-  cloud: cloudParameters,
+  cloud,
   figure,
   clip,
   stl: { maximumBytes, maximumTriangles },
-  // TODO(WP-K4): LampSettingsFile from core/lamp/lampSettingsFile.ts.
   lampSettings,
 };
