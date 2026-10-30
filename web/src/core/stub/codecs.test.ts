@@ -5,7 +5,7 @@
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { CoreFailure, INVALID_SETTINGS_MESSAGE, LAMP_SETTINGS_ERROR } from '../api';
+import { CoreFailure, INVALID_SETTINGS_MESSAGE, LAMP_SETTINGS_ERROR, MISSING_SETTINGS_MESSAGE } from '../api';
 import { core } from './index';
 
 const fixtureDir = new URL('../../../../references/fixtures/legacy-settings/', import.meta.url);
@@ -233,7 +233,7 @@ describe('balloon, pattern and purge preferences', () => {
     expect(core.balloon.pattern.codec.decode(encoded)).toEqual(pattern);
     const purge = core.balloon.purge.defaults;
     expect(core.balloon.purge.codec.decode(core.balloon.purge.codec.encode(purge))).toEqual(purge);
-    failsWith(() => core.balloon.purge.codec.decode('{"layerHeight":0.2}'), 'invalid-settings', INVALID_SETTINGS_MESSAGE);
+    failsWith(() => core.balloon.purge.codec.decode('{"layerHeight":0.2}'), 'invalid-settings', MISSING_SETTINGS_MESSAGE);
     expect(core.balloon.purge.normalize({ ...purge, layerHeight: NaN, baseToDetail: 9999, density: 0 })).toEqual({ ...purge, baseToDetail: 1500, density: 0.5 });
   });
 });
@@ -259,7 +259,7 @@ describe('ring, basket, figure and clip preferences', () => {
   it('basket: synthesized Codable needs every key', () => {
     const p = core.basket.defaults;
     expect(core.basket.codec.decode(core.basket.codec.encode(p))).toEqual(p);
-    failsWith(() => core.basket.codec.decode('{"style":"wicker","width":64}'), 'invalid-settings', INVALID_SETTINGS_MESSAGE);
+    failsWith(() => core.basket.codec.decode('{"style":"wicker","width":64}'), 'invalid-settings', MISSING_SETTINGS_MESSAGE);
     expect(core.basket.match(p, core.balloon.defaults)).toEqual({ ...p, width: 63, depth: 49, height: 42 });
   });
 

@@ -1,17 +1,20 @@
 // JSONDecoder / JSONEncoder semantics for the parameter codecs.
 // TODO(WP-K1): encoding moves to core/swift/json.ts (`encodeJSONCompact`) once it lands.
 
-import { CoreFailure, INVALID_SETTINGS_MESSAGE, type Codec } from '../api';
+import { CoreFailure, INVALID_SETTINGS_MESSAGE, MISSING_SETTINGS_MESSAGE, type Codec } from '../api';
 import { jsonNumber } from './swiftCompat';
 
 /** A failed `init(from:)`; codecs turn it into `CoreFailure('invalid-settings')`. */
 export class DecodeError extends Error {}
+/** `keyNotFound` or `valueNotFound`: the other DecodingError message. */
+class MissingError extends DecodeError {}
 
 export type Container = Readonly<Record<string, unknown>>;
 
 /** `decoder.container(keyedBy:)`: a JSON object, nothing else. */
 export const container = (value: unknown): Container => {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new DecodeError('Expected a keyed container');
+  if (value === null) throw new MissingError('Expected a keyed container');
+  if (typeof value !== 'object' || Array.isArray(value)) throw new DecodeError('Expected a keyed container');
   return value as Container;
 };
 
@@ -77,12 +80,12 @@ export const lenientEnum = <T extends string>(c: Container, key: string, cases: 
 export const required = {
   double: (c: Container, key: string): number => {
     const v = present(c, key);
-    if (v === undefined || v === null) throw new DecodeError(`${key}: missing`);
+    if (v === undefined || v === null) throw new MissingError(`${key}: missing`);
     return asDouble(v, key);
   },
   enum: <T extends string>(c: Container, key: string, cases: readonly T[]): T => {
     const v = present(c, key);
-    if (v === undefined || v === null) throw new DecodeError(`${key}: missing`);
+    if (v === undefined || v === null) throw new MissingError(`${key}: missing`);
     return asEnum(v, key, cases);
   },
 };
@@ -109,7 +112,7 @@ export const makeCodec = <T>(decodeValue: (value: unknown) => T): Codec<T> => {
     try {
       return decodeValue(value);
     } catch (error) {
-      if (error instanceof DecodeError) throw new CoreFailure('invalid-settings', INVALID_SETTINGS_MESSAGE);
+      if (error instanceof DecodeError) throw new CoreFailure('invalid-settings', error instanceof MissingError ? MISSING_SETTINGS_MESSAGE : INVALID_SETTINGS_MESSAGE);
       throw error;
     }
   };
