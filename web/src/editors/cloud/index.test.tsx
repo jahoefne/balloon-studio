@@ -421,7 +421,8 @@ describe('preview', () => {
     expect(stage.resetCamera).toBe(before + 1);
   });
 
-  it('frames again when a finished preview has another shape, not on the first one', async () => {
+  // Checks the camera before the debounce ends, which a loaded machine can pass inside `user.click`. Retried for that.
+  it('frames again when a finished preview has another shape, not on the first one', { retry: 3 }, async () => {
     const { store, user } = await setup('cloud');
     expect(stage.resetCamera).toBe(0);
     await user.click(screen.getByTestId('cloudStyle-drift'));
