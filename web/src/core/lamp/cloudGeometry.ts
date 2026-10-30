@@ -1,9 +1,8 @@
 // Ported from mac/Sources/BalloonStudio/CloudGeometry.swift @ 04553ee.
 //
-// WP-K4a part 1 holds CloudStyle/CloudProfile (:3-62), CloudParameters (:64-273), LampClipGeometry
-// and LampClips (:710-744), CloudGenerator.Rect/Layout/horizontalReach/horizontalIntervals/radius
-// (:755-841) and CloudMeshBuilder (:1033-1052). `CloudGenerator.generate` (:843-1030) follows in
-// part 2; CloudCableParts and CloudKit (:276-704) go to cloudKit.ts (plan §2).
+// CloudStyle/CloudProfile (:3-62), CloudParameters (:64-273), LampClipGeometry and LampClips
+// (:710-744), CloudGenerator (:754-1031) and CloudMeshBuilder (:1033-1052). CloudCableParts and
+// CloudKit (:276-704) are in cloudKit.ts (plan §2).
 //
 // Swift's computed properties of `CloudParameters` are free functions over the plain
 // `CloudParameters` of core/types.ts, named like the property. Swift's `static let`s are
@@ -12,7 +11,7 @@
 // This module, sunGeometry, cableSeal, cableClamp and lampSurface import each other, as the Swift
 // files do. So nothing here may read another of them at module level: only inside functions.
 
-import { CoreFailure, INVALID_SETTINGS_MESSAGE, type Codec } from '../api';
+import { CoreFailure, INVALID_SETTINGS_MESSAGE, type Codec, type Quality } from '../api';
 import { BalloonMesh } from '../geometry/mesh';
 import type { Point3, Triangle } from '../geometry/point3';
 import { IntKey3Map } from '../geometry/weld';
@@ -21,7 +20,7 @@ import { formatFixed } from '../swift/format';
 import { encodeJSONCompact, type JSONObject } from '../swift/json';
 import { arrayMax, arrayMin, swiftMax, swiftMin, swiftMin3 } from '../swift/minmax';
 import { ieeeRemainder, intTrunc, rounded } from '../swift/rounding';
-import { stableSorted } from '../swift/sort';
+import { sortedDoubles, stableSorted } from '../swift/sort';
 import {
   CABLE_SIDE_OPPOSITE,
   CABLE_SIDES,
@@ -35,8 +34,10 @@ import {
   type CloudParameters,
   type CloudStyle,
 } from '../types';
+import { CableClamp } from './cableClamp';
 import { CableOutlet } from './cableSeal';
-import { SunGeometry, sunProfile, type SunPolygon } from './sunGeometry';
+import { LampSurfaceGenerator } from './lampSurface';
+import { SunGeometry, sunNotchAngles, sunProfile, type SunPolygon } from './sunGeometry';
 
 /** Swift `(Double, Double)`, a point in the lamp's XY plane or a pair of offsets. */
 export type Pair = readonly [number, number];
@@ -266,7 +267,13 @@ export const encodeCloudParameters = (p: CloudParameters): string => {
   return encodeJSONCompact(object);
 };
 
-/** `JSONDecoder` + `init(from:)` and `StableJSON`, as `Codec` of core/api.ts. */
+/**
+ * `JSONDecoder` + `init(from:)` and `StableJSON`, as `Codec` of core/api.ts.
+ * SWIFT-DIFF: the text goes through JSON.parse, whose grammar differs from JSONDecoder's in edge
+ * cases: a repeated key (JSONDecoder keeps the first), a trailing comma, a BOM, a value like 1e-999
+ * (JSONDecoder rejects it). `scanJSONObject` in core/balloon/balloonParameters.ts has the real
+ * grammar; the same difference is in basket, ring, figures and clip.
+ */
 export const cloudParametersCodec: Codec<CloudParameters> = {
   decode(text) {
     let value: unknown;
@@ -611,10 +618,304 @@ const radius = (angle: number, inset: number, width: number, verticalScale = 1, 
 };
 
 /**
+ * A conforming cell mesh avoids overlapping component shells and Boolean dependencies.
+ * The Cartesian core contains the mechanical pockets. A swept cloud annulus shares
+ * its exact perimeter and houses the continuous wall, groove and spring fingers.
+ * Across the cable outlet its columns run along the cable instead of radially,
+ * which gives the window, the seal's pocket and the skirt's notch parallel sides.
+ * The outlet may be on either side, at the top or at the bottom.
+ * The posts of a strain relief are no cells: they stand in the floor's
+ * surface, which is laid anew around them.
+ */
+const generate = (p: CloudParameters, front: boolean, quality: Quality): BalloonMesh => {
+  const configurations = cableConfigurations(p);
+  const l = new Layout(p), outlets = configurations.map((q) => new CableOutlet(q)), profile = lampProfile(p), tau = PI * 2, base = front ? p.diffuserThickness : CloudConstants.floor;
+  const scale = verticalScale(p);
+  // The strain relief stands in the back. The front is the same without it.
+  const clamps: CableClamp[] = [];
+  if (!front) {
+    for (const q of configurations) {
+      const clamp = CableClamp.create(q);
+      if (clamp !== null) clamps.push(clamp);
+    }
+  }
+  const sampleCount = p.kind === 'sun' ? (quality === 'export' ? 480 : 240) : quality === 'export' ? 160 : 80;
+  const unique = (a: readonly number[]): number[] => {
+    const result: number[] = [];
+    for (const value of sortedDoubles(a)) {
+      if (result.length === 0 || Math.abs(result[result.length - 1]! - value) > 1e-7) result.push(value);
+    }
+    return result;
+  };
+  const angle = (x: number, y: number): number => {
+    const a = atan2(y, x);
+    return a < 0 ? a + tau : a;
+  };
+  const corePoint = (a: number): Pair => {
+    const dx = cos(a), dy = sin(a);
+    const rx = l.coreX / swiftMax(Math.abs(dx), 1e-15);
+    const ry = (dy >= 0 ? l.highY : -l.lowY) / swiftMax(Math.abs(dy), 1e-15);
+    const r = swiftMin(rx, ry);
+    return [r * dx, r * dy];
+  };
+  const clips = new LampClips(p), centers = clips.centers, half = clips.half, slit = clips.slit;
+  const edges = centers.flatMap((c) => [c - half - slit, c - half, c + half, c + half + slit]);
+  // Include every lobe's extrema so size readouts remain exact for every
+  // shape and handedness, even at preview resolution.
+  const extremes = profile.lobes.flatMap(([x, y, r]) => [angle(x - r, y * scale), angle(x + r, y * scale), angle(x, (y - r) * scale), angle(x, (y + r) * scale)]);
+  // A sun's notches get columns too: its valleys run into them.
+  const corners = [
+    ...profile.polygons.flatMap((polygon) => polygon.points.map((q) => angle(q.x, q.y * scale))),
+    ...(p.kind === 'sun' ? sunNotchAngles(p.sunStyle) : []),
+  ];
+  const seeds: number[] = [];
+  for (let i = 0; i < sampleCount; i++) seeds.push((i * tau) / sampleCount);
+  seeds.push(...edges, ...extremes, ...corners);
+  let xs = [-l.coreX, l.coreX], ys = [l.lowY, l.highY];
+  for (const r of l.rectangles) {
+    xs.push(r.x0, r.x1);
+    ys.push(r.y0, r.y1);
+  }
+  const add = (a: number): void => {
+    const [x, y] = corePoint(a);
+    if (Math.abs(Math.abs(x) - l.coreX) < 1e-6) ys.push(y);
+    else xs.push(x);
+  };
+  const columns = (): number[] => {
+    xs = unique(xs);
+    ys = unique(ys);
+    const found: number[] = [];
+    for (const x of xs) found.push(angle(x, l.lowY), angle(x, l.highY));
+    for (const y of ys) found.push(angle(-l.coreX, y), angle(l.coreX, y));
+    return unique(found);
+  };
+  seeds.forEach(add);
+  // A column through the strip no longer aims at its point of the outline.
+  // Extremes inside the strip get a column of their own to stay exact.
+  for (const outlet of outlets) {
+    const exact: number[] = [];
+    for (const a of [...extremes, ...corners]) {
+      if (outlet.offsetOfColumn(a) === null) continue;
+      const r = radius(a, 0, p.width, scale, profile);
+      const h = outlet.offsetOf([r * cos(a), r * sin(a)]);
+      if (Math.abs(h) <= outlet.notchHalfWidth) exact.push(h);
+    }
+    // Nearby existing columns take the face instead of leaving a sliver.
+    const taken: number[] = [];
+    for (const a of columns()) {
+      const h = outlet.offsetOfColumn(a);
+      if (h !== null) taken.push(h);
+    }
+    for (const h of [...outlet.columns, ...exact]) {
+      if (taken.some((t) => Math.abs(t - h) < 0.001)) continue;
+      add(outlet.columnAt(h));
+      taken.push(h);
+    }
+  }
+  const angles = columns();
+  const n = angles.length;
+  const outerSkirt = CloudConstants.wall + p.clipFit, innerSkirt = outerSkirt + LampClipGeometry.skirtThickness;
+  // The front has no hardware in its Cartesian floor. Pull that grid
+  // inward where a reinforced root needs room, keeping all perimeter
+  // columns fixed so the outer fit still matches existing backs.
+  const coreScale = front
+    ? swiftMin(
+        1,
+        arrayMin(
+          angles.map((a) => {
+            const [x, y] = corePoint(a);
+            const inset = outerSkirt + clips.thickness(a, 0);
+            const inner = radius(a, inset, p.width, scale, profile);
+            return (inner - 0.2) / hypot(x, y);
+          }),
+        )!,
+      )
+    : 1;
+  if (front) {
+    xs = xs.map((x) => x * coreScale);
+    ys = ys.map((y) => y * coreScale);
+  }
+  // Seated, the skirt's tip is at depth-12. Where the seal's pocket is
+  // taller, the skirt stops above it.
+  const notches = outlets.filter((outlet) => outlet.notchesSkirt).map((outlet) => base + p.depth - outlet.notchTop);
+  const zs = unique(
+    front
+      ? [0, base, base + LampClipGeometry.rootHeight, base + LampClipGeometry.taperEnd, base + 8.5, base + 9, base + 10, base + 12, ...notches]
+      : [0, 2.4, 3, 5.4, 8.4, p.depth - 12.25, p.depth - 8.25, p.depth, ...outlets.flatMap((outlet) => [outlet.windowZ.lower, outlet.windowZ.upper, outlet.cheekTop])],
+  );
+  // Inside -> outside. The front's intermediate edge is the ramped catch.
+  // The back has one more ring on its floor: the mouth of the seal's pocket.
+  const wall = CloudConstants.wall;
+  const insets = front ? [innerSkirt, outerSkirt, 0] : [wall, wall, 1.6, 0];
+  const mouth = front ? 0 : 1;
+  const gap = (a: number): boolean => centers.some((c) => Math.abs(a - c) > half && Math.abs(a - c) < half + slit);
+  const strips = outlets.map((outlet) => angles.map((a) => outlet.offsetOfColumn(a)));
+  const parallel = angles.map((_, col): Pair[] | null => {
+    const index = outlets.findIndex((__, o) => strips[o]![col] !== null);
+    if (index < 0) return null;
+    const h = strips[index]![col]!;
+    const outlet = outlets[index]!;
+    return insets.map((inset, row) => outlet.point(row < mouth ? outlet.seat : outlet.reach(h, inset), h));
+  });
+  const ringPoint = (row: number, col: number, z: number): Point3 => {
+    const a = angles[col % n]!;
+    if (row === 0) {
+      const [x, y] = corePoint(a);
+      return { x: x * coreScale, y: y * coreScale, z };
+    }
+    const points = parallel[col % n] ?? null;
+    if (points !== null) return { x: points[row - 1]![0], y: points[row - 1]![1], z };
+    if (row <= mouth) {
+      // Away from the outlet the ring stays a seal's length inside
+      // the wall, or halfway across a narrower floor.
+      const [x, y] = corePoint(a), inner = hypot(x, y);
+      const outer = radius(a, wall, p.width, scale, profile);
+      const r = swiftMax((inner + outer) / 2, outer - CableOutlet.seatLength - 1);
+      return { x: r * cos(a), y: r * sin(a), z };
+    }
+    let inset = insets[row - 1]!;
+    if (front && row === 1) {
+      inset = outerSkirt + clips.thickness(a, z - base);
+    }
+    // Both endpoints of a finger share its ramp; slot surfaces close it.
+    if (front && row === 2 && centers.some((c) => Math.abs(a - c) <= half + 1e-7)) {
+      const h = z - base;
+      const ramp = swiftMax(0, swiftMin(1, swiftMin((h - 8.5) / 0.5, (12 - h) / 2)));
+      inset -= (p.clipFit + 0.35) * ramp;
+    }
+    const r = radius(a, inset, p.width, scale, profile);
+    return { x: r * cos(a), y: r * sin(a), z };
+  };
+  const nr = insets.length, nz = zs.length - 1, nx = xs.length - 1, ny = ys.length - 1;
+  // SWIFT-DIFF: a ring's point is computed once per row, column and level. Swift computes it for each
+  // of the up to eight cells that share it, with the same result, and those radii dominate the run time.
+  const ringPoints = new Array<Point3 | undefined>((nr + 1) * n * (nz + 1));
+  const ringPointAt = (row: number, col: number, level: number): Point3 => {
+    const key = (level * (nr + 1) + row) * n + col % n;
+    return (ringPoints[key] ??= ringPoint(row, col, zs[level]!));
+  };
+  const core = new Uint8Array(nx * ny * nz);
+  const ci = (i: number, j: number, k: number): number => (k * ny + j) * nx + i;
+  for (let k = 0; k < nz; k++) {
+    for (let j = 0; j < ny; j++) {
+      for (let i = 0; i < nx; i++) {
+        const z = (zs[k]! + zs[k + 1]!) / 2;
+        core[ci(i, j, k)] = (front ? z < base : l.material((xs[i]! + xs[i + 1]!) / 2, (ys[j]! + ys[j + 1]!) / 2, z)) ? 1 : 0;
+      }
+    }
+  }
+  const rim = new Uint8Array(n * nr * nz);
+  const ri = (i: number, j: number, k: number): number => (k * nr + j) * n + (i + n) % n;
+  // SWIFT-DIFF: what the rim's loop reads of each outlet is computed once, not per cell.
+  const outletFacts = outlets.map((outlet) => ({
+    cheekLower: outlet.pocketWidth / 2,
+    cheekUpper: outlet.pocketWidth / 2 + CableOutlet.cheek,
+    notch: outlet.notchesSkirt ? base + p.depth - outlet.notchTop : Infinity,
+    notchHalfWidth: outlet.notchHalfWidth,
+    cheekTop: outlet.cheekTop,
+    window: outlet.window,
+    windowZ: outlet.windowZ,
+  }));
+  for (let k = 0; k < nz; k++) {
+    for (let j = 0; j < nr; j++) {
+      for (let i = 0; i < n; i++) {
+        const z = (zs[k]! + zs[k + 1]!) / 2, a = (angles[i]! + (i + 1 < n ? angles[i + 1]! : angles[0]! + tau)) / 2;
+        let solid = z < base;
+        if (front && j === 1 && z >= base) solid = z < base + LampClipGeometry.rootHeight || !gap(a);
+        if (!front && j >= 2) solid = j === 3 || !(z > p.depth - 12.25 && z < p.depth - 8.25);
+        for (let index = 0; index < outlets.length; index++) {
+          const h = strips[index]![i] ?? null, next = strips[index]![(i + 1) % n] ?? null;
+          if (h === null || next === null) continue;
+          const facts = outletFacts[index]!;
+          const across = Math.abs(h + next) / 2;
+          if (front) {
+            if (j === 1 && z > facts.notch && across < facts.notchHalfWidth) solid = false;
+          } else if (j === 1) {
+            if (z < facts.cheekTop && across >= facts.cheekLower && across <= facts.cheekUpper) solid = true;
+          } else if (j >= 2) {
+            // No groove behind the seal: its flange needs a plain wall.
+            if (across < facts.cheekUpper) solid = true;
+            if (across < facts.window / 2 && z >= facts.windowZ.lower && z <= facts.windowZ.upper) solid = false;
+          }
+        }
+        rim[ri(i, j, k)] = solid ? 1 : 0;
+      }
+    }
+  }
+  const builder = new CloudMeshBuilder();
+  // Faces of the floor around the posts, left to the strain relief.
+  const ground: Point3[][][] = clamps.map(() => []);
+  const floored = (v: readonly Point3[], neighbors: boolean[]): boolean[] => {
+    if (neighbors[1] || !(Math.abs(v[4]!.z - base) < 1e-9)) return neighbors;
+    const face = v.slice(4);
+    const index = clamps.findIndex((clamp) => clamp.stands(face));
+    if (index < 0) return neighbors;
+    ground[index]!.push(face);
+    neighbors[1] = true;
+    return neighbors;
+  };
+  // Every interface has the same grid edge subdivision on both sides.
+  for (let k = 0; k < nz; k++) {
+    for (let j = 0; j < ny; j++) {
+      for (let i = 0; i < nx; i++) {
+        if (!core[ci(i, j, k)]) continue;
+        const x0 = xs[i]!, x1 = xs[i + 1]!, y0 = ys[j]!, y1 = ys[j + 1]!, z0 = zs[k]!, z1 = zs[k + 1]!;
+        const v: Point3[] = [
+          { x: x0, y: y0, z: z0 }, { x: x1, y: y0, z: z0 }, { x: x1, y: y1, z: z0 }, { x: x0, y: y1, z: z0 },
+          { x: x0, y: y0, z: z1 }, { x: x1, y: y0, z: z1 }, { x: x1, y: y1, z: z1 }, { x: x0, y: y1, z: z1 },
+        ];
+        const floorNeighbor = (z0 + z1) / 2 < base;
+        const neighbors = [
+          k > 0 && core[ci(i, j, k - 1)] === 1,
+          k + 1 < nz && core[ci(i, j, k + 1)] === 1,
+          j > 0 ? core[ci(i, j - 1, k)] === 1 : floorNeighbor,
+          i + 1 < nx ? core[ci(i + 1, j, k)] === 1 : floorNeighbor,
+          j + 1 < ny ? core[ci(i, j + 1, k)] === 1 : floorNeighbor,
+          i > 0 ? core[ci(i - 1, j, k)] === 1 : floorNeighbor,
+        ];
+        builder.cell(v, floored(v, neighbors));
+      }
+    }
+  }
+  for (let k = 0; k < nz; k++) {
+    for (let j = 0; j < nr; j++) {
+      for (let i = 0; i < n; i++) {
+        if (!rim[ri(i, j, k)]) continue;
+        // Counterclockwise in XY: inner/start, outer/start, outer/end, inner/end.
+        const v = [
+          ringPointAt(j, i, k), ringPointAt(j + 1, i, k), ringPointAt(j + 1, i + 1, k), ringPointAt(j, i + 1, k),
+          ringPointAt(j, i, k + 1), ringPointAt(j + 1, i, k + 1), ringPointAt(j + 1, i + 1, k + 1), ringPointAt(j, i + 1, k + 1),
+        ];
+        const neighbors = [
+          k > 0 && rim[ri(i, j, k - 1)] === 1,
+          k + 1 < nz && rim[ri(i, j, k + 1)] === 1,
+          rim[ri(i - 1, j, k)] === 1,
+          j + 1 < nr && rim[ri(i, j + 1, k)] === 1,
+          rim[ri(i + 1, j, k)] === 1,
+          j > 0 ? rim[ri(i, j - 1, k)] === 1 : (zs[k]! + zs[k + 1]!) / 2 < base,
+        ];
+        builder.cell(v, floored(v, neighbors));
+      }
+    }
+  }
+  clamps.forEach((clamp, index) => clamp.stand(ground[index]!, builder));
+  const mesh = builder.mesh;
+  if (front && p.surface === 'sculpted') {
+    return LampSurfaceGenerator.sculpt(mesh, p, quality);
+  }
+  // Print front face down; assembly applies the inverse proper rotation.
+  if (front) {
+    mesh.vertices = mesh.vertices.map((q) => ({ x: q.x, y: -q.y, z: q.z }));
+    mesh.triangles = mesh.triangles.map((t) => ({ a: t.a, b: t.c, c: t.b }));
+  }
+  return mesh;
+};
+
+/**
  * Swift `CloudGenerator`. `radius(angle, inset, width, verticalScale, profile)` is scalar and
  * positional: a Swift call that leaves out `verticalScale:` passes 1 here.
  */
-export const CloudGenerator = { horizontalReach, horizontalIntervals, radius };
+export const CloudGenerator = { horizontalReach, horizontalIntervals, radius, generate };
 
 // --- CloudMeshBuilder (:1033-1052) ------------------------------------------------------------------
 

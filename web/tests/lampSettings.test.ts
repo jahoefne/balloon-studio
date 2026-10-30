@@ -1,12 +1,14 @@
-// Ported from mac/Tests/LampSettingsTests.swift @ cbda68d. The kit round trip (:21-27) follows
-// with the kit in WP-K4a part 2.
+// Ported from mac/Tests/LampSettingsTests.swift @ cbda68d. The kit round trip (:21-27) waits for WP-K4b.
 import { describe, it } from 'vitest';
 import { CoreFailure, LAMP_SETTINGS_ERROR } from '../src/core/api';
 import { cloudParameters, encodeCloudParameters, normalized } from '../src/core/lamp/cloudGeometry';
+import { CloudKit } from '../src/core/lamp/cloudKit';
 import { decodeLampSettings } from '../src/core/lamp/lampSettingsFile';
+import { wallLampDefaults } from '../src/core/lamp/sunGeometry';
+import { utf8Decode } from '../src/core/swift/text';
 import { check } from '../src/core/testing/check';
 import type { CloudParameters, WallLampKind } from '../src/core/types';
-import { referenceText, sameParameters } from './support/lamp';
+import { referenceText, sameParameters, waitsFor } from './support/lamp';
 
 describe('lamp settings', () => {
   it('keeps every saved option', () => {
@@ -25,6 +27,16 @@ describe('lamp settings', () => {
       const expected = normalized(input);
       const restored = decodeLampSettings(encodeCloudParameters(expected));
       check(sameParameters(restored, expected), 'Opening lamp settings lost a saved option');
+    }
+  });
+
+  // Use the JSON actually packaged alongside the printable parts.
+  it.skipIf(waitsFor.k4b)('restores the settings of an exported kit', () => {
+    for (const kind of ['cloud', 'sun'] as WallLampKind[]) {
+      const kit = new CloudKit(wallLampDefaults(kind));
+      const entry = kit.entries().find(([name]) => name === `${kind}-settings.json`)!;
+      const reopened = decodeLampSettings(utf8Decode(entry[1]));
+      check(sameParameters(reopened, kit.parameters), 'An exported lamp kit cannot restore its settings');
     }
   });
 
