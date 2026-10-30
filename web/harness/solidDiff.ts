@@ -136,7 +136,7 @@ function measure(welded: Welded): { volume: number; area: number } {
   return { volume, area };
 }
 
-function relativeDifference(a: number, b: number): number {
+export function relativeDifference(a: number, b: number): number {
   const scale = Math.max(Math.abs(a), Math.abs(b));
   return scale === 0 ? 0 : Math.abs(a - b) / scale;
 }

@@ -1,14 +1,17 @@
 // The wiring of the real core: what the grid in harness/ cannot see. Bytes and normalized settings
 // of exports are the harness's job (`VITE_CORE=real npm run test:reference`).
 import { readdirSync, readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { routeRequest } from '../../worker/route';
 import type { ExportRequest, PreviewRequest } from '../../worker/protocol';
 import { CoreFailure, INVALID_SETTINGS_MESSAGE, LAMP_SETTINGS_ERROR, MISSING_SETTINGS_MESSAGE, STL_ERRORS, type Codec } from '../api';
 import { core as stub } from '../stub/index';
-import { FIGURE_STYLES, type CableClipParameters, type MeshBuffers } from '../types';
+import { CLOUD_VIEWS, FIGURE_STYLES, type CableClipParameters, type MeshBuffers } from '../types';
 import { core } from './index';
 import { core as parameters } from './parameters';
+
+// Real geometry, also under the stub's config with its 5 s, and on slow CI runners.
+vi.setConfig({ testTimeout: 120_000 });
 
 const fixtureDir = new URL('../../../../references/fixtures/legacy-settings/', import.meta.url);
 const fixtures = readdirSync(fixtureDir)
@@ -108,10 +111,53 @@ describe('previews through the worker route', () => {
     expect(preview.clip).toEqual(core.clip.clip(core.clip.defaults));
   });
 
-  it('cloud and patterned balloons still come from the stub', () => {
+  it('patterned balloons still come from the stub', () => {
     const patterned = { ...snapshot, pattern: { ...snapshot.pattern, style: 'Hearts' as const } };
     expect(core.balloon.preview(patterned).mesh.positions).toEqual(stub.balloon.preview(patterned).mesh.positions);
-    expect(core.cloud.preview).toBe(stub.cloud.preview);
+  });
+
+  it('cloud: all eight views, colors as CloudEditor.swift picks them', () => {
+    const { result, transfer } = route({ part: 'cloud', input: core.cloud.defaults('cloud') });
+    const preview = result as ReturnType<typeof core.cloud.preview>;
+    const { views } = preview;
+    expect(Object.keys(views).sort()).toEqual([...CLOUD_VIEWS].sort());
+    for (const view of ['assembled', 'exploded', 'back'] as const) checkMesh(views[view], true);
+    for (const view of ['rear', 'front', 'seal', 'clamp'] as const) checkMesh(views[view], false);
+    expect(new Set(views.assembled.faceColors)).toEqual(new Set([0, 1, 2, 3]));
+    expect(new Set(views.back.faceColors)).toEqual(new Set([0, 1, 2, 3]));
+    expect(views.insert).toBe(views.rear);
+    expect(preview.nailInsert).toBeNull();
+    expect(preview.hasInsertMesh).toBe(false);
+    expect(preview.clampCount).toBe(1);
+    expect(preview.cableCount).toBe(1);
+    expect(preview.cablesWithoutClamp).toEqual([]);
+    expect(preview.printedParts).toBe(5);
+    expect(preview.ledPlan.sections.length).toBeGreaterThan(0);
+    expect(preview.ledPlan.nominalWatts).toBeCloseTo(preview.ledPlan.totalLength * 0.009, 12);
+    expect(preview.instructions).toContain('Print');
+    expect(new Set(transfer).size).toBe(transfer.length);
+  });
+
+  it('cloud: no clamp shows the seals, an insert has its mesh and colors the rear', () => {
+    const p = { ...core.cloud.defaults('cloud'), strainRelief: false, nailInsert: true };
+    const { views, clampCount, cablesWithoutClamp, nailInsert, hasInsertMesh, printedParts } = core.cloud.preview(p);
+    expect(clampCount).toBe(0);
+    expect(cablesWithoutClamp).toEqual(['right']);
+    expect(views.clamp).toBe(views.seal);
+    expect(hasInsertMesh).toBe(true);
+    expect(nailInsert).toEqual(core.cloud.nailInsert(core.cloud.normalize(p)));
+    checkMesh(views.insert, false);
+    checkMesh(views.rear, true);
+    expect(new Set(views.rear.faceColors)).toEqual(new Set([0, 3]));
+    expect(printedParts).toBe(4);
+  });
+
+  it('sun: a cloud kit with its own names', () => {
+    const p = core.cloud.defaults('sun');
+    const preview = core.cloud.preview(p);
+    checkMesh(preview.views.assembled, true);
+    expect(preview.parameters.width).toBe(200);
+    expect(core.cloud.export(p, { quality: 'preview' }).filename).toBe(core.cloud.filename(core.cloud.normalize(p)));
   });
 });
 
@@ -123,6 +169,9 @@ describe('cancellation', () => {
     expect(core.balloon.preview(snapshot, empty).mesh.indices.length).toBe(0);
     expect(core.basket.preview(core.basket.defaults, empty).mesh.indices.length).toBe(0);
     expect(core.ring.preview(core.ring.presets.large, empty).assembled.indices.length).toBe(0);
+    const lamp = core.cloud.preview(core.cloud.defaults('sun'), empty);
+    expect(CLOUD_VIEWS.every((view) => lamp.views[view].indices.length === 0)).toBe(true);
+    expect(lamp.parameters.kind).toBe('sun');
     expect(core.figure.preview(core.figure.defaults, empty).printMesh.indices.length).toBe(0);
     const clip = core.clip.preview(core.clip.defaults, empty);
     expect(clip.printMesh.indices.length).toBe(0);
@@ -177,9 +226,10 @@ describe('exports', () => {
     expect(route({ part: 'ring', input: core.ring.presets.solid }).mime).toBe('model/stl');
     expect(route({ part: 'ring', input: core.ring.presets.large }).mime).toBe('application/zip');
     expect(route({ part: 'figure', input: { parameters: core.figure.defaults, variant: 'single' } }).mime).toBe('model/stl');
+    expect(route({ part: 'cloud', input: core.cloud.defaults('cloud') }).mime).toBe('application/zip');
   });
 
-  it('honor the quality', { timeout: 60_000 }, () => {
+  it('honor the quality', () => {
     const size = (quality: 'preview' | 'export') => core.basket.export(core.basket.defaults, { quality }).files[0]!.bytes.length;
     expect(size('preview')).toBeLessThan(size('export'));
   });
@@ -227,6 +277,7 @@ describe('codecs read like JSONDecoder', () => {
     ['ring', core.ring.codec as unknown as Codec<never>, 'height'],
     ['figure', core.figure.codec as unknown as Codec<never>, 'height'],
     ['clip', core.clip.codec as unknown as Codec<never>, 'length'],
+    ['cloud', core.cloud.codec as unknown as Codec<never>, 'width'],
   ];
 
   it.each(codecs)('%s: lenient, the first of two keys, a trailing comma, a BOM', (_, codec, key) => {
@@ -269,9 +320,22 @@ describe('codecs read like JSONDecoder', () => {
     expect(core.balloon.codec.decode('{"panels":1.6e1}').panels).toBe(16);
   });
 
-  it('lamp settings stay on the stub until WP-K4', () => {
+  it('cloud: a nil outlet is omitted, a former sun design opens as the first sun', () => {
+    const p = core.cloud.defaults('cloud');
+    expect(core.cloud.codec.encode(p)).not.toContain('secondCableSide');
+    expect(core.cloud.codec.decode(core.cloud.codec.encode(p))).toEqual(p);
+    const sun = core.cloud.codec.decode('{"kind":"sun","sunStyle":"halo"}');
+    expect(sun).toEqual(core.cloud.defaults('sun'));
+    expect(failure(() => core.cloud.codec.decode('{"style":"zebra"}')).message).toBe(INVALID_SETTINGS_MESSAGE);
+  });
+
+  it('lamp settings: width, depth and diffuser are required, every failure is the one message', () => {
     expect(core.lampSettings.decode('{"width":100,"depth":16,"diffuserThickness":0.8}').width).toBe(100);
-    expect(failure(() => core.lampSettings.decode('{"width":100}')).message).toBe(LAMP_SETTINGS_ERROR);
+    for (const text of ['{"width":100}', 'nope', 'null', '{"width":"100","depth":16,"diffuserThickness":0.8}']) {
+      const error = failure(() => core.lampSettings.decode(text));
+      expect(error.code).toBe('invalid-lamp-settings');
+      expect(error.message).toBe(LAMP_SETTINGS_ERROR);
+    }
   });
 });
 
@@ -323,5 +387,28 @@ describe('the stub agrees with the real core on everything but geometry', () => 
   it('every legacy fixture that holds lamp settings decodes alike', () => {
     expect(fixtures.length).toBeGreaterThan(0);
     for (const { text } of fixtures) expect(core.lampSettings.decode(text)).toEqual(stub.lampSettings.decode(text));
+  });
+
+  it('lamp: derived values, normalizer, insert and outline; the clamp is the stub\'s approximation', () => {
+    const lamps = [
+      core.cloud.defaults('cloud'),
+      core.cloud.defaults('sun'),
+      { ...core.cloud.defaults('cloud'), style: 'cotton' as const, mirrored: true, width: 123.4, surface: 'sculpted' as const },
+      { ...core.cloud.defaults('sun'), sunStyle: 'bold-eight' as const, width: 500, cableSide: 'top' as const, secondCableSide: 'left' as const },
+    ];
+    for (const p of lamps) {
+      const q = core.cloud.normalize(p);
+      expect(stub.cloud.normalize(p)).toEqual(q);
+      expect(stub.cloud.derived(q)).toEqual(core.cloud.derived(q));
+      expect(stub.cloud.nailInsertProblem(q)).toEqual(core.cloud.nailInsertProblem(q));
+      expect(stub.cloud.nailInsert(q)).toEqual(core.cloud.nailInsert(q));
+      expect(stub.cloud.cableConfigurations(q)).toEqual(core.cloud.cableConfigurations(q));
+    }
+    expect(stub.cloud.constants).toEqual(core.cloud.constants);
+    const refs = [{ kind: 'cloud', style: 'billow', mirrored: true }, { kind: 'sun', sunStyle: 'pinwheel' }] as const;
+    for (const ref of refs) {
+      expect(stub.cloud.profileExtent(ref)).toEqual(core.cloud.profileExtent(ref));
+      for (const angle of [0, 1, 2.5, 4]) expect(stub.cloud.radius(angle, ref, { inset: 2, width: 230 })).toBe(core.cloud.radius(angle, ref, { inset: 2, width: 230 }));
+    }
   });
 });

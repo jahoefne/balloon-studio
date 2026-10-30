@@ -84,15 +84,16 @@ describe('App shell', () => {
     expect(screen.getByRole<HTMLInputElement>('checkbox', { name: 'Wireframe' }).checked).toBe(true);
   });
 
-  it('Mod+E runs the export of the part on screen, once at a time', async () => {
+  it('Mod+E opens the export panel of the part on screen, once at a time', async () => {
+    const user = userEvent.setup();
     render(<App />);
-    const button = screen.getByTestId('exportBalloon');
     const begin = vi.spyOn(useBalloonStore.getState(), 'beginExport');
     fireEvent.keyDown(window, { key: 'e', ctrlKey: true });
-    expect(button.textContent).toContain('Preparing STL…');
+    const dialog = screen.getByRole('dialog', { name: 'Export Balloon STL' });
     fireEvent.keyDown(window, { key: 'e', ctrlKey: true });
-    await waitFor(() => expect(button.textContent).toContain('Export STL…'));
-    expect(begin).toHaveBeenCalledTimes(2);
+    expect(begin).toHaveBeenCalledTimes(1);
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog', { name: 'Export Balloon STL' })).toBeNull();
     begin.mockRestore();
   });
 

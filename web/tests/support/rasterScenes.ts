@@ -2,13 +2,19 @@
 // tests/hashes.test.ts. No Node APIs: the same module runs in Node and in Chromium, Firefox and WebKit
 // (npm run test:browser).
 //
-// The primitive/* and scene/* drawings are those of src/core/raster/primitives.test.ts, the artwork/* sizes those of
+// The primitive/* and scene/* drawings are those of src/core/raster/primitives.test.ts, the artwork/night-flight-* sizes those of
 // tests/nightFlightArtwork.test.ts and the masks those of tests/textReference.test.ts, none of which is importable here
 // (they need node:fs and define tests). Each compares with the same hash file, so a change to one copy alone fails.
 //
 // To add a raster: a line in RASTER_SCENES, then tests/fixtures/README.md, "Hashes".
 import { nightFlightBytes } from '../../src/core/artwork/nightFlightArtwork';
-import { BALLOON_TEXT_FONTS, type BalloonTextFont } from '../../src/core/patterns/raster';
+import { summitCableCarBytes } from '../../src/core/artwork/summitCableCarArtwork';
+import { generate } from '../../src/core/balloon/balloonGenerator';
+import { classic, round, tall } from '../../src/core/balloon/balloonParameters';
+import { makePatternSettings } from '../../src/core/patterns/balloonPatterns';
+import { NightFlightRelief } from '../../src/core/patterns/nightFlightRelief';
+import { BALLOON_TEXT_FONTS, fieldFromBytes, type BalloonTextFont, type ReliefArtwork } from '../../src/core/patterns/raster';
+import type { BalloonParameters } from '../../src/core/types';
 import { ellipsePath, GrayCanvas, rectPath } from '../../src/core/raster/canvas';
 import { GrayGradient } from '../../src/core/raster/gradient';
 import { Path } from '../../src/core/raster/path';
@@ -249,6 +255,17 @@ function worstCaseScene(c: GrayCanvas): number {
   return primitives;
 }
 
+// Summit needs the crest radius of the envelope, so this draws it as the app does: the TS mesh through K3's relief.
+function summitScene(p: BalloonParameters): Uint8Array {
+  let bytes: Uint8Array | null = null;
+  const capture: ReliefArtwork = (width, height, diameter, columns, rows, radius) => {
+    bytes = summitCableCarBytes(width, height, diameter, columns, rows, radius);
+    return fieldFromBytes(bytes);
+  };
+  new NightFlightRelief(makePatternSettings({ style: 'Summit Cable Car' }), p, generate(p), { artworks: { nightFlight: capture, summitCableCar: capture } });
+  return bytes as unknown as Uint8Array;
+}
+
 /** Each entry draws its raster from scratch and returns the bytes that get hashed. */
 export const RASTER_SCENES: Readonly<Record<string, () => Uint8Array>> = {
   ...Object.fromEntries(PRIMITIVES.map(([name, body]) => [`primitive/${name}`, () => draw(body).pixels])),
@@ -256,6 +273,9 @@ export const RASTER_SCENES: Readonly<Record<string, () => Uint8Array>> = {
   'artwork/night-flight-classic': () => nightFlightBytes(531.557476987393, 152.50000000000003, 180, 2658, 848),
   'artwork/night-flight-round': () => nightFlightBytes(561.088447931137, 130.96, 190, 2806, 728),
   'artwork/night-flight-tall': () => nightFlightBytes(472.4955350999049, 168.63, 160, 2363, 937),
+  'artwork/summit-cable-car-classic': () => summitScene(classic),
+  'artwork/summit-cable-car-round': () => summitScene(round),
+  'artwork/summit-cable-car-tall': () => summitScene(tall),
 };
 
 // The fonts as bundled bytes: the browser run has no file system, and these URLs are data: URLs in every engine.
