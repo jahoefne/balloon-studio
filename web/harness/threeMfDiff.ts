@@ -106,6 +106,7 @@ export function diffModel(expected: Uint8Array, actual: Uint8Array): DiffResult 
     maxUlp,
     ulpCount,
     normalDiffs: 0,
+    nearZeroCorners: 0,
     notes: tags.size > 0 ? [...notes.all(), summary] : [summary],
   };
 }

@@ -12,6 +12,12 @@ import { IntKey3Map } from '../src/core/geometry/weld';
 import type { StlFacts } from './manifest';
 import { NoteList, mismatch, type DiffResult } from './result';
 
+/**
+ * Both values of a coordinate below this (mm) count as equal: a value that should be exactly 0
+ * comes out as ±1e-14 with one libm and 0 with the other, which is no distance in Float32 steps.
+ * Two exact zeros of opposite sign stay an error; they do not come from rounding noise.
+ */
+export const NEAR_ZERO_MM = 1e-9;
 /** Stored normal against the normal of the stored vertices (writer check, both files). */
 export const WRITER_NORMAL_DOT = 1 - 1e-4;
 /** TS normal against Swift normal. */
@@ -167,6 +173,7 @@ export function diffStl(expected: Uint8Array, actual: Uint8Array): DiffResult {
 
   const notes = new NoteList();
   let ulpCount = 0;
+  let nearZeroCorners = 0;
   let far = 0;
   let signedZeros = 0;
   let maxUlp = 0;
@@ -193,7 +200,10 @@ export function diffStl(expected: Uint8Array, actual: Uint8Array): DiffResult {
       if (distance === 0) {
         signedZeros++;
         notes.add(`${where}: signed zero`);
-      } else if (distance === 1 && (eb ^ ab) >= 0 && !isNonFinite(eb) && !isNonFinite(ab)) {
+      } else if (Math.abs(a.getFloat32(o + k, true)) < NEAR_ZERO_MM && Math.abs(e.getFloat32(o + k, true)) < NEAR_ZERO_MM) {
+        nearZeroCorners++;
+      } else if (distance === 1 && !isNonFinite(eb) && !isNonFinite(ab)) {
+        // Neighbours of opposite sign exist only around 0, which the branch above takes.
         ulpCount++;
         if (maxUlp < 1) maxUlp = 1;
       } else {
@@ -266,6 +276,7 @@ export function diffStl(expected: Uint8Array, actual: Uint8Array): DiffResult {
 
   const summary: string[] = [];
   if (ulpCount > 0) summary.push(`${ulpCount} coordinates 1 ULP apart`);
+  if (nearZeroCorners > 0) summary.push(`${nearZeroCorners} coordinates differ below ${NEAR_ZERO_MM} mm`);
   if (normalDiffs > 0) summary.push(`${normalDiffs} normals differ (max ${maxNormalUlp} ULP, min dot ${minimumDot})`);
   if (sliverNormals > 0) summary.push(`${sliverNormals} of them on slivers`);
   return {
@@ -274,12 +285,13 @@ export function diffStl(expected: Uint8Array, actual: Uint8Array): DiffResult {
     maxUlp,
     ulpCount,
     normalDiffs,
+    nearZeroCorners,
     notes: tags.length > 0 ? notes.all() : [...(summary.length > 0 ? [summary.join(', ')] : []), ...notes.all()],
   };
 }
 
 function ulpApart(a: number, b: number): boolean {
-  if (a === b) return true;
+  if (a === b || (Math.abs(a) < NEAR_ZERO_MM && Math.abs(b) < NEAR_ZERO_MM)) return true;
   const buffer = new DataView(new ArrayBuffer(8));
   buffer.setFloat32(0, a, true);
   buffer.setFloat32(4, b, true);
