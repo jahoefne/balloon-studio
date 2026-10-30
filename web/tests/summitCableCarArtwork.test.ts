@@ -22,6 +22,7 @@ import { Path, Verb } from '../src/core/raster/path';
 import { check } from '../src/core/testing/check';
 import { blockMeanDifference, heightfieldStats, pixelAgreement, THRESHOLDS } from './support/compare';
 import { hasRasterPack, loadReliefDump, type ReliefDump } from './support/rasterFixtures';
+import { FULL, PERF } from './support/tier';
 
 const SETTINGS = makePatternSettings({ style: 'Summit Cable Car' });
 const PARAMETERS = { classic, round, tall } as const;
@@ -400,7 +401,8 @@ describe('the seam of core/patterns/raster.ts', () => {
 
 describe('performance', () => {
   // docs/plan.md §7, §14: 0.5 s in Node locally, a hard limit only with PERF=1 (load from other runs is not ours).
-  it('draws classic within the budget', { timeout: 60_000 }, () => {
+  // Not in the `fast` tier: a warning in `full`.
+  it.runIf(PERF || FULL)('draws classic within the budget', { timeout: 60_000 }, () => {
     const relief = tsRelief('classic');
     const { width, height, columns, rows, crest } = relief;
     const radius = crestRadius(crest, height, rows);
@@ -410,7 +412,7 @@ describe('performance', () => {
       summitCableCarBytes(width, height, classic.diameter, columns, rows, radius);
       best = Math.min(best, performance.now() - start);
     }
-    if (process.env['PERF'] === '1') expect(best).toBeLessThanOrEqual(500);
+    if (PERF) expect(best).toBeLessThanOrEqual(500);
     else if (best > 500) console.warn(`Summit Cable Car classic took ${best.toFixed(0)} ms (budget 500 ms)`);
   });
 });

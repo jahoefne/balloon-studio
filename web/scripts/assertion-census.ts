@@ -22,8 +22,6 @@ type Source = string | Section;
 interface Row {
   swift: string;
   ts: readonly Source[];
-  /** The work package that still has to port this file. Its assertions count as allowlisted until the TS file exists. */
-  pending?: string;
 }
 
 const BASKET = 'tests/basket.test.ts';
@@ -55,7 +53,7 @@ const TABLE: readonly Row[] = [
   },
   { swift: 'PatternTests.swift', ts: ['tests/textMask.test.ts', { file: PATTERNS, to: '// NightFlightTests.validateFlightSTL' }] },
   { swift: 'STLImportTests.swift', ts: ['tests/stlImport.test.ts'] },
-  { swift: 'SummitCableCarTests.swift', ts: ['tests/summitCableCarArtwork.test.ts'], pending: 'WP-R5' },
+  { swift: 'SummitCableCarTests.swift', ts: ['tests/summitCableCarArtwork.test.ts'] },
   { swift: 'SunTests.swift', ts: ['tests/sun.test.ts'] },
   { swift: 'WickerTests.swift', ts: ['src/core/testing/basket.ts', { file: BASKET, from: '/** WickerTests.swift', to: "describe('BasketParameters'" }] },
 ];
@@ -182,7 +180,6 @@ interface Result {
   swiftCount: number;
   allowed: number;
   ts: number;
-  pending?: string;
   ok: boolean;
   note: string;
 }
@@ -201,17 +198,10 @@ function censusRow(row: Row): Result {
   const sources = row.ts.map(sectionText);
   const missing = sources.filter((source) => source.missing).map((source) => source.label);
   const ts = sources.reduce((sum, source) => sum + count(codeOnly(source.text), TS_ASSERTION), 0);
-  const waiting = row.pending !== undefined && missing.length > 0;
   const required = swiftCount - allowed;
-  const ok = waiting || (missing.length === 0 && ts >= required);
-  const note = waiting
-    ? `waits for ${row.pending}`
-    : missing.length > 0
-      ? `missing: ${missing.join(', ')}`
-      : ts < required
-        ? `${required - ts} short`
-        : '';
-  return { swift: row.swift, swiftCount, allowed: waiting ? swiftCount : allowed, ts, ...(row.pending === undefined ? {} : { pending: row.pending }), ok, note };
+  const ok = missing.length === 0 && ts >= required;
+  const note = missing.length > 0 ? `missing: ${missing.join(', ')}` : ts < required ? `${required - ts} short` : '';
+  return { swift: row.swift, swiftCount, allowed, ts, ok, note };
 }
 
 function unmatchedMessages(row: Row): string[] {
