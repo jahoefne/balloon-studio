@@ -1,5 +1,5 @@
 // Ported from mac/Tests/SunTests.swift @ cbda68d, without the files written to .build/test-output
-// (:161-166, plan §8). The kits wait for WP-K4b, the sculpted fronts of :55-57 for WP-K4c too.
+// (:161-166, plan §8). The sculpted fronts of :55-57 wait for WP-K4c.
 // Without FULL the kits run at preview quality, with the default and the next two only.
 import { describe, it } from 'vitest';
 import { binarySTL } from '../src/core/io/binaryStl';
@@ -185,7 +185,7 @@ describe('suns', () => {
 
 const bytesEqual = (a: Uint8Array, b: Uint8Array): boolean => a.length === b.length && a.every((value, i) => value === b[i]);
 
-describe.skipIf(waitsFor.k4b)('sun kits', () => {
+describe('sun kits', () => {
   const defaults = wallLampDefaults('sun');
 
   it('Soft star and Cones share their back', () => {
@@ -234,7 +234,7 @@ describe.skipIf(waitsFor.k4b)('sun kits', () => {
           check(parsed.vertices.length - parsed.triangles.length / 2 === (name === 'back' ? 0 : 2), 'Sun has extra shells or holes');
           check(fitsP2S(p) === (p.width <= 240), 'Sun bed fit incorrect');
         }
-        checkCloudFeatures(p, parts[0]!, parts[1]!, FULL && index < 2);
+        checkCloudFeatures(p, parts[0]!, parts[1]!, FULL && index < 2, parseSTL(binarySTL(kit.seal)));
       }
     });
     for (const width of [minimumWidth(base), 200, 500]) {

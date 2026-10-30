@@ -1,12 +1,20 @@
-// Ported from mac/Tests/CableOutletTests.swift @ cbda68d: the outlet logic of checkChainedOutlets
-// (:6-51). The chained kits (:52-117) follow once the fittings exist (WP-K4b).
+// Ported from mac/Tests/CableOutletTests.swift @ cbda68d: checkChainedOutlets (:6-115), without the
+// files written to .build/test-output (:101-106, plan §8). Without FULL the kits run in one design
+// each and at preview quality; the sculpted variants wait for WP-K4c.
 import { describe, it } from 'vitest';
-import { cableSides, encodeCloudParameters, filename, normalized, selectCableSide, setCableOutletCount, withCableSides } from '../src/core/lamp/cloudGeometry';
+import { binarySTL } from '../src/core/io/binaryStl';
+import { CableClamp } from '../src/core/lamp/cableClamp';
+import { cableConfigurations, cableSides, cloudParameters, displayName, encodeCloudParameters, filename, height, minimumWidth, normalized, selectCableSide, setCableOutletCount, withCableSides } from '../src/core/lamp/cloudGeometry';
+import { CloudKit } from '../src/core/lamp/cloudKit';
 import { decodeLampSettings } from '../src/core/lamp/lampSettingsFile';
 import { wallLampDefaults } from '../src/core/lamp/sunGeometry';
 import { check } from '../src/core/testing/check';
-import { CABLE_SIDES, type CableSide, type CloudParameters, type WallLampKind } from '../src/core/types';
-import { decoded, sameParameters } from './support/lamp';
+import { parseSTL } from '../src/core/testing/stl';
+import { CABLE_SIDE_TITLE, CABLE_SIDES, CLOUD_STYLES, SUN_STYLES, type CableSide, type CloudParameters, type WallLampKind } from '../src/core/types';
+import { decoded, sameParameters, waitsFor } from './support/lamp';
+import { checkCableClamp, checkCableOutlet, checkLEDLayout } from './support/lampFeatures';
+
+const FULL = Boolean(process.env['FULL']);
 
 const same = (a: readonly CableSide[], b: readonly CableSide[]): boolean => a.length === b.length && a.every((side, i) => side === b[i]);
 
@@ -85,4 +93,62 @@ describe('chained outlets: the outlet logic', () => {
       check(same(cableSides(single), expected), `New outlets start on unexpected sides: ${cableSides(single).join(', ')}`);
     }
   });
+});
+
+describe('chained outlets: the kits', () => {
+  const designs: CloudParameters[] = [
+    ...CLOUD_STYLES.flatMap((style) => [false, true].map((mirrored) => ({ ...cloudParameters(), style, mirrored }))),
+    ...SUN_STYLES.map((sunStyle) => ({ ...wallLampDefaults('sun'), sunStyle })),
+  ];
+  const cases = designs.map((design, designIndex) => [displayName(design), design.mirrored, designIndex, design] as const);
+
+  it.each(FULL ? cases : cases.filter(([, , designIndex]) => designIndex === 0 || designIndex === 12))('%s, mirrored %s', (_, __, designIndex, design) => {
+    sets.forEach((set, setIndex) => {
+      if (!FULL && setIndex !== 0 && set.length !== 4) return;
+      for (let variant = 0; variant < 3; variant++) {
+        // Each outlet comes first somewhere: the mesher takes them in turn.
+        const turn = (designIndex + variant) % set.length;
+        let p = withCableSides(design, [...set.slice(turn), ...set.slice(0, turn)]);
+        if (variant === 0) p = { ...p, width: minimumWidth(p), depth: 16, cableDiameter: 6, nailHead: 10, nailShaft: 5, clipFit: 0.5 };
+        if (variant === 2) p = { ...p, width: 500, depth: 40, cableDiameter: 2, strainRelief: false };
+        // Exercise both print orientations, including both skirt notches.
+        if (variant === 0 && (designIndex + setIndex) % 2 === 0) p = { ...p, surface: 'sculpted' };
+        p = normalized(p);
+        if (p.surface === 'sculpted' && waitsFor.k4c) continue;
+        const label = `${displayName(p)}, ${Math.trunc(p.width)} mm, ${cableSides(p).join('+')}, ${p.surface}`;
+        checkLEDLayout(p);
+        for (const quality of FULL ? (['preview', 'export'] as const) : (['preview'] as const)) {
+          const kit = new CloudKit(p, quality);
+          const back = parseSTL(binarySTL(kit.back)), front = parseSTL(binarySTL(kit.front));
+          back.validate();
+          front.validate();
+          check(back.vertices.length - back.triangles.length / 2 === 2 - 2 * set.length, `Back must have one cable through-path per outlet: ${label}`);
+          check(front.vertices.length - front.triangles.length / 2 === 2, `Front must remain one closed shell: ${label}`);
+          check(Math.abs(back.dimensions.x - p.width) < 0.003 && Math.abs(back.dimensions.y - height(p)) < 0.003, `Several outlets changed dimensions: ${label}`);
+          check(kit.cables.length === set.length && kit.printedParts === 2 + set.length + 2 * kit.clampCount, 'Wrong parts count with several outlets');
+          check(kit.clampCount === cableConfigurations(p).filter((q) => CableClamp.create(q) !== null).length, `A clamp lost its posts: ${label}`);
+          check(kit.assembly().triangles.length === kit.assemblyColors.length, 'Assembly colors miss an outlet');
+          check(kit.backWithLEDGuides.triangles.length === kit.backColors.length, 'Back preview colors miss an outlet');
+          const placed = kit.placedFront();
+          const clamps = kit.cables.flatMap((cable) => (cable.clamp === null ? [] : [cable.clamp]));
+          for (const cable of kit.cables) {
+            const seal = parseSTL(binarySTL(cable.seal));
+            checkCableOutlet(cable.parameters, back, placed, seal, false, clamps);
+            if (variant !== 2) checkCableClamp(cable.parameters, back, placed, cable.placedSeal(), false);
+            check(kit.instructions.includes(cable.sealFilename), 'Assembly guide misses a seal');
+            check(kit.instructions.includes(`## ${CABLE_SIDE_TITLE[cable.parameters.cableSide]} cable outlet`), 'Assembly guide misses an outlet');
+            check(kit.ledPlan.svg.includes(CABLE_SIDE_TITLE[cable.parameters.cableSide]), 'LED plan misses an outlet');
+          }
+          if (variant === 1 && quality === 'export') {
+            const entries = kit.entries();
+            check(new Set(entries.map(([name]) => name)).size === entries.length, 'Outlet parts overwrite each other');
+            check(entries.filter(([name]) => name.endsWith('.stl')).length === kit.printedParts, 'Wrong STL count');
+            for (const cable of kit.cables) {
+              check(entries.some(([name]) => name === cable.sealFilename), 'Export lacks a side-specific seal');
+            }
+          }
+        }
+      }
+    });
+  }, 3_600_000);
 });
