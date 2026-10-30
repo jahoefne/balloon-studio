@@ -1,0 +1,89 @@
+{
+  "antialias" : false,
+  "aspect" : 7.6427121204967179,
+  "bounds" : {
+    "height" : 78.44074074074075,
+    "width" : 599.5,
+    "x" : 3.9000000000000004,
+    "y" : -1
+  },
+  "case" : "text-rounded-zoe-lea",
+  "font" : "Rounded",
+  "fontPostScriptName" : "Nunito-Bold",
+  "fontSource" : "file:Nunito-Bold.ttf",
+  "glyphCount" : 12,
+  "height" : 256,
+  "rowOrder" : "row 0 is the bottom of the glyphs",
+  "runs" : [
+    {
+      "font" : "Nunito-Bold",
+      "glyphs" : [
+        235,
+        373,
+        299,
+        897,
+        960,
+        897,
+        105,
+        288,
+        241,
+        897,
+        937,
+        787
+      ],
+      "positions" : [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          0
+        ],
+        [
+          116.59999999999999,
+          0
+        ],
+        [
+          170.80000000000001,
+          0
+        ],
+        [
+          197.90000000000001,
+          0
+        ],
+        [
+          270.5,
+          0
+        ],
+        [
+          297.60000000000002,
+          0
+        ],
+        [
+          353.30000000000001,
+          0
+        ],
+        [
+          407.5,
+          0
+        ],
+        [
+          462.19999999999999,
+          0
+        ],
+        [
+          489.30000000000001,
+          0
+        ],
+        [
+          549.29999999999995,
+          0
+        ]
+      ]
+    }
+  ],
+  "sha256" : "265b9fd2713104372cad5fcb55ab8bbfcfd46d9ef5b5cab1d2a4714815eed3dc",
+  "text" : "Zoë & Léa <3",
+  "width" : 1957
+}

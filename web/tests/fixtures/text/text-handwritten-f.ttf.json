@@ -1,0 +1,34 @@
+{
+  "antialias" : false,
+  "aspect" : 0.73559822747415071,
+  "bounds" : {
+    "height" : 67.700000000000003,
+    "width" : 49.800000000000004,
+    "x" : 7.5,
+    "y" : -0.70000000000000007
+  },
+  "case" : "text-handwritten-f",
+  "font" : "Handwritten",
+  "fontPostScriptName" : "ComicNeue-Bold",
+  "fontSource" : "file:ComicNeue-Bold.ttf",
+  "glyphCount" : 1,
+  "height" : 256,
+  "rowOrder" : "row 0 is the bottom of the glyphs",
+  "runs" : [
+    {
+      "font" : "ComicNeue-Bold",
+      "glyphs" : [
+        41
+      ],
+      "positions" : [
+        [
+          0,
+          0
+        ]
+      ]
+    }
+  ],
+  "sha256" : "d050386e76b06acf2c94329c0dbf4eb9d78b08fe54bffc71774d171eb8304c61",
+  "text" : "F",
+  "width" : 189
+}

@@ -1,0 +1,34 @@
+{
+  "antialias" : false,
+  "aspect" : 0.81818181818181823,
+  "bounds" : {
+    "height" : 68.200000000000003,
+    "width" : 55.800000000000004,
+    "x" : 4,
+    "y" : -0.60000000000000009
+  },
+  "case" : "text-handwritten-o",
+  "font" : "Handwritten",
+  "fontPostScriptName" : "ComicNeue-Bold",
+  "fontSource" : "file:ComicNeue-Bold.ttf",
+  "glyphCount" : 1,
+  "height" : 256,
+  "rowOrder" : "row 0 is the bottom of the glyphs",
+  "runs" : [
+    {
+      "font" : "ComicNeue-Bold",
+      "glyphs" : [
+        50
+      ],
+      "positions" : [
+        [
+          0,
+          0
+        ]
+      ]
+    }
+  ],
+  "sha256" : "7ac110539333beb539b1a04aaec29c6715bba67b96804e4e1e36df1ea3f8c099",
+  "text" : "O",
+  "width" : 210
+}
