@@ -25,7 +25,7 @@ const mesh = (change: Partial<MeshBuffers> = {}): MeshBuffers => ({
 const setBundle = (m: MeshBuffers, estimate: PurgeEstimate = { mixedLayers: 12, minimumChanges: 4, maximumChanges: 4, minimumGrams: 1.25, maximumGrams: 1.25 }) =>
   act(() => {
     const { parameters, pattern, purge, revision } = useBalloonStore.getState();
-    useBalloonStore.setState({ bundle: { parameters, pattern, purge, mesh: m, estimate }, faceColors: m.faceColors ?? null, estimate, revision: revision + 1, updating: false });
+    useBalloonStore.setState({ bundle: { parameters, pattern, purge, mesh: m, estimate, missingGlyphs: [] }, faceColors: m.faceColors ?? null, estimate, revision: revision + 1, updating: false });
   });
 
 const metrics = () =>
