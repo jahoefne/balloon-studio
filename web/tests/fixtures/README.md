@@ -9,14 +9,14 @@ tests. Tests read everything through `tests/support/rasterFixtures.ts`.
 
 ## Where each set is
 
-The relief and text dumps are 67 MB raw, too much for the repository, so they stay in the reference pack and are not
+The relief and text dumps are 75 MB raw, too much for the repository, so they stay in the reference pack and are not
 copied here. `deploy.yml` has no pack, so tests of pack data skip themselves on CI and run locally.
 
 | Set | Where | Read with |
 | --- | --- | --- |
-| Relief: Night Flight and Summit Cable Car × classic, round, tall (6 cases) | Pack: `rasters/relief-*.{raw.pgm,field.f32,json}` | `loadReliefDump(id)` |
-| Text with the Apple fonts: 5 fonts × `F`, `Hello`, `O`, `Zoë & Léa <3`, plus `東京` in Rounded (21 cases) | Pack: `rasters/text-*.{pgm,json}` | `loadTextDump(id)` |
-| Text with the bundled TTFs: the same without `東京` (20 cases) | Here: `text/<id>.ttf.{pgm.gz,json}` (WP-R3; the release `refs-v1` has them only after its next rebuild) | `loadTextDump(id, 'ttf')` |
+| Relief: Night Flight and Summit Cable Car × classic, round, tall, plus 3 small migrations (9 cases) | Pack: `rasters/relief-*.{raw.pgm,field.f32,json}` | `loadReliefDump(id)` |
+| Text with the Apple fonts: 5 fonts × `F`, `Hello`, `O`, `Zoë & Léa <3`, plus `東京` in Rounded and the Milo migration (22 cases) | Pack: `rasters/text-*.{pgm,json}` | `loadTextDump(id)` |
+| Text with the bundled TTFs: the same without `東京` (20 cases) | Here: `text/<id>.ttf.{pgm.gz,json}` (WP-R3; also in the pack since `refs-v2`, there as well for `東京` and `text-legacy-milo`) | `loadTextDump(id, 'ttf')` |
 | Primitives: 14 calibration canvases, `index.json` with their commands | Tier A: `references/files`, through `references/manifest.json` | `loadPrimitive(name)`, `loadPrimitiveIndex()` |
 | What WP-R2 measured beyond the primitives | Here: `primitives/probes/cg-raster.txt.gz`, source `cg-raster.swift` | `fixtureText`, `probeSection` |
 | SHA-256 of the TS rasters | Here: `hashes.json` | `tests/hashes.test.ts` |
@@ -58,7 +58,7 @@ each case in `references/manifest.json`.
 
 `web/tests/support/rasterFixtures.ts`, Node only. Whatever comes from the pack or Tier A is checked against the manifest's
 SHA-256 and throws when damaged. `REFS_PACK_DIR` picks the pack, as in `web/harness`; the default is
-`references/pack/refs-v1` at the repo root.
+`references/pack/refs-v2` at the repo root.
 
 ```ts
 import { float32BitDifference, hasRasterPack, loadPrimitive, loadReliefDump, loadTextDump, rasterCaseIds } from './support/rasterFixtures';
@@ -119,13 +119,13 @@ deploy does not wait for it; a failure turns the run red.
 
 ## Provenance
 
-A new row is needed whenever the Swift sources, the fonts or macOS change. The pack rows are release `refs-v1`
-(`references/manifest.json`: `generatedAt` 2026-10-29T22:43:23Z, `sourcesSha256` `5c0599851f44…`, toolchain and flags in
+A new row is needed whenever the Swift sources, the fonts or macOS change. The pack rows are release `refs-v2`
+(`references/manifest.json`: `generatedAt` 2026-10-30T15:25:23Z, `sourcesSha256` `5c0599851f44…`, toolchain and flags in
 `generator`). CoreGraphics draws one case at a time there, since it is not deterministic across threads (`references/PACK.md`).
 
 | Set | Swift sources (`mac/` commit) | macOS | Swift | Produced by | Date |
 | --- | --- | --- | --- | --- | --- |
-| Relief, text, primitives | `04553ee` (app), `41a2ab1` (exporter) | 26.6.2 (25G83) | 6.3.3 | `bash mac/scripts/make-references.sh` (`--rasters`, `JOBS=6`) | 2026-10-29 |
+| Relief, text, primitives | `04553ee` (app), `c1a641b` (exporter) | 26.6.2 (25G83) | 6.3.3 | `FONT_FILES=… bash mac/scripts/make-references.sh` (`--rasters`, `JOBS=6`) | 2026-10-30 |
 | `primitives/probes/cg-raster.txt.gz` | none (stand-alone probe `primitives/probes/cg-raster.swift`, comments there) | 26.6.2 (25G83) | 6.3.3 | `cg-raster \| gzip -9 -n` | 2026-10-30 |
 | `text/<id>.ttf.*` | `04553ee` (app), `c1a641b` (exporter), fonts in `web/public/fonts` | 26.6.2 (25G83) | 6.3.3 | `bash mac/scripts/refresh-text-rasters.sh` (WP-R3) | 2026-10-30 |
 | `hashes.json`, `text/mask-hashes.json` | none: TS rasters, checked against the dumps by tolerance in their own tests | any | none | see "Hashes" | 2026-10-30 |

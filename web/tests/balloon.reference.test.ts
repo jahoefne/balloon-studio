@@ -1,6 +1,6 @@
 // WP-K2 reference comparison: every `part: "balloon"` case of mac/cases/grid.json against the Swift
 // exports in references/manifest.json. The manifest's SHA-256 proves `identical` without the pack;
-// only a differing file needs the Swift body (references/pack/refs-v1, see references/PACK.md) to
+// only a differing file needs the Swift body (references/pack/refs-v2, see references/PACK.md) to
 // tell `ulp` from a real difference. WP-V2's harness replaces this comparison later.
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -46,7 +46,7 @@ const manifest = new Map(readJSON<{ cases: ManifestCase[] }>('references/manifes
 
 function swiftBody(c: ManifestCase): Uint8Array | undefined {
   const tierA = new URL(`references/files/${c.sha256.slice(0, 2)}/${c.sha256}`, repository);
-  const pack = new URL(`references/pack/refs-v1/files/${c.id}/${c.filename}`, repository);
+  const pack = new URL(`references/pack/refs-v2/files/${c.id}/${c.filename}`, repository);
   for (const file of [tierA, pack]) {
     if (existsSync(file)) return new Uint8Array(readFileSync(file));
   }

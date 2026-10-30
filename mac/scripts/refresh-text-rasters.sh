@@ -7,7 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 FONTS=web/public/fonts
 BUILD=references/build/text-rasters
-PACK=${REFS_PACK_DIR:-references/pack/refs-v1}
+PACK=${REFS_PACK_DIR:-references/pack/refs-v2}
 if [ -z "${DEVELOPER_DIR:-}" ] && [ -d /Library/Developer/CommandLineTools ]; then export DEVELOPER_DIR=/Library/Developer/CommandLineTools; fi
 
 IDS=$(python3 -I -c 'import json; print(",".join(c["id"] for c in json.load(open("mac/cases/grid.json"))["cases"] if c.get("group") == "text" and c.get("rasters")))')

@@ -26,7 +26,7 @@ const SHAPES = {
 type Shape = keyof typeof SHAPES;
 const SHAPE_NAMES = Object.keys(SHAPES) as Shape[];
 
-const pack = new URL('../../references/pack/refs-v1/rasters/', import.meta.url);
+const pack = new URL('../../references/pack/refs-v2/rasters/', import.meta.url);
 const hasPack = existsSync(new URL('relief-night-flight-classic.raw.pgm', pack));
 
 function draw(shape: Shape): Uint8Array {

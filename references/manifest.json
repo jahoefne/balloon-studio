@@ -14,7 +14,7 @@
         ]
       },
       "bytes" : 12080084,
-      "durationMs" : 136,
+      "durationMs" : 128,
       "filename" : "Balloon-180x220mm-20panels.stl",
       "group" : "identity",
       "header" : "4253544c30303032001400005c430000344300008040000000420000c040000082429a99993f0000404000008040000040410000c040000080400000a04095f5699f4d0ef7dd6f0ee39083a775c60000",
@@ -41,7 +41,7 @@
         ]
       },
       "bytes" : 9664084,
-      "durationMs" : 121,
+      "durationMs" : 105,
       "filename" : "Balloon-190x190mm-16panels.stl",
       "group" : "identity",
       "header" : "4253544c30303032001000003e4300003e4300008040000008420000c040000064429a99993f0000404000008040000040410000c040000080400000a040b05f8cb59767873f618d0330e36eb6340000",
@@ -68,7 +68,7 @@
         ]
       },
       "bytes" : 14496084,
-      "durationMs" : 156,
+      "durationMs" : 139,
       "filename" : "Balloon-160x245mm-24panels.stl",
       "group" : "identity",
       "header" : "4253544c30303032001800007543000020430000a0400000e04100000041000088429a99993f0000404000008040000040410000c040000080400000a040a118abfce969c6a23559664f542002c90000",
@@ -95,7 +95,7 @@
         ]
       },
       "bytes" : 5836884,
-      "durationMs" : 65,
+      "durationMs" : 61,
       "filename" : "Balloon-60x80mm-32panels.stl",
       "group" : "identity",
       "header" : "4253544c3030303200200000a04200007042000000410000104200004041000048429a99993f0000404000008040000040410000c040000080400000a040cc599c3796c82e8d4d5d31d89a9c89fa0000",
@@ -122,7 +122,7 @@
         ]
       },
       "bytes" : 5836884,
-      "durationMs" : 55,
+      "durationMs" : 54,
       "filename" : "Balloon-240x80mm-32panels.stl",
       "group" : "identity",
       "header" : "4253544c3030303200200000a04200007043000000410000a04200004041000096429a99993f0000404000008040000040410000c040000080400000a04033fff536cc57bff167bbe25ecef871400000",
@@ -149,7 +149,7 @@
         ]
       },
       "bytes" : 5836884,
-      "durationMs" : 63,
+      "durationMs" : 62,
       "filename" : "Balloon-60x250mm-32panels.stl",
       "group" : "identity",
       "header" : "4253544c30303032002000007a430000704200000041000010420000a041000096429a99993f0000404000008040000040410000c040000080400000a0406a0f0ceaf396c7533bf4bce442b347750000",
@@ -176,7 +176,7 @@
         ]
       },
       "bytes" : 19328084,
-      "durationMs" : 191,
+      "durationMs" : 189,
       "filename" : "Balloon-240x250mm-32panels.stl",
       "group" : "identity",
       "header" : "4253544c30303032002000007a4300007043000000410000a0420000a041000048429a99993f0000404000008040000040410000c040000080400000a040f43114971c56e3324f72307c4b76bce10000",
@@ -203,7 +203,7 @@
         ]
       },
       "bytes" : 1459284,
-      "durationMs" : 15,
+      "durationMs" : 12,
       "filename" : "Balloon-180x220mm-8panels.stl",
       "group" : "identity",
       "header" : "4253544c30303032000800005c430000344300000000000000420000c040000082429a99993f0000404000008040000040410000c040000080400000a0401bd294b2f48de22a94b4597672a737fe0000",
@@ -230,7 +230,7 @@
         ]
       },
       "bytes" : 2918484,
-      "durationMs" : 29,
+      "durationMs" : 26,
       "filename" : "Balloon-180x220mm-16panels.stl",
       "group" : "identity",
       "header" : "4253544c30303032001000005c43000034430000f040000000420000c040000082429a99993f0000404000008040000040410000c040000080400000a04072b44156ca371ec8c493899d505b2a6f0000",
@@ -257,7 +257,7 @@
         ]
       },
       "bytes" : 3648084,
-      "durationMs" : 33,
+      "durationMs" : 29,
       "filename" : "Balloon-180x220mm-20panels.stl",
       "group" : "identity",
       "header" : "4253544c30303032001400005c4300003443000080400000404100004040000082429a99993f0000404000008040000040410000c040000080400000a0402456ebc8df02116d9266b7c2b0a501210000",
@@ -284,7 +284,7 @@
         ]
       },
       "bytes" : 24160084,
-      "durationMs" : 1169,
+      "durationMs" : 1057,
       "filename" : "Balloon-180x220mm-20panels-hollow-1.2mm.stl",
       "group" : "identity",
       "header" : "4253544c30303032011400005c430000344300008040000000420000c040000082429a99993f0000404000008040000040410000c040000080400000a04041601b203863e4fe8e9e938c6a15a8ce0000",
@@ -311,7 +311,7 @@
         ]
       },
       "bytes" : 11673684,
-      "durationMs" : 639,
+      "durationMs" : 573,
       "filename" : "Balloon-60x80mm-32panels-hollow-0.8mm.stl",
       "group" : "identity",
       "header" : "4253544c3030303201200000a0420000704200000041000040410000404000009642cdcc4c3f0000404000008040000040410000c040000080400000a0409501b4e1b4b752370982ee4751e1f5d00000",
@@ -338,7 +338,7 @@
         ]
       },
       "bytes" : 11673684,
-      "durationMs" : 685,
+      "durationMs" : 610,
       "filename" : "Balloon-240x80mm-32panels-hollow-2.4mm.stl",
       "group" : "identity",
       "header" : "4253544c3030303201200000a04200007043000000410000a04200004041000096429a9919400000404000008040000040410000c040000080400000a0402dd6021f9ad181802fc78f72b1e66af30000",
@@ -365,7 +365,7 @@
         ]
       },
       "bytes" : 24320084,
-      "durationMs" : 1223,
+      "durationMs" : 1123,
       "filename" : "Balloon-180x220mm-20panels-hollow-1.2mm-tethers.stl",
       "group" : "identity",
       "header" : "4253544c30303032031400005c4300003443000080400000004200004041000082429a99993f0000404000008040000040410000c040000080400000a040ee00ef2814a86f9d7091e93555cd77640000",
@@ -392,7 +392,7 @@
         ]
       },
       "bytes" : 3696884,
-      "durationMs" : 37,
+      "durationMs" : 34,
       "filename" : "Balloon-180x220mm-20panels-tethers.stl",
       "group" : "identity",
       "header" : "4253544c30303032021400005c4300003443000080400000004200004041000082429a99993f0000404000008040000040410000c040000080400000a0409f88c842ab08ac530012869c92ae9b410000",
@@ -419,7 +419,7 @@
         ]
       },
       "bytes" : 3567784,
-      "durationMs" : 33,
+      "durationMs" : 31,
       "filename" : "Balloon-180x220mm-20panels-hanger.stl",
       "group" : "identity",
       "header" : "4253544c30303032041400005c430000344300008040000000420000c040000082429a99993f0000404000008040000040410000c040000080400000a040b4240d726f8955bbeeb760a6b1bcf3f80000",
@@ -446,7 +446,7 @@
         ]
       },
       "bytes" : 23839784,
-      "durationMs" : 1378,
+      "durationMs" : 1237,
       "filename" : "Balloon-180x220mm-20panels-hollow-1.2mm-tethers-hanger.stl",
       "group" : "identity",
       "header" : "4253544c30303032071400005c4300003443000080400000004200004041000082429a99993f0000404000008040000040410000c040000080400000a040e1d7e65f4fb218b78bfd142c5c691ddd0000",
@@ -473,7 +473,7 @@
         ]
       },
       "bytes" : 35879784,
-      "durationMs" : 4072,
+      "durationMs" : 3755,
       "filename" : "Balloon-60x80mm-32panels-hollow-0.8mm-tethers-hanger.stl",
       "group" : "identity",
       "header" : "4253544c3030303207200000a04200007042000000413333cb410000404100009642cdcc4c3f0000a0400000a040000040410000c040000080400000a040bd0b58133c4d5d29491dd373cb36bd470000",
@@ -500,7 +500,7 @@
         ]
       },
       "bytes" : 10714984,
-      "durationMs" : 1475,
+      "durationMs" : 1332,
       "filename" : "Balloon-60x236mm-32panels-hollow-0.8mm-tethers-hanger.stl",
       "group" : "identity",
       "header" : "4253544c30303032072000006c430000704200000041000000420000404100009642cdcc4c3f000040400000a04000008041000000410000a04000000041a12303f3c7b90f2c0d6664f3f9eef5210000",
@@ -527,7 +527,7 @@
         ]
       },
       "bytes" : 4377684,
-      "durationMs" : 41,
+      "durationMs" : 37,
       "filename" : "Balloon-175x215mm-24panels.stl",
       "group" : "identity",
       "header" : "4253544c3030303200180000574300002f430000a0400000f0410000e040000086429a99993f0000404000008040000040410000c040000080400000a040dd06dc78d736b261ef52fc2c4f51bbf10000",
@@ -554,7 +554,7 @@
         ]
       },
       "bytes" : 3567784,
-      "durationMs" : 34,
+      "durationMs" : 31,
       "filename" : "Balloon-180x240mm-20panels-hanger.stl",
       "group" : "identity",
       "header" : "4253544c303030320414000070430000344300008040000000420000c040000082429a99993f0000404000008040000040410000c040000080400000a040279fbf03d78958f4ebf79083772785380000",
@@ -569,7 +569,7 @@
     },
     {
       "bytes" : 32240806,
-      "durationMs" : 353,
+      "durationMs" : 341,
       "entries" : [
         {
           "bytes" : 426,
@@ -640,7 +640,7 @@
     },
     {
       "bytes" : 34662622,
-      "durationMs" : 413,
+      "durationMs" : 381,
       "entries" : [
         {
           "bytes" : 426,
@@ -711,7 +711,7 @@
     },
     {
       "bytes" : 34752524,
-      "durationMs" : 548,
+      "durationMs" : 499,
       "entries" : [
         {
           "bytes" : 426,
@@ -782,7 +782,7 @@
     },
     {
       "bytes" : 34445664,
-      "durationMs" : 548,
+      "durationMs" : 485,
       "entries" : [
         {
           "bytes" : 426,
@@ -853,7 +853,7 @@
     },
     {
       "bytes" : 24374557,
-      "durationMs" : 712,
+      "durationMs" : 631,
       "entries" : [
         {
           "bytes" : 426,
@@ -924,7 +924,7 @@
     },
     {
       "bytes" : 10046869,
-      "durationMs" : 117,
+      "durationMs" : 103,
       "entries" : [
         {
           "bytes" : 426,
@@ -995,7 +995,7 @@
     },
     {
       "bytes" : 8456195,
-      "durationMs" : 96,
+      "durationMs" : 85,
       "entries" : [
         {
           "bytes" : 426,
@@ -1066,7 +1066,7 @@
     },
     {
       "bytes" : 9942152,
-      "durationMs" : 105,
+      "durationMs" : 93,
       "entries" : [
         {
           "bytes" : 426,
@@ -1137,7 +1137,7 @@
     },
     {
       "bytes" : 9328876,
-      "durationMs" : 78,
+      "durationMs" : 71,
       "entries" : [
         {
           "bytes" : 426,
@@ -1208,7 +1208,7 @@
     },
     {
       "bytes" : 10373793,
-      "durationMs" : 132,
+      "durationMs" : 110,
       "entries" : [
         {
           "bytes" : 426,
@@ -1279,7 +1279,7 @@
     },
     {
       "bytes" : 85013659,
-      "durationMs" : 1508,
+      "durationMs" : 1435,
       "entries" : [
         {
           "bytes" : 426,
@@ -1373,7 +1373,7 @@
     },
     {
       "bytes" : 164547716,
-      "durationMs" : 2587,
+      "durationMs" : 2527,
       "entries" : [
         {
           "bytes" : 426,
@@ -1467,7 +1467,7 @@
     },
     {
       "bytes" : 93954108,
-      "durationMs" : 1586,
+      "durationMs" : 1453,
       "entries" : [
         {
           "bytes" : 426,
@@ -1561,7 +1561,7 @@
     },
     {
       "bytes" : 131134935,
-      "durationMs" : 2186,
+      "durationMs" : 2121,
       "entries" : [
         {
           "bytes" : 426,
@@ -1655,7 +1655,7 @@
     },
     {
       "bytes" : 197516698,
-      "durationMs" : 3070,
+      "durationMs" : 2975,
       "entries" : [
         {
           "bytes" : 426,
@@ -1749,7 +1749,7 @@
     },
     {
       "bytes" : 125308930,
-      "durationMs" : 2056,
+      "durationMs" : 1931,
       "entries" : [
         {
           "bytes" : 426,
@@ -1843,7 +1843,7 @@
     },
     {
       "bytes" : 32298896,
-      "durationMs" : 550,
+      "durationMs" : 518,
       "entries" : [
         {
           "bytes" : 426,
@@ -1909,12 +1909,35 @@
       "normalizedPurge" : "{\"baseToDetail\":400,\"density\":1.24,\"detailToBase\":400,\"layerHeight\":0.2,\"multiplier\":1}",
       "part" : "pattern",
       "quality" : "preview",
+      "rasters" : [
+        {
+          "bytes" : 272400,
+          "kind" : "pgm",
+          "name" : "relief-night-flight-legacy.raw.pgm",
+          "sha256" : "c31207cf84b8c2f57bea5049f50dfd37610077956a998cdeb1e4fef3021b87da",
+          "tierA" : false
+        },
+        {
+          "bytes" : 1089536,
+          "kind" : "f32",
+          "name" : "relief-night-flight-legacy.field.f32",
+          "sha256" : "32fb761ab1d76a3e9629d4fdc9830702422cd60038a803d0c096672f5dbcbdcc",
+          "tierA" : false
+        },
+        {
+          "bytes" : 6934,
+          "kind" : "json",
+          "name" : "relief-night-flight-legacy.json",
+          "sha256" : "7b0a55d78eaded96655e7c541d31a3438dc77fd5798b5f0d7f9fd3e8c1a653da",
+          "tierA" : false
+        }
+      ],
       "sha256" : "41ab19a32f1ee6e59bdd658883820c859192c596031a0a4f5a1e3410a3790980",
       "tierA" : false
     },
     {
       "bytes" : 32894907,
-      "durationMs" : 565,
+      "durationMs" : 519,
       "entries" : [
         {
           "bytes" : 426,
@@ -1980,12 +2003,35 @@
       "normalizedPurge" : "{\"baseToDetail\":400,\"density\":1.24,\"detailToBase\":400,\"layerHeight\":0.2,\"multiplier\":1}",
       "part" : "pattern",
       "quality" : "preview",
+      "rasters" : [
+        {
+          "bytes" : 294928,
+          "kind" : "pgm",
+          "name" : "relief-night-flight-v2.raw.pgm",
+          "sha256" : "4ddaafe604bc6bcc52854630dbd6491acd40667ff9b649e0b3e9347dbb1e5797",
+          "tierA" : false
+        },
+        {
+          "bytes" : 1179648,
+          "kind" : "f32",
+          "name" : "relief-night-flight-v2.field.f32",
+          "sha256" : "4116e51092d2aac9cfa8ad321b228480c03a55d4e6190dd4c9c9a4c1784acdaf",
+          "tierA" : false
+        },
+        {
+          "bytes" : 7468,
+          "kind" : "json",
+          "name" : "relief-night-flight-v2.json",
+          "sha256" : "d5526d5e36810eac2c8fcaa97801b309880356faa8bf2b48177e7e1de7669156",
+          "tierA" : false
+        }
+      ],
       "sha256" : "9c2cd4ee16c7902d6dedfbb3a3e3bf5d2aca5fed3fb8913ccf684585abe6f4f5",
       "tierA" : false
     },
     {
       "bytes" : 43142753,
-      "durationMs" : 710,
+      "durationMs" : 683,
       "entries" : [
         {
           "bytes" : 426,
@@ -2051,12 +2097,35 @@
       "normalizedPurge" : "{\"baseToDetail\":400,\"density\":1.24,\"detailToBase\":400,\"layerHeight\":0.2,\"multiplier\":1}",
       "part" : "pattern",
       "quality" : "preview",
+      "rasters" : [
+        {
+          "bytes" : 272400,
+          "kind" : "pgm",
+          "name" : "relief-summit-saved.raw.pgm",
+          "sha256" : "7961d71cc3aca104b6bc0fc7b8ee0e5f6c21c0a8d7a6157bbdcffa304a7e34bb",
+          "tierA" : false
+        },
+        {
+          "bytes" : 1089536,
+          "kind" : "f32",
+          "name" : "relief-summit-saved.field.f32",
+          "sha256" : "dbb377a658b54be65a9e72f066bd70278d9b13a8c59ba5310d2a7740ad618fe1",
+          "tierA" : false
+        },
+        {
+          "bytes" : 6914,
+          "kind" : "json",
+          "name" : "relief-summit-saved.json",
+          "sha256" : "a1471c3a27d33b4c9aadf318c041f644b1765ea9d55f3e37dfb5e4b05cdadf45",
+          "tierA" : false
+        }
+      ],
       "sha256" : "6bee023c785b79a6837a4866abfb790c39726515079f0a2837214c71feef9c64",
       "tierA" : false
     },
     {
       "bytes" : 10465836,
-      "durationMs" : 110,
+      "durationMs" : 104,
       "entries" : [
         {
           "bytes" : 426,
@@ -2157,7 +2226,7 @@
     },
     {
       "bytes" : 15047777,
-      "durationMs" : 144,
+      "durationMs" : 141,
       "entries" : [
         {
           "bytes" : 426,
@@ -2258,7 +2327,7 @@
     },
     {
       "bytes" : 11023383,
-      "durationMs" : 107,
+      "durationMs" : 103,
       "entries" : [
         {
           "bytes" : 426,
@@ -2359,7 +2428,7 @@
     },
     {
       "bytes" : 17041205,
-      "durationMs" : 172,
+      "durationMs" : 161,
       "entries" : [
         {
           "bytes" : 426,
@@ -2460,7 +2529,7 @@
     },
     {
       "bytes" : 10404304,
-      "durationMs" : 103,
+      "durationMs" : 99,
       "entries" : [
         {
           "bytes" : 426,
@@ -2561,7 +2630,7 @@
     },
     {
       "bytes" : 14603918,
-      "durationMs" : 198,
+      "durationMs" : 191,
       "entries" : [
         {
           "bytes" : 426,
@@ -2662,7 +2731,7 @@
     },
     {
       "bytes" : 10996990,
-      "durationMs" : 108,
+      "durationMs" : 102,
       "entries" : [
         {
           "bytes" : 426,
@@ -2763,7 +2832,7 @@
     },
     {
       "bytes" : 17349550,
-      "durationMs" : 181,
+      "durationMs" : 165,
       "entries" : [
         {
           "bytes" : 426,
@@ -2864,7 +2933,7 @@
     },
     {
       "bytes" : 10960240,
-      "durationMs" : 104,
+      "durationMs" : 119,
       "entries" : [
         {
           "bytes" : 426,
@@ -2965,7 +3034,7 @@
     },
     {
       "bytes" : 15234013,
-      "durationMs" : 152,
+      "durationMs" : 144,
       "entries" : [
         {
           "bytes" : 426,
@@ -3066,7 +3135,7 @@
     },
     {
       "bytes" : 11127451,
-      "durationMs" : 110,
+      "durationMs" : 107,
       "entries" : [
         {
           "bytes" : 426,
@@ -3167,7 +3236,7 @@
     },
     {
       "bytes" : 17223069,
-      "durationMs" : 210,
+      "durationMs" : 205,
       "entries" : [
         {
           "bytes" : 426,
@@ -3268,7 +3337,7 @@
     },
     {
       "bytes" : 10465325,
-      "durationMs" : 118,
+      "durationMs" : 101,
       "entries" : [
         {
           "bytes" : 426,
@@ -3369,7 +3438,7 @@
     },
     {
       "bytes" : 14271243,
-      "durationMs" : 143,
+      "durationMs" : 137,
       "entries" : [
         {
           "bytes" : 426,
@@ -3470,7 +3539,7 @@
     },
     {
       "bytes" : 10931171,
-      "durationMs" : 108,
+      "durationMs" : 101,
       "entries" : [
         {
           "bytes" : 426,
@@ -3571,7 +3640,7 @@
     },
     {
       "bytes" : 16689109,
-      "durationMs" : 169,
+      "durationMs" : 156,
       "entries" : [
         {
           "bytes" : 426,
@@ -3672,7 +3741,7 @@
     },
     {
       "bytes" : 10413740,
-      "durationMs" : 103,
+      "durationMs" : 100,
       "entries" : [
         {
           "bytes" : 426,
@@ -3773,7 +3842,7 @@
     },
     {
       "bytes" : 14563023,
-      "durationMs" : 152,
+      "durationMs" : 143,
       "entries" : [
         {
           "bytes" : 426,
@@ -3874,7 +3943,7 @@
     },
     {
       "bytes" : 10773501,
-      "durationMs" : 110,
+      "durationMs" : 101,
       "entries" : [
         {
           "bytes" : 426,
@@ -3975,7 +4044,7 @@
     },
     {
       "bytes" : 15949954,
-      "durationMs" : 179,
+      "durationMs" : 159,
       "entries" : [
         {
           "bytes" : 426,
@@ -4076,7 +4145,7 @@
     },
     {
       "bytes" : 14553786,
-      "durationMs" : 178,
+      "durationMs" : 153,
       "entries" : [
         {
           "bytes" : 426,
@@ -4177,7 +4246,7 @@
     },
     {
       "bytes" : 12902452,
-      "durationMs" : 156,
+      "durationMs" : 132,
       "entries" : [
         {
           "bytes" : 426,
@@ -4243,6 +4312,36 @@
       "normalizedPurge" : "{\"baseToDetail\":400,\"density\":1.24,\"detailToBase\":400,\"layerHeight\":0.2,\"multiplier\":1}",
       "part" : "pattern",
       "quality" : "preview",
+      "rasters" : [
+        {
+          "bytes" : 195855,
+          "kind" : "pgm",
+          "name" : "text-legacy-milo.pgm",
+          "sha256" : "2065580534db5ee6ba16e938338ce7986efbd5a77aea6bd7c149c18e85ed518d",
+          "tierA" : false
+        },
+        {
+          "bytes" : 894,
+          "kind" : "json",
+          "name" : "text-legacy-milo.json",
+          "sha256" : "fd7732af093af6a10ebfa63c6e0acb7a391edc6557769b40a0aadbdd4178aa3b",
+          "tierA" : false
+        },
+        {
+          "bytes" : 194831,
+          "kind" : "pgm",
+          "name" : "text-legacy-milo.ttf.pgm",
+          "sha256" : "4b3dfe3b44361f13ec446610ea39ff27b783252104c0ac1da391642423bcd8ed",
+          "tierA" : false
+        },
+        {
+          "bytes" : 905,
+          "kind" : "json",
+          "name" : "text-legacy-milo.ttf.json",
+          "sha256" : "74e73797b6444845378e015793243123f0c8e95880e03c504d711c1178a88b2d",
+          "tierA" : false
+        }
+      ],
       "sha256" : "6a0906a0257cd215bd7c459e12c980f9c3399b7a9a0051d2c0c11ea9e902ea66",
       "tierA" : false
     },
@@ -4260,7 +4359,7 @@
         ]
       },
       "bytes" : 29635684,
-      "durationMs" : 291,
+      "durationMs" : 282,
       "filename" : "Basket-wicker-64x48x42mm.stl",
       "group" : "identity",
       "id" : "basket-wicker-default",
@@ -4312,7 +4411,7 @@
         ]
       },
       "bytes" : 5142484,
-      "durationMs" : 48,
+      "durationMs" : 47,
       "filename" : "Basket-wicker-100x90x70mm.stl",
       "group" : "identity",
       "id" : "basket-wicker-large",
@@ -4390,7 +4489,7 @@
         ]
       },
       "bytes" : 5142484,
-      "durationMs" : 44,
+      "durationMs" : 46,
       "filename" : "Basket-ribbed-100x100x70mm.stl",
       "group" : "identity",
       "id" : "basket-ribbed-large",
@@ -4416,7 +4515,7 @@
         ]
       },
       "bytes" : 7321684,
-      "durationMs" : 68,
+      "durationMs" : 63,
       "filename" : "Basket-voyager-64x48x42mm.stl",
       "group" : "identity",
       "id" : "basket-voyager-default",
@@ -4442,7 +4541,7 @@
         ]
       },
       "bytes" : 1470484,
-      "durationMs" : 15,
+      "durationMs" : 13,
       "filename" : "Basket-voyager-40x30x24mm.stl",
       "group" : "identity",
       "id" : "basket-voyager-small",
@@ -4468,7 +4567,7 @@
         ]
       },
       "bytes" : 5142484,
-      "durationMs" : 47,
+      "durationMs" : 44,
       "filename" : "Basket-voyager-100x90x70mm.stl",
       "group" : "identity",
       "id" : "basket-voyager-large",
@@ -4502,7 +4601,7 @@
         ]
       },
       "bytes" : 29635684,
-      "durationMs" : 324,
+      "durationMs" : 286,
       "filename" : "Basket-wicker-64x48x42mm.stl",
       "group" : "identity",
       "id" : "basket-no-settings",
@@ -4528,7 +4627,7 @@
         ]
       },
       "bytes" : 1062084,
-      "durationMs" : 10,
+      "durationMs" : 9,
       "filename" : "Mobile-Ring-240mm-3-balloons.stl",
       "group" : "identity",
       "id" : "ring-solid-default",
@@ -4554,7 +4653,7 @@
         ]
       },
       "bytes" : 1062084,
-      "durationMs" : 11,
+      "durationMs" : 9,
       "filename" : "Mobile-Ring-140mm-3-balloons.stl",
       "group" : "identity",
       "id" : "ring-solid-low",
@@ -4580,7 +4679,7 @@
         ]
       },
       "bytes" : 1044084,
-      "durationMs" : 10,
+      "durationMs" : 9,
       "filename" : "Mobile-Ring-240mm-3-balloons.stl",
       "group" : "identity",
       "id" : "ring-solid-high",
@@ -4606,7 +4705,7 @@
         ]
       },
       "bytes" : 1447284,
-      "durationMs" : 14,
+      "durationMs" : 11,
       "filename" : "Mobile-Ring-450mm-8mm-uplight-solid.stl",
       "group" : "identity",
       "id" : "ring-uplight-solid-450",
@@ -4658,7 +4757,7 @@
         ]
       },
       "bytes" : 1411284,
-      "durationMs" : 14,
+      "durationMs" : 11,
       "filename" : "Mobile-Ring-140mm-3.5mm-uplight-solid.stl",
       "group" : "identity",
       "id" : "ring-uplight-solid-low",
@@ -4684,7 +4783,7 @@
         ]
       },
       "bytes" : 1447284,
-      "durationMs" : 13,
+      "durationMs" : 12,
       "filename" : "Mobile-Ring-600mm-12mm-uplight-solid.stl",
       "group" : "identity",
       "id" : "ring-uplight-solid-high",
@@ -4698,7 +4797,7 @@
     },
     {
       "bytes" : 399960,
-      "durationMs" : 5,
+      "durationMs" : 4,
       "entries" : [
         {
           "bbox" : {
@@ -4819,7 +4918,7 @@
     },
     {
       "bytes" : 399954,
-      "durationMs" : 5,
+      "durationMs" : 4,
       "entries" : [
         {
           "bbox" : {
@@ -4940,7 +5039,7 @@
     },
     {
       "bytes" : 399955,
-      "durationMs" : 5,
+      "durationMs" : 4,
       "entries" : [
         {
           "bbox" : {
@@ -5182,7 +5281,7 @@
     },
     {
       "bytes" : 515404,
-      "durationMs" : 6,
+      "durationMs" : 5,
       "entries" : [
         {
           "bbox" : {
@@ -5303,7 +5402,7 @@
     },
     {
       "bytes" : 519420,
-      "durationMs" : 6,
+      "durationMs" : 5,
       "entries" : [
         {
           "bbox" : {
@@ -5450,7 +5549,7 @@
     },
     {
       "bytes" : 4845419,
-      "durationMs" : 567,
+      "durationMs" : 532,
       "entries" : [
         {
           "bbox" : {
@@ -5602,7 +5701,7 @@
     },
     {
       "bytes" : 4355275,
-      "durationMs" : 537,
+      "durationMs" : 528,
       "entries" : [
         {
           "bbox" : {
@@ -5754,7 +5853,7 @@
     },
     {
       "bytes" : 5045219,
-      "durationMs" : 626,
+      "durationMs" : 506,
       "entries" : [
         {
           "bbox" : {
@@ -5906,7 +6005,7 @@
     },
     {
       "bytes" : 4197328,
-      "durationMs" : 493,
+      "durationMs" : 427,
       "entries" : [
         {
           "bbox" : {
@@ -6058,7 +6157,7 @@
     },
     {
       "bytes" : 4469997,
-      "durationMs" : 515,
+      "durationMs" : 467,
       "entries" : [
         {
           "bbox" : {
@@ -6210,7 +6309,7 @@
     },
     {
       "bytes" : 4943498,
-      "durationMs" : 601,
+      "durationMs" : 514,
       "entries" : [
         {
           "bbox" : {
@@ -6362,7 +6461,7 @@
     },
     {
       "bytes" : 5638419,
-      "durationMs" : 756,
+      "durationMs" : 712,
       "entries" : [
         {
           "bbox" : {
@@ -6514,7 +6613,7 @@
     },
     {
       "bytes" : 4165684,
-      "durationMs" : 746,
+      "durationMs" : 711,
       "entries" : [
         {
           "bbox" : {
@@ -6666,7 +6765,7 @@
     },
     {
       "bytes" : 5299426,
-      "durationMs" : 1106,
+      "durationMs" : 992,
       "entries" : [
         {
           "bbox" : {
@@ -6818,7 +6917,7 @@
     },
     {
       "bytes" : 4499897,
-      "durationMs" : 521,
+      "durationMs" : 464,
       "entries" : [
         {
           "bbox" : {
@@ -6970,7 +7069,7 @@
     },
     {
       "bytes" : 4468414,
-      "durationMs" : 516,
+      "durationMs" : 490,
       "entries" : [
         {
           "bbox" : {
@@ -7122,7 +7221,7 @@
     },
     {
       "bytes" : 4781799,
-      "durationMs" : 572,
+      "durationMs" : 516,
       "entries" : [
         {
           "bbox" : {
@@ -7274,7 +7373,7 @@
     },
     {
       "bytes" : 5471820,
-      "durationMs" : 706,
+      "durationMs" : 639,
       "entries" : [
         {
           "bbox" : {
@@ -7492,7 +7591,7 @@
     },
     {
       "bytes" : 5872214,
-      "durationMs" : 736,
+      "durationMs" : 682,
       "entries" : [
         {
           "bbox" : {
@@ -7776,7 +7875,7 @@
     },
     {
       "bytes" : 6246412,
-      "durationMs" : 798,
+      "durationMs" : 757,
       "entries" : [
         {
           "bbox" : {
@@ -8126,7 +8225,7 @@
     },
     {
       "bytes" : 4581615,
-      "durationMs" : 582,
+      "durationMs" : 521,
       "entries" : [
         {
           "bbox" : {
@@ -8278,7 +8377,7 @@
     },
     {
       "bytes" : 4779353,
-      "durationMs" : 573,
+      "durationMs" : 542,
       "entries" : [
         {
           "bbox" : {
@@ -8386,7 +8485,7 @@
     },
     {
       "bytes" : 4873460,
-      "durationMs" : 651,
+      "durationMs" : 546,
       "entries" : [
         {
           "bbox" : {
@@ -8560,7 +8659,7 @@
     },
     {
       "bytes" : 9751012,
-      "durationMs" : 1589,
+      "durationMs" : 1387,
       "entries" : [
         {
           "bbox" : {
@@ -8712,7 +8811,7 @@
     },
     {
       "bytes" : 7605238,
-      "durationMs" : 3231,
+      "durationMs" : 2724,
       "entries" : [
         {
           "bbox" : {
@@ -8864,7 +8963,7 @@
     },
     {
       "bytes" : 4856298,
-      "durationMs" : 581,
+      "durationMs" : 571,
       "entries" : [
         {
           "bbox" : {
@@ -9016,7 +9115,7 @@
     },
     {
       "bytes" : 2571522,
-      "durationMs" : 332,
+      "durationMs" : 289,
       "entries" : [
         {
           "bbox" : {
@@ -9168,7 +9267,7 @@
     },
     {
       "bytes" : 4844613,
-      "durationMs" : 590,
+      "durationMs" : 556,
       "entries" : [
         {
           "bbox" : {
@@ -9320,7 +9419,7 @@
     },
     {
       "bytes" : 4355274,
-      "durationMs" : 544,
+      "durationMs" : 539,
       "entries" : [
         {
           "bbox" : {
@@ -9624,7 +9723,7 @@
     },
     {
       "bytes" : 4355086,
-      "durationMs" : 539,
+      "durationMs" : 530,
       "entries" : [
         {
           "bbox" : {
@@ -9776,7 +9875,7 @@
     },
     {
       "bytes" : 4273237,
-      "durationMs" : 512,
+      "durationMs" : 506,
       "entries" : [
         {
           "bbox" : {
@@ -9928,7 +10027,7 @@
     },
     {
       "bytes" : 4845419,
-      "durationMs" : 617,
+      "durationMs" : 594,
       "entries" : [
         {
           "bbox" : {
@@ -10080,7 +10179,7 @@
     },
     {
       "bytes" : 4837806,
-      "durationMs" : 583,
+      "durationMs" : 584,
       "entries" : [
         {
           "bbox" : {
@@ -10232,7 +10331,7 @@
     },
     {
       "bytes" : 11500206,
-      "durationMs" : 323,
+      "durationMs" : 296,
       "entries" : [
         {
           "bbox" : {
@@ -10384,7 +10483,7 @@
     },
     {
       "bytes" : 11500206,
-      "durationMs" : 286,
+      "durationMs" : 306,
       "entries" : [
         {
           "bbox" : {
@@ -10536,7 +10635,7 @@
     },
     {
       "bytes" : 11500194,
-      "durationMs" : 273,
+      "durationMs" : 254,
       "entries" : [
         {
           "bbox" : {
@@ -10688,7 +10787,7 @@
     },
     {
       "bytes" : 12378392,
-      "durationMs" : 316,
+      "durationMs" : 271,
       "entries" : [
         {
           "bbox" : {
@@ -10840,7 +10939,7 @@
     },
     {
       "bytes" : 11230560,
-      "durationMs" : 302,
+      "durationMs" : 240,
       "entries" : [
         {
           "bbox" : {
@@ -10992,7 +11091,7 @@
     },
     {
       "bytes" : 11523574,
-      "durationMs" : 280,
+      "durationMs" : 479,
       "entries" : [
         {
           "bbox" : {
@@ -11144,7 +11243,7 @@
     },
     {
       "bytes" : 11503394,
-      "durationMs" : 281,
+      "durationMs" : 610,
       "entries" : [
         {
           "bbox" : {
@@ -11296,7 +11395,7 @@
     },
     {
       "bytes" : 11528247,
-      "durationMs" : 390,
+      "durationMs" : 580,
       "entries" : [
         {
           "bbox" : {
@@ -11470,7 +11569,7 @@
     },
     {
       "bytes" : 21515399,
-      "durationMs" : 2259,
+      "durationMs" : 2045,
       "entries" : [
         {
           "bbox" : {
@@ -11622,7 +11721,7 @@
     },
     {
       "bytes" : 12179277,
-      "durationMs" : 1131,
+      "durationMs" : 1070,
       "entries" : [
         {
           "bbox" : {
@@ -11774,7 +11873,7 @@
     },
     {
       "bytes" : 11525854,
-      "durationMs" : 657,
+      "durationMs" : 370,
       "entries" : [
         {
           "bbox" : {
@@ -11926,7 +12025,7 @@
     },
     {
       "bytes" : 11511164,
-      "durationMs" : 619,
+      "durationMs" : 351,
       "entries" : [
         {
           "bbox" : {
@@ -12078,7 +12177,7 @@
     },
     {
       "bytes" : 21082556,
-      "durationMs" : 1121,
+      "durationMs" : 1064,
       "entries" : [
         {
           "bbox" : {
@@ -12265,7 +12364,7 @@
     },
     {
       "bytes" : 22539862,
-      "durationMs" : 1438,
+      "durationMs" : 1282,
       "entries" : [
         {
           "bbox" : {
@@ -12464,7 +12563,7 @@
         ]
       },
       "bytes" : 2531984,
-      "durationMs" : 73,
+      "durationMs" : 70,
       "filename" : "Mobile-Figure-star-60mm.stl",
       "group" : "identity",
       "id" : "figure-star-default",
@@ -12490,7 +12589,7 @@
         ]
       },
       "bytes" : 6195484,
-      "durationMs" : 308,
+      "durationMs" : 274,
       "filename" : "Mobile-Figure-cloud-60mm.stl",
       "group" : "identity",
       "id" : "figure-cloud-default",
@@ -12516,7 +12615,7 @@
         ]
       },
       "bytes" : 2076984,
-      "durationMs" : 85,
+      "durationMs" : 66,
       "filename" : "Mobile-Figure-moon-40mm.stl",
       "group" : "identity",
       "id" : "figure-moon-small",
@@ -12542,7 +12641,7 @@
         ]
       },
       "bytes" : 2494584,
-      "durationMs" : 162,
+      "durationMs" : 154,
       "filename" : "Mobile-Figure-balloon-120mm-chain.stl",
       "group" : "identity",
       "id" : "figure-balloon-large-chain",
@@ -12568,7 +12667,7 @@
         ]
       },
       "bytes" : 3258484,
-      "durationMs" : 109,
+      "durationMs" : 94,
       "filename" : "Mobile-Figure-heart-60mm-flat.stl",
       "group" : "identity",
       "id" : "figure-heart-flat",
@@ -12594,7 +12693,7 @@
         ]
       },
       "bytes" : 2072284,
-      "durationMs" : 89,
+      "durationMs" : 75,
       "filename" : "Mobile-Figure-raindrop-60mm-puffy-chain.stl",
       "group" : "identity",
       "id" : "figure-raindrop-puffy-chain",
@@ -12620,7 +12719,7 @@
         ]
       },
       "bytes" : 2899284,
-      "durationMs" : 288,
+      "durationMs" : 257,
       "filename" : "Mobile-Figure-sun-60mm-two-sided.stl",
       "group" : "identity",
       "id" : "figure-sun-two-sided",
@@ -12646,7 +12745,7 @@
         ]
       },
       "bytes" : 2432684,
-      "durationMs" : 144,
+      "durationMs" : 129,
       "filename" : "Mobile-Figure-moon-75mm.stl",
       "group" : "identity",
       "id" : "figure-moon-partial",
@@ -12672,7 +12771,7 @@
         ]
       },
       "bytes" : 2531984,
-      "durationMs" : 72,
+      "durationMs" : 64,
       "filename" : "Mobile-Figure-star-60mm.stl",
       "group" : "identity",
       "id" : "figure-unknown-style",
@@ -13186,11 +13285,15 @@
       "triangles" : 808
     }
   ],
-  "generatedAt" : "2026-10-29T22:43:23Z",
+  "generatedAt" : "2026-10-30T15:25:23Z",
   "generator" : {
     "exporter" : "mac/ReferenceExporter/main.swift",
     "fontFiles" : {
-
+      "Handwritten" : "ComicNeue-Bold.ttf",
+      "Monospaced" : "DejaVuSansMono-Bold.ttf",
+      "Rounded" : "Nunito-Bold.ttf",
+      "Sans serif" : "Arimo-Bold.ttf",
+      "Serif" : "Gelasio-Bold.ttf"
     },
     "geometryOnly" : false,
     "macOS" : "Version 26.6.2 (Build 25G83)",
@@ -13205,24 +13308,24 @@
   "grid" : {
     "cases" : 158,
     "path" : "mac/cases/grid.json",
-    "sha256" : "e68a64b20ea61b05f0de83b804000bb75785f3d1748ddbf4cc7611bc716d06fb"
+    "sha256" : "fe745c0e0a6f030836d940f509a698743ab105a73cd28a73699bf93b8393e704"
   },
   "pack" : {
     "assets" : [
       {
-        "bytes" : 334305084,
-        "name" : "balloon-studio-refs-v1.tar.zst",
-        "sha256" : "e7fd642ea449682a7506d3c5d8e73586e8db195c571bdd2821d2925ee82053d2",
-        "url" : "https://github.com/jahoefne/balloon-studio/releases/download/refs-v1/balloon-studio-refs-v1.tar.zst"
+        "bytes" : 335714645,
+        "name" : "balloon-studio-refs-v2.tar.zst",
+        "sha256" : "2a05136b32e7d8adf997028fb551e07bbbbe72b614943fe1135a0c281882f8b5",
+        "url" : "https://github.com/jahoefne/balloon-studio/releases/download/refs-v2/balloon-studio-refs-v2.tar.zst"
       },
       {
         "bytes" : 214235282,
-        "name" : "balloon-studio-refs-v1-libm.tar.zst",
+        "name" : "balloon-studio-refs-v2-libm.tar.zst",
         "sha256" : "038580d2b1361c88b47b00c0de669965dfd0bdbd738211d2240ca7f781fa8185",
-        "url" : "https://github.com/jahoefne/balloon-studio/releases/download/refs-v1/balloon-studio-refs-v1-libm.tar.zst"
+        "url" : "https://github.com/jahoefne/balloon-studio/releases/download/refs-v2/balloon-studio-refs-v2-libm.tar.zst"
       }
     ],
-    "release" : "refs-v1"
+    "release" : "refs-v2"
   },
   "primitives" : [
     {

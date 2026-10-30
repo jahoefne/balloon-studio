@@ -6,19 +6,19 @@ The Mac app is the oracle for the web port (docs/plan.md, WP-V1). `mac/Reference
 | --- | --- | --- |
 | `references/manifest.json` | One record per case: `id, part, quality, group, filename, kind, bytes, sha256, tierA, durationMs, normalized` (+ `normalizedPattern`, `normalizedPurge` for patterns); per STL `triangles`, `bbox` and `header` (hex, only when it is not the plain Balloon Studio header, i.e. the `BSTL0002` settings header); per ZIP/3MF entry `name, kind, bytes, sha256, crc32, localHeaderOffset, tierA` (+ STL facts); `rasters` for dumped cases; `error` for a case whose export throws (expected only for `basket-partial-settings`); `notes` (clip problems). Head: `generatedAt`, `generator` (toolchain, macOS, options), `grid` (SHA-256), `sources`/`sourcesSha256` (the 23 core files + `StableJSON.swift`), `tierA`, `pack` (release, asset URLs and SHA-256), `primitives`. | yes |
 | `references/files/<sha256[0:2]>/<sha256>` | Tier A: every output and every ZIP/3MF entry of at most 300,000 bytes, plus the primitive canvases, content-addressed and deduplicated. Enough to prove byte identity of the clips, ring kits' small parts, seals, clamps, inserts and every kit text/SVG/JSON without the pack. | yes |
-| `balloon-studio-refs-v1.tar.zst` (release `refs-v1`) | Tier B: `files/<id>/<filename>` for every case (STL, ZIP, 3MF) and `rasters/` (below). ZIP and 3MF entries are not stored separately: they are the stored entries of the archives at `localHeaderOffset`. | release asset |
-| `balloon-studio-refs-v1-libm.tar.zst` (release `refs-v1`) | `probes/libm/<series>.bin`: all 1,000,000 records of each Libm probe series (see `probes/README.md`). | release asset |
+| `balloon-studio-refs-v2.tar.zst` (release `refs-v2`) | Tier B: `files/<id>/<filename>` for every case (STL, ZIP, 3MF) and `rasters/` (below). ZIP and 3MF entries are not stored separately: they are the stored entries of the archives at `localHeaderOffset`. | release asset |
+| `balloon-studio-refs-v2-libm.tar.zst` (release `refs-v2`) | `probes/libm/<series>.bin`: all 1,000,000 records of each Libm probe series (see `probes/README.md`). | release asset |
 | `references/probes/` | Probe outputs, see `probes/README.md`. | yes |
 | `references/patch-proof.json` | Result of `mac/scripts/verify-swift-patches.sh`. | yes |
 
 ## Using the pack
 
 ```bash
-bash mac/scripts/fetch-pack.sh          # main pack → references/pack/refs-v1/{files,rasters}
-bash mac/scripts/fetch-pack.sh --libm   # also references/pack/refs-v1/probes/libm
+bash mac/scripts/fetch-pack.sh          # main pack → references/pack/refs-v2/{files,rasters}
+bash mac/scripts/fetch-pack.sh --libm   # also references/pack/refs-v2/probes/libm
 ```
 
-The script reads release, URLs and SHA-256 from `references/manifest.json`, reuses a pack that `make-references.sh` left in `references/pack/`, downloads otherwise (`curl`, falling back to `gh release download`), verifies the hash and unpacks. CI can cache `references/pack/refs-v1` keyed on the asset SHA-256 in the manifest. On the Mac that generated the references the same tree is in `references/build/` (plus `entries/<id>/<entry>` for every archive).
+The script reads release, URLs and SHA-256 from `references/manifest.json`, reuses a pack that `make-references.sh` left in `references/pack/`, downloads otherwise (`curl`, falling back to `gh release download`), verifies the hash and unpacks. CI can cache `references/pack/refs-v2` keyed on the asset SHA-256 in the manifest. On the Mac that generated the references the same tree is in `references/build/` (plus `entries/<id>/<entry>` for every archive).
 
 ## The report of a pack
 
@@ -47,7 +47,7 @@ Written with `--rasters` for cases with `"rasters": true` (group `relief` or `te
 
 `<id>.pgm` is always the app's own mask with the Apple fonts, the one the 3MF export of that case used; `fileRaster`-style mesh proofs (WP-K3) need it. With `--font-file`, the exporter also writes `<id>.ttf.pgm` and `<id>.ttf.json`, the same text through CoreText and CoreGraphics with the bundled TTF (`fontSource: "file:…"`), so that WP-R3 compares only shaping and rasterization. `--font-file <Font>=<ttf>` loads the file with `CTFontManagerCreateFontDescriptorFromData` → `CTFontCreateWithFontDescriptor(·, 100)`; `<Font>` is the raw value or the case name (`rounded`, `sans`, `serif`, `handwritten`, `mono`); a bare `--font-file <ttf>` applies to every font. File names in `FONT_FILES` must not contain spaces.
 
-`mac/scripts/refresh-text-rasters.sh` adds these dumps without a full run: it draws the text cases one at a time, merges their `rasters` lists into the manifest with `reference-exporter merge-rasters` (which refuses if anything else of a case changed) and copies the new files into `references/pack/refs-v1/rasters/`. The `refs-v1` release does not hold them; the committed copies of the 20 comparison masks are in `web/tests/fixtures/text/`. **The next pack has to be built with the fonts**, or the manifest loses the entries and `web/tests/textReference.test.ts` fails:
+`refs-v2` holds both dumps for all 22 text cases. `mac/scripts/refresh-text-rasters.sh` redraws only the text cases one at a time, merges their `rasters` lists into the manifest with `reference-exporter merge-rasters` (which refuses if anything else of a case changed) and copies the `.ttf` files into `references/pack/refs-v2/rasters/`; right after a full run it leaves the manifest byte for byte as it was. The 20 comparison dumps of WP-R3 and the masks' hashes are also committed in `web/tests/fixtures/text/`. **Every pack has to be built with the fonts**, or the manifest loses the entries and `web/tests/textReference.test.ts` fails:
 
 ```bash
 FONT_FILES="rounded=web/public/fonts/Nunito-Bold.ttf sans=web/public/fonts/Arimo-Bold.ttf serif=web/public/fonts/Gelasio-Bold.ttf handwritten=web/public/fonts/ComicNeue-Bold.ttf mono=web/public/fonts/DejaVuSansMono-Bold.ttf" \
@@ -57,26 +57,31 @@ FONT_FILES="rounded=web/public/fonts/Nunito-Bold.ttf sans=web/public/fonts/Arimo
 ## Regenerating
 
 ```bash
-bash mac/scripts/make-references.sh     # JOBS=6 by default; REFS_RELEASE=refs-v1
-gh release create refs-v1 references/pack/*.tar.zst --notes "Reference pack v1 (Mac exports)"
+FONT_FILES="…" bash mac/scripts/make-references.sh     # the list above; JOBS=6 by default; REFS_RELEASE=refs-v2
+gh release create refs-v2 references/pack/balloon-studio-refs-v2.tar.zst references/pack/balloon-studio-refs-v2-libm.tar.zst \
+  --repo jahoefne/balloon-studio --target <40-digit SHA or branch> --notes "Reference pack v2 (Mac exports)"
 ```
 
 `make-references.sh` builds the exporter (same flags as `build-app.sh`) and the probes, clears `references/build/{files,entries,rasters}` and `references/files/`, runs the grid with `--rasters --tier-a references/files`, packs `files/` and `rasters/` (and `probes/libm/`) with `tar --zstd` (ustar, names sorted with `LC_ALL=C`, every file mode 644 and time 2026-10-29 00:00, owner root/wheel, no extended attributes or macOS metadata) and stamps release, URLs and hashes into the manifest. A second run gives identical files except `generatedAt` and the `durationMs` values. A new pack needs a new release tag (`REFS_RELEASE=refs-v2`), since the manifest pins the asset hashes.
 
 Results depend on the macOS version: CoreText and CoreGraphics produce the raster and text masks, Apple libm the geometry. The manifest records the toolchain and OS.
 
-## Figures for refs-v1
+## Figures for refs-v2
 
-Generated 2026-10-29 on macOS 26.6.2 (Apple silicon, 18 cores), Swift 6.3.3 with the command line tools, `JOBS=6`.
+Generated 2026-10-30 on macOS 26.6.2 (Apple silicon, 18 cores), Swift 6.3.3 with the command line tools, `JOBS=6`.
 
 | | |
 | --- | --- |
 | Cases | 158 (99 export, 59 preview quality): balloon 21, pattern 41 (10 identity, 9 relief, 22 text, incl. 5 migrations), basket 11, ring 14, cloud 29, sun 12, figure 9, figure set 2, clip 19 |
-| Raw outputs | 2.12 GB in `files/` (patterns 1.41 GB: a relief 3MF is 85–198 MB even at preview quality; balloons 239 MB, suns 149 MB, clouds 144 MB, baskets 96 MB, figures 70 MB, rings 13 MB, clips 0.7 MB), 67 MB rasters; `entries/` (1.6 GB) stays local |
-| Tier B | `balloon-studio-refs-v1.tar.zst` 334.3 MB, `balloon-studio-refs-v1-libm.tar.zst` 214.2 MB (SHA-256 in the manifest) |
-| Tier A | 277 files, 6.1 MB; manifest 440 KB; probes 4.5 MB |
+| Raw outputs | 2.12 GB in `files/` (patterns 1.41 GB: a relief 3MF is 85–198 MB even at preview quality; balloons 239 MB, suns 149 MB, clouds 144 MB, baskets 96 MB, figures 70 MB, rings 13 MB, clips 0.7 MB), 75 MB rasters; `entries/` (1.6 GB) stays local |
+| Tier B | `balloon-studio-refs-v2.tar.zst` 335.7 MB, `balloon-studio-refs-v2-libm.tar.zst` 214.2 MB (SHA-256 in the manifest) |
+| Tier A | 277 files, 6.1 MB; manifest 452 KB; probes 4.5 MB |
 | Run time | `make-references.sh` 90–110 s in all (builds about 50 s, probes about 20 s, the grid 30 s with the CoreGraphics cases one at a time, packing about 15 s); `verify-swift-patches.sh` about 2 min |
 | Longest cases | `balloon-hanger-small` 3.9 s, `relief-summit-round` 3.4 s, `cloud-sculpted-billow-min` 3.0 s, `relief-night-flight-round` 2.9 s |
+
+## What changed from refs-v1
+
+Only dumps were added: the bundled-font text dumps (`<id>.ttf.*`, WP-R3) are now in the pack, and the four migration cases `relief-night-flight-legacy`, `relief-night-flight-v2`, `relief-summit-saved` and `text-legacy-milo` have `"rasters": true` in the grid. Every export hash of all 158 cases, every existing dump, Tier A, the probes and the Libm asset (same SHA-256) are as in refs-v1. In the manifest only `generatedAt`, `durationMs`, `generator.fontFiles`, `grid.sha256`, `pack` and the `rasters` of those four cases differ. Release `refs-v1` stays as it is for older checkouts.
 
 ## CoreGraphics is not deterministic across threads
 

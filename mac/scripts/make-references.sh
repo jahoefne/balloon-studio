@@ -3,12 +3,12 @@
 # bodies under references/files/, the probe outputs under references/probes/ and the Tier B packs
 # under references/pack/ (gitignored; uploaded as assets of the GitHub release $REFS_RELEASE).
 # Idempotent: a second run leaves every file as it was, except generatedAt and durationMs.
-# Environment: JOBS (parallel cases, default 6), REFS_RELEASE (default refs-v1),
+# Environment: JOBS (parallel cases, default 6), REFS_RELEASE (default refs-v2),
 # FONT_FILES (space-separated --font-file specs for the text dumps, e.g. "Rounded=web/public/fonts/Nunito-Bold.ttf").
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 JOBS=${JOBS:-6}
-RELEASE=${REFS_RELEASE:-refs-v1}
+RELEASE=${REFS_RELEASE:-refs-v2}
 URL=https://github.com/jahoefne/balloon-studio/releases/download/$RELEASE
 BUILD=references/build
 PACK=references/pack

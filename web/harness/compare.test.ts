@@ -155,7 +155,7 @@ describe('without the pack', () => {
     expect(hasPack()).toBe(false);
     expect(packDir()).toBe('/nonexistent/balloon-pack/');
     vi.stubEnv('REFS_PACK_DIR', '');
-    expect(packDir()).toBe(`${REFERENCES_DIR}pack/refs-v1/`);
+    expect(packDir()).toBe(`${REFERENCES_DIR}pack/refs-v2/`);
   });
 
   it('a differing STL that only the pack could settle is `unverified-needs-pack`', () => {
@@ -331,7 +331,7 @@ describe('report', () => {
       writeReport(results.map(toRow), 'stub', path);
       const report = JSON.parse(readFileSync(path, 'utf8')) as { implementation: string; release: string; summary: Record<string, number>; rows: { id: string }[] };
       expect(report.implementation).toBe('stub');
-      expect(report.release).toBe('refs-v1');
+      expect(report.release).toBe('refs-v2');
       expect(report.summary).toEqual({ identical: 1, ulp: 0, equivalent: 0, 'equivalent-bounded': 0, mismatch: 1, unverified: 0 });
       expect(report.rows.length).toBe(2);
     } finally {

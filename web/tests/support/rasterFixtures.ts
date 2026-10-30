@@ -40,7 +40,7 @@ export function hasRasterPack(): boolean {
   return existsSync(rasterPackDir());
 }
 
-/** Ids of the dumped cases in grid order, optionally of one group: 6 `relief`, 21 `text` in refs-v1. */
+/** Ids of the dumped cases in grid order, optionally of one group: 9 `relief`, 22 `text` in refs-v2. */
 export function rasterCaseIds(group?: 'relief' | 'text'): string[] {
   return allCases()
     .filter((c) => isExported(c) && c.rasters !== undefined && (group === undefined || c.group === group))

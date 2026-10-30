@@ -2,8 +2,8 @@
 // `part: "pattern"`, plus blur and summed-area tables bit for bit. Relief and text cases get the Swift rasters
 // through core/patterns/fileRaster, which proves the mesh side independently of the rasterizer.
 //
-// Where the rasters come from: the pack (`rasters/`), and tests/fixtures/patterns for the four migration
-// cases the pack has no dump for (same exporter, `--rasters`). Without the pack (CI so far) the 10 identity and
+// Where the rasters come from: the pack (`rasters/`), and tests/fixtures/patterns for the four small migration
+// cases (the same bytes as in the pack since refs-v2). Without the pack (CI so far) the 10 identity and
 // those 4 cases still run: Tier A covers everything but the model, and PINNED_MODELS covers the model. The six
 // big reliefs (85-198 MB each) run with FULL=1.
 //
@@ -33,7 +33,7 @@ const identity = cases.filter((c) => c.group === 'identity');
 const reliefCases = cases.filter((c) => c.group === 'relief');
 const textCases = cases.filter((c) => c.group === 'text');
 
-/** Dumps the pack lacks: their cases had no `rasters` flag when refs-v1 was made. */
+/** Dumps committed so that these cases run without the pack; since refs-v2 the pack holds the same bytes. */
 const FIXTURE_RASTERS = new Set(['relief-night-flight-legacy', 'relief-night-flight-v2', 'relief-summit-saved', 'text-legacy-milo']);
 const BIG_RELIEFS = new Set(reliefCases.filter((c) => !FIXTURE_RASTERS.has(c.id)).map((c) => c.id));
 
