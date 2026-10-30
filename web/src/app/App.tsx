@@ -1,5 +1,10 @@
 import { useEffect, useRef } from 'react';
 import BalloonEditor from '../editors/balloon';
+import BasketEditor from '../editors/basket';
+import CableClipEditor from '../editors/clip';
+import CloudEditor from '../editors/cloud';
+import FigureEditor from '../editors/figure';
+import RingEditor from '../editors/ring';
 import { startExport } from '../io';
 import { DropZone } from '../open/DropZone';
 import { ImportReviewDialog } from '../open/ImportReviewDialog';
@@ -7,7 +12,6 @@ import { useAppStore, useBalloonStore, useImportStore } from '../stores';
 import { AlertDialog, Button, useGlobalShortcuts } from '../ui';
 import type { PartKey } from '../worker/protocol';
 import { Header } from './Header';
-import { PartPlaceholder } from './PartPlaceholder';
 
 // ContentView and the scene around it (BalloonStudioApp.swift:211-351). The `importRevision`
 // effect (:342-344) lives in the app store.
@@ -16,19 +20,18 @@ function PartEditor({ part }: { part: PartKey }) {
   switch (part) {
     case 'balloon':
       return <BalloonEditor />;
-    // WP-U6/U7/U8: editors are wired here by the integrator
     case 'basket':
-      return <PartPlaceholder part="basket" />;
+      return <BasketEditor />;
     case 'ring':
-      return <PartPlaceholder part="ring" />;
+      return <RingEditor />;
     case 'cloud':
-      return <PartPlaceholder part="cloud" />;
+      return <CloudEditor kind="cloud" />;
     case 'sun':
-      return <PartPlaceholder part="sun" />;
+      return <CloudEditor kind="sun" />;
     case 'figure':
-      return <PartPlaceholder part="figure" />;
+      return <FigureEditor />;
     case 'clip':
-      return <PartPlaceholder part="clip" />;
+      return <CableClipEditor />;
   }
 }
 
