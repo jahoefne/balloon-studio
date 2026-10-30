@@ -1,6 +1,5 @@
 // Ported from mac/Tests/STLImportTests.swift @ cbda68d. Every `require` is a `check` with the same
-// message. Two Swift checks wait for other work packages: the real basket in the "basket" rejection
-// (WP-K8; a box of the same size stands in) and the patterned 3MF of the reopened balloon (WP-K3).
+// message.
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -9,9 +8,13 @@ import { generate } from '../src/core/balloon/balloonGenerator';
 import { classic, filename, makeBalloonParameters, normalized, round, tall } from '../src/core/balloon/balloonParameters';
 import { exportSTL, maximumBytes, maximumTriangles } from '../src/core/balloon/balloonStl';
 import { centered, open, parse, read, STLImportError, swiftDouble } from '../src/core/balloon/stlImport';
+import { basketDefaults, BasketGenerator } from '../src/core/basket/basketGeometry';
 import { BalloonMesh } from '../src/core/geometry/mesh';
 import { add, type Point3 } from '../src/core/geometry/point3';
 import { binarySTL } from '../src/core/io/binaryStl';
+import { makePatternSettings, makePurgeSettings, PaintedBalloon } from '../src/core/patterns/balloonPatterns';
+import { NO_RASTERIZERS } from '../src/core/patterns/fileRaster';
+import { threeMF } from '../src/core/patterns/threeMF';
 import { swiftDescription } from '../src/core/swift/format';
 import { check } from '../src/core/testing/check';
 import type { BalloonParameters } from '../src/core/types';
@@ -98,7 +101,11 @@ describe.skipIf(!existsSync(original) || !existsSync(oldAttachments))('existing 
     check(imported.parameters.panels === 20 && close(imported.parameters.panelDepth, 4, 0.1), 'Original Blender panels differ');
     // Reopened settings must still produce editable, validated shells, attachments and patterns.
     const edited = normalized({ ...imported.parameters, hollow: true, wallThickness: 1.4, stringHoles: true, hangingLoop: true });
-    generate(edited).validate();
+    const editedMesh = generate(edited);
+    editedMesh.validate();
+    const pattern = makePatternSettings({ style: 'Horizontal stripes' });
+    const painted = PaintedBalloon.make(editedMesh, edited, pattern, NO_RASTERIZERS);
+    check(threeMF(painted, pattern, makePurgeSettings()).length > 100, 'Pattern export failed');
   }, 60_000);
   it('existing 222 × 244 mm attachment export', () => {
     const imported = open(new Uint8Array(readFileSync(oldAttachments)));
@@ -179,18 +186,8 @@ describe('ASCII, binary detection, centering, integrity, malformed and unsupport
     rejects('ASCII NaN', () => parse(bytes(ascii.replaceAll('1e0', 'nan'))));
     rejects('degenerate', () => parse(bytes(ascii.replaceAll('1e0', '0'))));
     rejects('non-balloon', () => read(bytes(ascii)));
-    // Stand-in for BasketGenerator.generate(BasketParameters()) until WP-K8: its default size, a box.
-    const w = 60;
-    const d = 45;
-    const h = 40;
-    const box = new BalloonMesh(
-      [[-w, -d, 0], [w, -d, 0], [w, d, 0], [-w, d, 0], [-w, -d, h], [w, -d, h], [w, d, h], [-w, d, h]].map(([x, y, z]) => ({ x: x as number, y: y as number, z: z as number })),
-      [[0, 2, 1], [0, 3, 2], [4, 5, 6], [4, 6, 7], [0, 1, 5], [0, 5, 4], [1, 2, 6], [1, 6, 5], [2, 3, 7], [2, 7, 6], [3, 0, 4], [3, 4, 7]].map(([a, b, c]) => ({ a: a as number, b: b as number, c: c as number })),
-      0,
-    );
-    rejects('basket', () => read(binarySTL(box)));
+    rejects('basket', () => read(binarySTL(BasketGenerator.generate(basketDefaults()))));
   });
-  it.todo('rejects the real basket STL (WP-K8) and exports the reopened balloon as a patterned 3MF (WP-K3)');
 });
 
 describe('error messages and limits', () => {
