@@ -1,17 +1,16 @@
 // Runs one grid case through the CoreApi the way mac/ReferenceExporter/main.swift (`produce`)
 // runs it through the Swift core: decode the raw settings, normalize, export.
-import type { CoreApi, Quality, RunOptions } from '../src/core/api';
+import type { CoreApi, ExportOptions, Quality } from '../src/core/api';
 import type { ExportResult } from '../src/core/types';
 import type { ReferenceCase } from './manifest';
 
 /**
- * Two things the reference exporter does and the app does not, which `CoreApi.export` has no
- * parameter for yet. `core/real` (WP-K9) has to honor both for the grid to pass:
+ * Two things the reference exporter does and the app does not:
  * - `quality`: 59 grid cases are exported at preview quality.
  * - `ignoreExportProblem`: `clip-small-head` has a `problem`; the app disables its export, the
  *   reference keeps the geometry.
  */
-export interface GridRunOptions extends RunOptions {
+export interface GridRunOptions extends ExportOptions {
   quality: Quality;
   ignoreExportProblem: true;
 }

@@ -4,8 +4,10 @@
 import type { CableClipNames, ClipParameterApi } from '../api';
 import { CABLE_CLIP_MOUNTS, type CableClipDerived, type CableClipParameters, type Range } from '../types';
 import { asin, cos, hypot, PI, sin } from '../swift/dmath';
-import { container, ifPresent, lenientEnum, makeCodec } from './json';
-import { printfFixed, printfG, swiftMax, swiftMax3, swiftMin } from './swiftCompat';
+import { keyedCodec, lenientEnumeration } from '../codec';
+import type { JSONKeyedContainer } from '../swift/json';
+import { formatFixed, formatG } from '../swift/format';
+import { swiftMax, swiftMax3, swiftMin } from '../swift/minmax';
 
 const defaults: CableClipParameters = Object.freeze({
   cableDiameter: 3.75,
@@ -52,7 +54,7 @@ export const normalizeClip = (input: CableClipParameters): CableClipParameters =
 };
 
 export const clipNames = (p: CableClipParameters): CableClipNames => {
-  const cableText = printfG(p.cableDiameter);
+  const cableText = formatG(p.cableDiameter);
   return {
     cableText,
     displayName: `Cable clip · Ø ${cableText} mm`,
@@ -61,21 +63,20 @@ export const clipNames = (p: CableClipParameters): CableClipNames => {
 };
 
 /** CableClip.swift:42-54: an unknown mount falls back to the nail. */
-const decode = (value: unknown): CableClipParameters => {
-  const c = container(value);
+const decode = (c: JSONKeyedContainer): CableClipParameters => {
   const d = defaults;
   return {
-    cableDiameter: ifPresent.double(c, 'cableDiameter') ?? d.cableDiameter,
-    mount: lenientEnum(c, 'mount', CABLE_CLIP_MOUNTS) ?? d.mount,
-    nailDiameter: ifPresent.double(c, 'nailDiameter') ?? d.nailDiameter,
-    nailHeadDiameter: ifPresent.double(c, 'nailHeadDiameter') ?? d.nailHeadDiameter,
-    nailHeadHeight: ifPresent.double(c, 'nailHeadHeight') ?? d.nailHeadHeight,
-    nailGap: ifPresent.double(c, 'nailGap') ?? d.nailGap,
-    plate: ifPresent.double(c, 'plate') ?? d.plate,
-    length: ifPresent.double(c, 'length') ?? d.length,
-    wall: ifPresent.double(c, 'wall') ?? d.wall,
-    overlap: ifPresent.double(c, 'overlap') ?? d.overlap,
-    flat: ifPresent.bool(c, 'flat') ?? d.flat,
+    cableDiameter: c.doubleIfPresent('cableDiameter') ?? d.cableDiameter,
+    mount: lenientEnumeration(c, 'mount', CABLE_CLIP_MOUNTS) ?? d.mount,
+    nailDiameter: c.doubleIfPresent('nailDiameter') ?? d.nailDiameter,
+    nailHeadDiameter: c.doubleIfPresent('nailHeadDiameter') ?? d.nailHeadDiameter,
+    nailHeadHeight: c.doubleIfPresent('nailHeadHeight') ?? d.nailHeadHeight,
+    nailGap: c.doubleIfPresent('nailGap') ?? d.nailGap,
+    plate: c.doubleIfPresent('plate') ?? d.plate,
+    length: c.doubleIfPresent('length') ?? d.length,
+    wall: c.doubleIfPresent('wall') ?? d.wall,
+    overlap: c.doubleIfPresent('overlap') ?? d.overlap,
+    flat: c.boolIfPresent('flat') ?? d.flat,
   };
 };
 
@@ -135,7 +136,7 @@ export const cableClip = (input: CableClipParameters): CableClipDerived => {
     plateEnd = p.length / 2;
   }
 
-  const mm = (value: number) => printfFixed(value, 1);
+  const mm = (value: number) => formatFixed(value, 1);
   const problem =
     p.mount === 'nail' && p.nailHeadDiameter < p.nailDiameter + 0.6
       ? `A ${mm(p.nailHeadDiameter)} mm head is too small for a ${mm(p.nailDiameter)} mm nail: it needs a head of ${mm(p.nailDiameter + 0.6)} mm or more to hold the plate.`
@@ -196,7 +197,7 @@ export const clipParameters: ClipParameterApi = {
   defaults,
   ranges,
   normalize: normalizeClip,
-  codec: makeCodec(decode),
+  codec: keyedCodec(decode),
   filename: (p) => clipNames(p).filename,
   names: clipNames,
   clip: cableClip,
