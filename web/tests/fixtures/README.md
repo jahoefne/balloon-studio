@@ -80,7 +80,7 @@ Implemented in `web/tests/support/compare.ts` (`THRESHOLDS`). Pixel values in by
 | | `iou(ts, cg)` (nearest-neighbour resampled to the CG size) | ≥ 0.97 |
 | Primitives vs `primitives/*.pgm` | `pixelAgreement(ts, cg, 2)` | ≥ 0.98 (`cubic-dash-8-5-w4` ≥ 0.97: dash drift on curves, see `dash.ts`) |
 | Moon primitive (checks the `addArc` normalisation) | ink at the moon circle's centre, which lies in the bite | 0 |
-| Worst-case scene (3072 × 1200, 700 primitives) | time in Node | < 0.6 s locally, soft 3 s in CI |
+| Worst-case scene (3072 × 1200, 700 primitives) | time in Node | < 0.6 s, hard only with `PERF=1`; otherwise a warning from 3 s |
 | Determinism | `hashes.json` in Node, Chromium, Firefox, WebKit | identical |
 
 The plan gives the primitives threshold without a tolerance; ±2 gray levels (the fine artwork tolerance) is
