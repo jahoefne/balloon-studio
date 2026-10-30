@@ -1,11 +1,11 @@
 // Ported from mac/Sources/BalloonStudio/BasketGeometry.swift @ cbda68d
 //
-// BasketStyle (:3-17) with its titles lives in core/types.ts. `layout` and `compact` at the end
-// of this file are from StringHoles.swift @ cbda68d, see the SWIFT-DIFF there.
+// BasketStyle (:3-17) with its titles lives in core/types.ts.
 //
 // Swift `pow(x, 2)` is written `x * x` (docs/plan.md, Abschnitt 3), through a named local where x
 // is an expression; `pow(x, 0.65)` goes through dmath.
 import { CoreFailure, type Codec } from '../api';
+import { compact, layout, type Layout } from '../balloon/stringHoles';
 import { BalloonMesh } from '../geometry/mesh';
 import { add, scale, zero, type Point3, type Triangle } from '../geometry/point3';
 import { atan, atan2, cos, exp, PI, pow, sin } from '../swift/dmath';
@@ -357,7 +357,7 @@ function roundCordHoles(
   mesh: BalloonMesh,
   p: BasketParameters,
   row: number,
-  stringLayout: StringHolesLayout,
+  stringLayout: Layout,
   outer: (row: number, col: number) => number,
   inner: (row: number, col: number) => number,
   surface: (theta: number, z: number, inside: boolean) => number,
@@ -459,96 +459,3 @@ function roundCordHoles(
 
 /** Swift `enum BasketGenerator`. */
 export const BasketGenerator = { wickerDistance, wickerRelief, radius, generate };
-
-// SWIFT-DIFF: StringHoles.layout (StringHoles.swift:20-54) and compact (:106-117) stay private here
-// because core/balloon/stringHoles.ts belongs to WP-K2 and is not on main yet; this port does not
-// depend on the merge order. Swap to that module once it has landed.
-interface StringHolesLayout {
-  angles: number[];
-  centers: number[];
-}
-
-function layout(samples: number, clearance: number, innerRadius: (angle: number) => number): StringHolesLayout {
-  const tau = 2 * PI;
-  const half = clearance / Math.sqrt(2);
-  const centers: number[] = [];
-  for (let i = 0; i < 4; i++) centers.push(i * PI / 2);
-  const spans = centers.map((center) => {
-    let lo = 0.0;
-    let hi = PI / 4 - 0.01;
-    for (let step = 0; step < 40; step++) {
-      const mid = (lo + hi) / 2;
-      if (innerRadius(center + mid) * sin(mid) < half) lo = mid;
-      else hi = mid;
-    }
-    return hi;
-  });
-  const wrapped = (a: number): number => (a + tau) % tau;
-  const difference = (a: number, b: number): number => Math.abs(atan2(sin(a - b), cos(a - b)));
-  const isReserved = (angle: number): boolean => {
-    for (let c = 0; c < centers.length; c++) {
-      if (difference(angle, centers[c] as number) < (spans[c] as number) + 1e-8) return true;
-    }
-    return false;
-  };
-  const angles: number[] = [];
-  for (let i = 0; i < samples; i++) {
-    const angle = tau * i / samples;
-    if (!isReserved(angle)) angles.push(angle);
-  }
-  for (let c = 0; c < centers.length; c++) {
-    const center = centers[c] as number;
-    const span = spans[c] as number;
-    angles.push(wrapped(center - span), center, wrapped(center + span));
-  }
-  sortDoubles(angles);
-  while (angles.length < samples) {
-    let best = -1;
-    let bestWidth = 0.0;
-    for (let i = 0; i < angles.length; i++) {
-      const next = i + 1 < angles.length ? (angles[i + 1] as number) : (angles[0] as number) + tau;
-      const mid = wrapped(((angles[i] as number) + next) / 2);
-      if (isReserved(mid)) continue;
-      if (next - (angles[i] as number) > bestWidth) {
-        best = i;
-        bestWidth = next - (angles[i] as number);
-      }
-    }
-    if (!(best >= 0)) break;
-    const next = best + 1 < angles.length ? (angles[best + 1] as number) : (angles[0] as number) + tau;
-    angles.push(wrapped(((angles[best] as number) + next) / 2));
-    sortDoubles(angles);
-  }
-  return { angles, centers: centers.map((center) => angles.findIndex((angle) => Math.abs(angle - center) < 1e-8)) };
-}
-
-function compact(mesh: BalloonMesh): void {
-  const used = new Uint8Array(mesh.vertices.length);
-  for (const t of mesh.triangles) {
-    used[t.a] = 1;
-    used[t.b] = 1;
-    used[t.c] = 1;
-  }
-  const remap = new Int32Array(used.length);
-  const vertices: Point3[] = [];
-  for (let i = 0; i < used.length; i++) {
-    if (used[i] === 1) {
-      remap[i] = vertices.length;
-      vertices.push(mesh.vertices[i] as Point3);
-    }
-  }
-  const range = mesh.innerVertexRange;
-  if (range !== undefined) {
-    let first = -1;
-    let last = -1;
-    for (let i = range.lowerBound; i < range.upperBound; i++) {
-      if (used[i] === 1) {
-        if (first < 0) first = i;
-        last = i;
-      }
-    }
-    if (first >= 0) mesh.innerVertexRange = { lowerBound: remap[first] as number, upperBound: (remap[last] as number) + 1 };
-  }
-  mesh.triangles = mesh.triangles.map((t) => ({ a: remap[t.a] as number, b: remap[t.b] as number, c: remap[t.c] as number }));
-  mesh.vertices = vertices;
-}
