@@ -467,6 +467,8 @@ Meilensteine:
 | Mehrere Agenten kollidieren | ein WP = ein Branch, Dateibesitz, eingefrorene Verträge zuerst (U2/K1/R0) |
 
 ## 12. Annahmen (im Plan getroffen, vom Nutzer bei Freigabe zu bestätigen oder zu ändern)
+
+Stand 2026-10-30: alle Annahmen bestätigt (Lizenz, Git-Identität und `output/` mit der Freigabe am 2026-10-29; Alt+N, Punkt-Dezimalanzeige und der nur nach Freigabe gebaute Settings-Download ausdrücklich am 2026-10-30). WP-U5/U9 setzen sie wie beschrieben um.
 - Lizenz **MIT** für das öffentliche Repo (wie stacklamp); Fonts/Bibliotheken mit eigenen Lizenztexten in `THIRD_PARTY_NOTICES.md` / `fonts/LICENSES.md`.
 - Repo-lokale Git-Identität `jahoefne@gmail.com` (global ist eine Arbeitsadresse gesetzt).
 - Reset-Shortcut **Alt+N** (⌥N) plus sichtbarer Button, weil `Cmd/Ctrl+N` im Browser nicht abfangbar ist.
