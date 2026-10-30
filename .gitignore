@@ -13,6 +13,8 @@ web/.build/
 # reference pack (Tier B, ~1 GB) and exporter scratch; Tier A under references/files is committed
 references/pack/
 references/build/
+# the harness's working file; the record of a pack is references/report-<release>.json
+references/report.json
 
 # Claude desktop app: session worktrees and launch config
 .claude/

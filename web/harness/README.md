@@ -112,6 +112,8 @@ REFS_SHARD=2/4 VITE_CORE=real npm run test:reference
 
 It fails on `mismatch` and `unverified`; `ulp`, `equivalent` and `equivalent-bounded` pass. It prints `id | status | maxUlp | ulpCount | tsMs | swiftMs | note`; `references/report.json` has the same rows plus a summary and the stale warnings. Under `npm test` (stub core) only the structure runs: every case decodes and exports one file.
 
+`references/report.json` is a working file (gitignored): every run overwrites it, also with a partial selection or a shard, and `npm run bench` adds its rows under `bench`. The record of a pack version is `references/report-<release>.json`, made from a whole run on `main` and committed once per pack (`references/PACK.md`, "The report of a pack"); `docs/acceptance.md` summarizes it.
+
 The relief and text groups are exempt from the byte criterion (plan §1), so the grid leaves `3D/3dmodel.model` and `Metadata/balloon-studio.txt` out of those 31 cases (`skipEntries`). With injected Swift rasters, WP-K3 calls `expectReference` without that option.
 
 `core/real` honors two `ExportOptions` the app does not use (`GridRunOptions` in `exportCase.ts`): `quality` for the 59 preview-quality cases, and `ignoreExportProblem` for `clip-small-head`, which the app refuses to export but the reference keeps.

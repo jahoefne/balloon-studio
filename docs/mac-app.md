@@ -492,6 +492,74 @@ The attachment exports were independently checked in Blender for connected manif
 
 The basket exports were also independently checked in Blender. Ray tests through each of the four openings verify clearance; a ray through the open top verifies the floor thickness. The basket exported using the app's actual Save dialog was checked as well.
 
+## Regenerating the references
+
+The web port is compared with what this app exports. `mac/ReferenceExporter` runs the grid `mac/cases/grid.json` through the app's own export paths and writes the reference set; [`references/PACK.md`](../references/PACK.md) describes its files and formats. Redo this when the Swift sources, the grid or the bundled fonts change. All paths and commands below are from the repository root, not from `mac/`.
+
+You need a Mac with Apple silicon, Xcode or its command line tools (the scripts set `DEVELOPER_DIR=/Library/Developer/CommandLineTools` if you have not set it), about 5 GB free in `references/build`, and a clean checkout. CoreText, CoreGraphics and Apple libm take part in the result, so the manifest records the macOS version and toolchain. All times are from 2026-10-30, macOS 26.6.2, 18 cores, with other work on the machine. Every step below ran on `main` at b7be18b, except publishing the release in step 6; step 7 ran against a pack already unpacked, and the workflow "Full reference comparison" exercises the download.
+
+**1. Prove the Swift patches.** Only needed when `mac/Sources` changed.
+
+```bash
+bash mac/scripts/verify-swift-patches.sh
+```
+
+It takes about 3 minutes. It builds the exporter from the import commit (`PATCH_BASE`, default `cbda68d`) and from your tree, runs both over the grid with `--geometry-only` and writes `references/patch-proof.json`; it exits 1 if an STL or `3D/3dmodel.model` differs, or a JSON differs after parsing. Nothing else may differ, so a run with unchanged sources changes only the `commit` line of that file. Leave that out of your commit.
+
+**2. Run the probes on their own, if you only want those.** `make-references.sh` runs them anyway.
+
+```bash
+bash mac/scripts/build-probes.sh --no-full
+```
+
+It takes about 40 seconds and rewrites `references/probes/` and `web/tests/fixtures/swift/lampSurface/`. The output is deterministic, so `git status` shows nothing unless the runtime or the sources changed. Without `--no-full` it also writes the complete Libm series (about 230 MB) to `references/build/probes/libm`.
+
+**3. Build the reference set.**
+
+```bash
+FONT_FILES="rounded=web/public/fonts/Nunito-Bold.ttf sans=web/public/fonts/Arimo-Bold.ttf serif=web/public/fonts/Gelasio-Bold.ttf handwritten=web/public/fonts/ComicNeue-Bold.ttf mono=web/public/fonts/DejaVuSansMono-Bold.ttf" \
+  REFS_RELEASE=refs-v2 bash mac/scripts/make-references.sh
+```
+
+It takes about 100 seconds in all: builds about 50, the probes about 20, the grid about 30, packing about 15. It clears `references/files` and `references/build/{files,entries,rasters}`, then writes `references/manifest.json`, Tier A under `references/files/` and the two archives under `references/pack/`.
+
+- **`FONT_FILES` is required.** Without it the manifest loses the `<id>.ttf.*` dumps and `web/tests/textReference.test.ts` fails.
+- **`REFS_RELEASE` needs a new tag for a new pack,** because the manifest pins the asset hashes and URLs. Set it to the next free one.
+- **`JOBS`** (default 6) sets `--jobs`, the number of cases run in parallel. It does not apply to relief and text cases: the exporter draws those one at a time whatever the setting, because CoreGraphics gives different bitmaps when several threads draw at once ([details](../references/PACK.md#coregraphics-is-not-deterministic-across-threads)). Anything else that dumps CoreGraphics rasters has to draw one at a time too.
+- **A second run** with the same inputs changes only `generatedAt` and the `durationMs` values. With the fonts added to `refs-v1`, no case in the manifest changed apart from `durationMs`; only `generatedAt`, `generator` and `pack` in its head did, and the main archive grew from 334.31 to 334.39 MB.
+
+**4. Refresh the text dumps alone, if a font changed and nothing else did.** Step 3 with `FONT_FILES` already includes this.
+
+```bash
+REFS_PACK_DIR=references/pack/refs-v1 bash mac/scripts/refresh-text-rasters.sh
+```
+
+It takes about 40 seconds. It draws the text cases one at a time, merges their `rasters` lists into the manifest with `reference-exporter merge-rasters`, which refuses if anything else of a case changed, and copies the `<id>.ttf.*` files into the unpacked pack. The release keeps the old files until the next full build. The web tests read 20 of these masks from `web/tests/fixtures/text/` (`<id>.ttf.pgm.gz` written with `gzip -9 -n`, and `<id>.ttf.json`), so copy them there too, then pin the TS masks again with `UPDATE_TEXT_HASHES=1 npx vitest run tests/textReference.test.ts` in `web/`.
+
+**5. Regenerate the four migration dumps, if their cases or the artwork changed.** `relief-night-flight-legacy`, `relief-night-flight-v2`, `relief-summit-saved` and `text-legacy-milo` have no `rasters` flag in the grid of `refs-v1`, so that pack has no dumps for them; `refs-v2` (#51) adds the flag and the dumps. `web/tests/patterns.reference.test.ts` reads them from `web/tests/fixtures/patterns/`, so they stay committed and those cases run without the pack. On a grid without the flag, make a temporary grid with only those cases, each with `"rasters": true`, and run the exporter one case at a time:
+
+```bash
+mac/.build/reference-exporter --cases /tmp/migration-grid.json --out /tmp/migration --jobs 1 --rasters
+```
+
+Copy `<id>.json` as it is and gzip `<id>.raw.pgm` or `<id>.pgm` with `gzip -9 -n`. This gave exactly the committed files. Their 3MF hashes must equal the manifest's.
+
+**6. Commit, push, and publish the release.** Commit `references/manifest.json`, `references/files`, `references/probes` and anything from the steps above, and push. The manifest is what names the pack, so publish the assets from that commit, before CI needs them. `--target` takes a branch or a full SHA, not an abbreviated one. A release is public, so this step is for the repository's owner:
+
+```bash
+gh release create refs-v2 references/pack/balloon-studio-refs-v2.tar.zst references/pack/balloon-studio-refs-v2-libm.tar.zst --repo jahoefne/balloon-studio --target "$(git rev-parse HEAD)" --title "Reference pack v2" --notes "Reference pack v2 (Mac exports)"
+```
+
+**7. Fetch and check.**
+
+```bash
+bash mac/scripts/fetch-pack.sh
+```
+
+It reads release, URLs and SHA-256 from the manifest, uses an archive already in `references/pack/` if its hash matches, downloads otherwise, and unpacks to `references/pack/<release>/`. `--libm` adds the Libm series, `--dest DIR` picks the folder, and a marker file makes a repeat run a no-op. Worktrees can share one unpacked pack with `REFS_PACK_DIR`. Then run the comparison and commit its report, `references/report-<release>.json`, as described in [the report of a pack](../references/PACK.md#the-report-of-a-pack).
+
+**What the manifest holds.** The head has `generatedAt`, `generator` (toolchain, macOS, options, `fontFiles`), `grid` (path, case count, SHA-256), `sources` and `sourcesSha256` (the core Swift files), `tierA`, `pack` (release, and name, bytes, SHA-256 and URL of each asset) and `primitives`. Each case has `id, part, quality, group, filename, kind, bytes, sha256, tierA, durationMs, normalized`, per STL `triangles`, `bbox` and sometimes `header`, per ZIP or 3MF entry `name, kind, bytes, sha256, crc32, localHeaderOffset, tierA`, and `rasters`, `error` or `notes` where they apply. `references/PACK.md` has the full list.
+
 ## Project files
 
 - `Sources/BalloonStudio/`: native app and mesh generator.
