@@ -1,7 +1,7 @@
 // The wiring of the real core: what the grid in harness/ cannot see. Bytes and normalized settings
 // of exports are the harness's job (`VITE_CORE=real npm run test:reference`).
 import { readdirSync, readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { routeRequest } from '../../worker/route';
 import type { ExportRequest, PreviewRequest } from '../../worker/protocol';
 import { CoreFailure, INVALID_SETTINGS_MESSAGE, LAMP_SETTINGS_ERROR, MISSING_SETTINGS_MESSAGE, STL_ERRORS, type Codec } from '../api';
@@ -9,6 +9,9 @@ import { core as stub } from '../stub/index';
 import { CLOUD_VIEWS, FIGURE_STYLES, type CableClipParameters, type MeshBuffers } from '../types';
 import { core } from './index';
 import { core as parameters } from './parameters';
+
+// Real geometry, also under the stub's config with its 5 s, and on slow CI runners.
+vi.setConfig({ testTimeout: 120_000 });
 
 const fixtureDir = new URL('../../../../references/fixtures/legacy-settings/', import.meta.url);
 const fixtures = readdirSync(fixtureDir)
@@ -113,7 +116,7 @@ describe('previews through the worker route', () => {
     expect(core.balloon.preview(patterned).mesh.positions).toEqual(stub.balloon.preview(patterned).mesh.positions);
   });
 
-  it('cloud: all eight views, colors as CloudEditor.swift picks them', { timeout: 60_000 }, () => {
+  it('cloud: all eight views, colors as CloudEditor.swift picks them', () => {
     const { result, transfer } = route({ part: 'cloud', input: core.cloud.defaults('cloud') });
     const preview = result as ReturnType<typeof core.cloud.preview>;
     const { views } = preview;
@@ -135,7 +138,7 @@ describe('previews through the worker route', () => {
     expect(new Set(transfer).size).toBe(transfer.length);
   });
 
-  it('cloud: no clamp shows the seals, an insert has its mesh and colors the rear', { timeout: 60_000 }, () => {
+  it('cloud: no clamp shows the seals, an insert has its mesh and colors the rear', () => {
     const p = { ...core.cloud.defaults('cloud'), strainRelief: false, nailInsert: true };
     const { views, clampCount, cablesWithoutClamp, nailInsert, hasInsertMesh, printedParts } = core.cloud.preview(p);
     expect(clampCount).toBe(0);
@@ -149,7 +152,7 @@ describe('previews through the worker route', () => {
     expect(printedParts).toBe(4);
   });
 
-  it('sun: a cloud kit with its own names', { timeout: 60_000 }, () => {
+  it('sun: a cloud kit with its own names', () => {
     const p = core.cloud.defaults('sun');
     const preview = core.cloud.preview(p);
     checkMesh(preview.views.assembled, true);
@@ -226,7 +229,7 @@ describe('exports', () => {
     expect(route({ part: 'cloud', input: core.cloud.defaults('cloud') }).mime).toBe('application/zip');
   });
 
-  it('honor the quality', { timeout: 60_000 }, () => {
+  it('honor the quality', () => {
     const size = (quality: 'preview' | 'export') => core.basket.export(core.basket.defaults, { quality }).files[0]!.bytes.length;
     expect(size('preview')).toBeLessThan(size('export'));
   });
