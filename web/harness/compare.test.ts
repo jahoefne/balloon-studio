@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { storedZipArchive } from '../src/core/io/storedZip';
 import { compareCase, compareCaseError, compareOutput } from './compare';
-import { at, bumpVertexEverywhere, copy, resealBstl, stl, text, withBstlHeader, type Tri } from './fixtures';
+import { at, bumpVertexEverywhere, copy, resealBstl, stl, text, withBstlHeader } from './fixtures';
 import { ReferenceMismatchError, expectNormalized, expectReference, expectReferenceError } from './index';
 import { REFERENCES_DIR, allCases, getCase, isExported, isStrictKind, kindOfName, loadManifest, type ExportedCase, type ManifestEntry } from './manifest';
 import { hasPack, loadCaseBody, loadEntryBody, packDir, referenceAvailable, sha256Hex } from './refs';
@@ -33,11 +33,24 @@ const entryOf = (c: ExportedCase, name: string): ManifestEntry => {
 };
 const tierACases = allCases().filter(isExported).filter((c) => c.tierA);
 
-/** An STL that satisfies the manifest facts of `c` (its triangle count and bbox) but is not its reference. */
-function factsFixture(c: ExportedCase): Uint8Array {
+/**
+ * The Tier B STL with the fewest triangles. What these tests check does not depend on the size,
+ * and the largest case (592,712 triangles) took 40 s under parallel load, past the test timeout.
+ */
+function smallestTierBStl(hasHeader: boolean): ExportedCase {
+  const candidates = allCases().filter(isExported).filter((c) => c.kind === 'stl' && !c.tierA && (c.header !== undefined) === hasHeader);
+  return candidates.sort((a, b) => (a.triangles as number) - (b.triangles as number))[0] as ExportedCase;
+}
+
+/** An STL that satisfies the manifest facts of `c` (its triangle count and bbox) but is not its reference: one record, repeated. */
+function factsFixture(c: Pick<ExportedCase, 'bbox' | 'triangles'>): Uint8Array {
   const { min, max } = c.bbox as NonNullable<ExportedCase['bbox']>;
-  const triangles: Tri[] = Array.from({ length: c.triangles as number }, () => [min, max, min]);
-  return stl(triangles);
+  const count = c.triangles as number;
+  const out = new Uint8Array(84 + 50 * count);
+  out.set(stl([[min, max, min]]));
+  new DataView(out.buffer).setUint32(80, count, true);
+  for (let filled = 50; filled < 50 * count; filled *= 2) out.copyWithin(84 + filled, 84, 84 + filled);
+  return out;
 }
 
 describe('manifest', () => {
@@ -146,7 +159,7 @@ describe('without the pack', () => {
   });
 
   it('a differing STL that only the pack could settle is `unverified-needs-pack`', () => {
-    const c = allCases().filter(isExported).find((candidate) => candidate.kind === 'stl' && !candidate.tierA && candidate.header === undefined) as ExportedCase;
+    const c = smallestTierBStl(false);
     expect(referenceAvailable(c)).toBe(false);
     expect(loadCaseBody(c)).toBeNull();
     const result = compareCase(c.id, factsFixture(c));
@@ -160,7 +173,7 @@ describe('without the pack', () => {
   });
 
   it('a BSTL header is checked against the manifest', () => {
-    const c = exported('balloon-classic');
+    const c = smallestTierBStl(true);
     const triangles = stl([[[0, 0, 0], [1, 0, 0], [0, 1, 0]]]);
     expect(compareCase(c.id, resealBstl(withBstlHeader(triangles))).tags).toEqual(['triangle count']);
     const right = factsFixture(c);
@@ -182,7 +195,7 @@ describe('without the pack', () => {
     const large = entries.filter((entry) => !entry.tierA);
     /** Placeholders for the Tier B parts that satisfy their manifest facts. */
     const plausible = (): Record<string, Uint8Array> =>
-      Object.fromEntries(large.map((entry) => [entry.name, factsFixture({ ...c, triangles: entry.triangles as number, bbox: entry.bbox as NonNullable<ExportedCase['bbox']> })]));
+      Object.fromEntries(large.map((entry) => [entry.name, factsFixture(entry)]));
 
     it('with Tier B entries that differ is `unverified-needs-pack` when their facts hold', () => {
       expect(large.length).toBeGreaterThan(0);
@@ -244,7 +257,7 @@ describe('error cases', () => {
 describe('expectReference', () => {
   const c = exported('clip-default');
   const body = () => loadCaseBody(c) as Uint8Array;
-  const tierB = allCases().filter(isExported).find((candidate) => candidate.kind === 'stl' && !candidate.tierA && candidate.header === undefined) as ExportedCase;
+  const tierB = smallestTierBStl(false);
 
   it('passes on identical and ulp, returning the result', () => {
     expect(expectReference(c.id, body()).status).toBe('identical');
@@ -277,12 +290,13 @@ describe('expectReference', () => {
 
   it('unverified warns locally and fails on CI, unless allowed', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const bytes = factsFixture(tierB);
     vi.stubEnv('CI', '');
-    expect(expectReference(tierB.id, factsFixture(tierB)).status).toBe('unverified');
+    expect(expectReference(tierB.id, bytes).status).toBe('unverified');
     expect(warn).toHaveBeenCalledOnce();
     vi.stubEnv('CI', 'true');
-    expect(() => expectReference(tierB.id, factsFixture(tierB))).toThrow(ReferenceMismatchError);
-    expect(expectReference(tierB.id, factsFixture(tierB), { allowUnverified: true }).status).toBe('unverified');
+    expect(() => expectReference(tierB.id, bytes)).toThrow(ReferenceMismatchError);
+    expect(expectReference(tierB.id, bytes, { allowUnverified: true }).status).toBe('unverified');
   });
 
   it('expectNormalized compares byte for byte and names the path', () => {
