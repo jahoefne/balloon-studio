@@ -208,7 +208,7 @@ describe('DisclosureGroup', () => {
 describe('labels, metrics, advice and icons', () => {
   it('renders a section label as a heading', () => {
     render(<SectionLabel>DIMENSIONS</SectionLabel>);
-    expect(screen.getByRole('heading', { level: 3, name: 'DIMENSIONS' })).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 2, name: 'DIMENSIONS' })).toBeTruthy();
   });
 
   it('renders metrics as a description list', () => {
@@ -246,6 +246,73 @@ describe('labels, metrics, advice and icons', () => {
     expect(container.querySelectorAll('svg[aria-hidden="true"]')).toHaveLength(SYMBOL_NAMES.length);
     expect(screen.getByRole('img', { name: 'Reset camera' })).toBeTruthy();
     expect(container.querySelector('[data-symbol="balloon.fill"]')).toBeTruthy();
+  });
+});
+
+describe('layout and size variants', () => {
+  it('lets the pickers and the switch hug their content', () => {
+    const { container } = render(
+      <>
+        <SegmentedControl hug label="Fixing" options={[{ value: 'a', label: 'A' }]} value="a" onChange={() => undefined} />
+        <Select hug label="Mount" options={[{ value: 'a', label: 'A' }]} value="a" onChange={() => undefined} />
+        <Switch hug checked={false} onChange={() => undefined}>
+          Hollow
+        </Switch>
+      </>,
+    );
+    expect(container.querySelector('.ui-segmented--hug')).toBeTruthy();
+    expect(container.querySelector('.ui-select--hug')).toBeTruthy();
+    expect(container.querySelector('.ui-switch--hug')).toBeTruthy();
+  });
+
+  it('fills the row unless told otherwise', () => {
+    const { container } = render(
+      <>
+        <SegmentedControl label="Fixing" options={[{ value: 'a', label: 'A' }]} value="a" onChange={() => undefined} />
+        <Select label="Mount" options={[{ value: 'a', label: 'A' }]} value="a" onChange={() => undefined} />
+        <Switch checked={false} onChange={() => undefined}>
+          Hollow
+        </Switch>
+      </>,
+    );
+    expect(container.querySelector('[class*="--hug"]')).toBeNull();
+  });
+
+  it('sizes checkboxes: 11 by default, 12 medium, 12 semibold', () => {
+    const { container } = render(
+      <>
+        <Checkbox checked={false} onChange={() => undefined}>
+          Wireframe
+        </Checkbox>
+        <Checkbox size={12} checked={false} onChange={() => undefined}>
+          Basket string holes
+        </Checkbox>
+        <Checkbox size={12} strong checked={false} onChange={() => undefined}>
+          Screwed strain relief
+        </Checkbox>
+      </>,
+    );
+    expect([...container.querySelectorAll('label')].map((label) => label.className)).toEqual(['ui-checkbox', 'ui-checkbox ui-checkbox--12', 'ui-checkbox ui-checkbox--12 ui-checkbox--strong']);
+  });
+
+  it('passes the metric size to the row', () => {
+    const { container } = render(
+      <MetricRow size={15}>
+        <Metric title="SIZE" value="6" unit="mm" />
+      </MetricRow>,
+    );
+    expect(container.querySelector('dl')?.className).toBe('ui-metric-row ui-metric-row--15');
+  });
+
+  it('cuts the check out of checkmark.circle.fill and draws a spinner for ProgressView', () => {
+    const { container } = render(
+      <>
+        <Icon name="checkmark.circle.fill" />
+        <Icon name="progress.view" />
+      </>,
+    );
+    expect(container.querySelector('[data-symbol="checkmark.circle.fill"] path')?.getAttribute('fill-rule')).toBe('evenodd');
+    expect(container.querySelector('[data-symbol="progress.view"]')?.getAttribute('class')).toContain('ui-spinner');
   });
 });
 

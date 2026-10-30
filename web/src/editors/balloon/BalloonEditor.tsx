@@ -94,7 +94,7 @@ function Sections() {
         </div>
       </div>
       <div className="balloon-panel">
-        <Switch checked={hollow} testId="hollowMode" onChange={(value) => setField('hollow', value)}>
+        <Switch hug checked={hollow} testId="hollowMode" onChange={(value) => setField('hollow', value)}>
           <Icon name="lightbulb" size={13} />
           Hollow for LEDs
         </Switch>
@@ -153,7 +153,7 @@ function Sections() {
       <hr className="balloon-divider" />
       <div className="balloon-section">
         <SectionLabel>ATTACHMENTS</SectionLabel>
-        <Checkbox className="balloon-toggle" checked={parameters.stringHoles} testId="basketAttachments" onChange={(value) => setField('stringHoles', value)}>
+        <Checkbox size={12} checked={parameters.stringHoles} testId="basketAttachments" onChange={(value) => setField('stringHoles', value)}>
           Basket string holes
         </Checkbox>
         {hasStringHoles && (
@@ -166,7 +166,7 @@ function Sections() {
             </p>
           </>
         )}
-        <Checkbox className="balloon-toggle" checked={hangingLoop} testId="ceilingAttachment" onChange={(value) => setField('hangingLoop', value)}>
+        <Checkbox size={12} checked={hangingLoop} testId="ceilingAttachment" onChange={(value) => setField('hangingLoop', value)}>
           Ceiling hanging loop
         </Checkbox>
         {hangingLoop && (
@@ -233,7 +233,7 @@ function Footer() {
   return (
     <div className="balloon-footer">
       <button type="button" className="balloon-export" disabled={exporting} data-testid="exportBalloon" onClick={() => void startExport('balloon')}>
-        {exporting ? <span className="balloon-spinner" aria-hidden="true" /> : <Icon name="square.and.arrow.up" size={14} />}
+        <Icon name={exporting ? 'progress.view' : 'square.and.arrow.up'} size={14} />
         <span>{exporting ? `Preparing ${format}…` : `Export ${format}…`}</span>
         <span className="balloon-export__shortcut">{modKeyLabel()}E</span>
       </button>

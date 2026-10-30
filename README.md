@@ -26,6 +26,8 @@ npm run dev        # http://localhost:5173/balloon-studio/
 npm test           # vitest
 npm run build      # typecheck + production build into web/dist
 npm run size       # gzip budget check
+npm run e2e        # Playwright smoke: every tab in Chromium, Firefox, WebKit (stub core)
+npm run e2e:parity # walks docs/parity-checklist.md on both cores and regenerates it
 ```
 
 Pushes to `main` run the tests, build the site and deploy it to GitHub Pages (`.github/workflows/deploy.yml`).

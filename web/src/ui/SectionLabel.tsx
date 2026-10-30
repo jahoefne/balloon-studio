@@ -10,7 +10,7 @@ export interface SectionLabelProps {
   level?: 2 | 3 | 4 | undefined;
 }
 
-export function SectionLabel({ children, level = 3 }: SectionLabelProps) {
+export function SectionLabel({ children, level = 2 }: SectionLabelProps) {
   const Heading = `h${level}` as const;
   return <Heading className="ui-section-label">{children}</Heading>;
 }

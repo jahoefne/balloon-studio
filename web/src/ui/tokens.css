@@ -14,11 +14,11 @@
   --ink: rgb(38 48 51); /* Color(red:0.15,green:0.19,blue:0.20) */
   --accent: rgb(31 102 89); /* Color(red:0.12,green:0.40,blue:0.35) */
   --paper: rgb(246 244 238); /* Color(red:0.965,green:0.958,blue:0.935) */
-  --stage: rgb(19 23 31); /* preview background (0.075,0.09,0.12) */
+  --stage: rgb(24 31 41); /* preview background as measured: SceneKit (0.075,0.09,0.12) is calibrated, gamma 1.8 */
 
-  /* Derived colors. SwiftUI's `.secondary` is ink at reduced opacity; 0.68 keeps 10 px
-     captions above 4.5:1 on paper. Swift's `.orange` is darkened for the same reason. */
-  --ink-secondary: rgb(38 48 51 / 0.68);
+  /* Derived colors. SwiftUI's `.secondary` is ink at reduced opacity; 0.7 keeps 10 px
+     captions above 4.5:1 on paper and on the accent panels. Swift's `.orange` is darkened for the same reason. */
+  --ink-secondary: rgb(38 48 51 / 0.7);
   --warning: rgb(168 84 0);
   --fit-badge: rgb(135 212 173); /* checkmark.circle.fill on the stage (0.53,0.83,0.68) */
   --accent-wash: rgb(31 102 89 / 0.07); /* panels: accent.opacity(0.07) */

@@ -1,6 +1,6 @@
 // BasketEditor.swift:85-255.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { core } from '#core/parameters';
 import { BASKET_STYLE_INFO, BASKET_STYLES, type BasketParameters, type BasketStyle } from '../../core/types';
 import { startExport } from '../../io';
@@ -19,7 +19,7 @@ import {
   SectionLabel,
   type SymbolName,
 } from '../../ui';
-import { ExportFooter, PartEditor, PreviewStatus, StageFrame, StageResetButton } from './PartEditor';
+import { ExportFooter, PartEditor, PreviewStatus, StageFrame, StageResetButton } from '../shared/PartEditor';
 import './basket.css';
 
 type NumericKey = Exclude<keyof BasketParameters, 'style'>;
@@ -168,13 +168,11 @@ export function BasketEditor() {
           Wireframe
         </Checkbox>
       </div>
-      <div className="part-metrics">
-        <MetricRow>
-          <Metric title="FOOTPRINT" value={`${Math.trunc(parameters.width)} × ${Math.trunc(derived.actualDepth)}`} unit="mm" />
-          <Metric title="HEIGHT" value={String(Math.trunc(parameters.height))} unit="mm" />
-          <Metric title="CORD CLEARANCE" value={number01(parameters.cordClearance)} unit="mm" />
-        </MetricRow>
-      </div>
+      <MetricRow size={21}>
+        <Metric title="FOOTPRINT" value={`${Math.trunc(parameters.width)} × ${Math.trunc(derived.actualDepth)}`} unit="mm" />
+        <Metric title="HEIGHT" value={String(Math.trunc(parameters.height))} unit="mm" />
+        <Metric title="CORD CLEARANCE" value={number01(parameters.cordClearance)} unit="mm" />
+      </MetricRow>
       <AdviceRow icon="link" title="Print separately, then string together">
         Print flat base down. Tie four equal-length strings through the basket holes and the matching balloon neck holes.
       </AdviceRow>
@@ -185,14 +183,15 @@ export function BasketEditor() {
 
 function StyleCard({ style, selected, onSelect }: { style: BasketStyle; selected: boolean; onSelect: () => void }) {
   const { title, subtitle, symbol } = BASKET_STYLE_INFO[style];
+  const subtitleId = useId();
   return (
-    <button type="button" className="part-card" aria-label={`${title} basket`} aria-pressed={selected} onClick={onSelect}>
+    <button type="button" className="part-card" aria-label={`${title} basket`} aria-describedby={subtitleId} aria-pressed={selected} onClick={onSelect}>
       <span className="part-card__icon">
         <Icon name={symbol as SymbolName} size={20} />
       </span>
       <span className="part-card__text">
         <span className="part-card__title">{title}</span>
-        <span className="part-card__subtitle">{subtitle}</span>
+        <span id={subtitleId} className="part-card__subtitle">{subtitle}</span>
       </span>
       {selected && <Icon name="checkmark" size={10} className="part-card__check" />}
     </button>

@@ -3,7 +3,6 @@ import {
   Cable,
   Check,
   Circle,
-  CircleCheck,
   CircleDashed,
   Contrast,
   Cylinder,
@@ -25,8 +24,9 @@ import {
 } from 'lucide-react';
 import './primitives.css';
 
-// SF Symbols used by the Mac app → lucide icons (docs/plan.md, WP-U1). `balloon.fill` has
-// no lucide counterpart and is drawn by `BalloonMark`.
+// SF Symbols used by the Mac app → lucide icons (docs/plan.md, WP-U1). What lucide lacks is drawn
+// here: `balloon.fill`, `checkmark.circle.fill` (solid with the check cut out, so a badge's
+// background shows through) and `progress.view`, SwiftUI's small `ProgressView()`.
 
 const symbols = {
   folder: Folder,
@@ -36,7 +36,6 @@ const symbols = {
   'circle.fill': Circle,
   'square.and.arrow.up': Upload,
   checkmark: Check,
-  'checkmark.circle.fill': CircleCheck,
   viewfinder: Scan,
   'arrow.counterclockwise': RotateCcw,
   'exclamationmark.triangle': TriangleAlert,
@@ -53,9 +52,9 @@ const symbols = {
   'arrow.up.and.down': ArrowUpDown,
 } as const satisfies Record<string, LucideIcon>;
 
-export type SymbolName = keyof typeof symbols | 'balloon.fill';
+export type SymbolName = keyof typeof symbols | 'balloon.fill' | 'checkmark.circle.fill' | 'progress.view';
 
-export const SYMBOL_NAMES = [...(Object.keys(symbols) as (keyof typeof symbols)[]), 'balloon.fill'] as const;
+export const SYMBOL_NAMES = [...(Object.keys(symbols) as (keyof typeof symbols)[]), 'balloon.fill', 'checkmark.circle.fill', 'progress.view'] as const;
 
 export interface IconProps {
   name: SymbolName;
@@ -69,6 +68,25 @@ export function Icon({ name, size = 14, label, className }: IconProps) {
   const classes = className ? `ui-icon ${className}` : 'ui-icon';
   const a11y = label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true };
   if (name === 'balloon.fill') return <BalloonMark size={size} className={classes} {...a11y} />;
+  if (name === 'checkmark.circle.fill') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" className={classes} data-symbol={name} {...a11y}>
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM6.72 13.28l3.82 3.82 6.77-7.35-1.62-1.5-5.22 5.66-2.19-2.19Z"
+        />
+      </svg>
+    );
+  }
+  if (name === 'progress.view') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" className={`${classes} ui-spinner`} fill="none" stroke="currentColor" strokeWidth="3.5" data-symbol={name} {...a11y}>
+        <circle cx="12" cy="12" r="10" opacity="0.35" />
+        <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+      </svg>
+    );
+  }
   const Glyph = symbols[name];
   // SF's filled variants: fill the dot so "Live preview" reads as a status light.
   const fill = name === 'circle.fill' ? 'currentColor' : 'none';

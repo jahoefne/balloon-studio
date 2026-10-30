@@ -46,7 +46,7 @@ export function PatternEditor() {
   return (
     <div className="balloon-section">
       <SectionLabel>PATTERN &amp; COLOR</SectionLabel>
-      <Select<BalloonPattern> label="Pattern" options={PATTERN_OPTIONS} value={pattern.style} testId="patternStyle" onChange={(style) => setPattern('style', style)} />
+      <Select<BalloonPattern> hug label="Pattern" options={PATTERN_OPTIONS} value={pattern.style} testId="patternStyle" onChange={(style) => setPattern('style', style)} />
       {uses3MF && (
         <>
           {pattern.style === 'Horizontal stripes' ? (
@@ -96,6 +96,7 @@ export function PatternEditor() {
                 />
               </div>
               <Select<BalloonTextFont>
+                hug
                 rich
                 label="Font"
                 options={FONT_OPTIONS}
@@ -148,7 +149,7 @@ function WasteAssumptions() {
   const purge = useBalloonStore((state) => state.purge);
   return (
     <DisclosureGroup title="P2S waste assumptions">
-      <Select<number> label="Layer height" options={LAYER_HEIGHT_OPTIONS} value={purge.layerHeight} onChange={(value) => setPurge('layerHeight', value)} />
+      <Select<number> hug label="Layer height" options={LAYER_HEIGHT_OPTIONS} value={purge.layerHeight} onChange={(value) => setPurge('layerHeight', value)} />
       <ParameterControl title="Base → pattern" value={purge.baseToDetail} range={[0, 1500]} step={10} unit="mm³" onChange={(value) => setPurge('baseToDetail', value)} />
       <ParameterControl title="Pattern → base" value={purge.detailToBase} range={[0, 1500]} step={10} unit="mm³" onChange={(value) => setPurge('detailToBase', value)} />
       <ParameterControl title="Flush multiplier" value={purge.multiplier} range={[0, 2]} step={0.1} unit="×" onChange={(value) => setPurge('multiplier', value)} />

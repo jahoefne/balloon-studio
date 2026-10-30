@@ -95,7 +95,7 @@ export function CloudPreviewPane({ parameters, kit, revision, updating, view, on
       </div>
 
       <div className="cloud-preview__toggles">
-        <span className={derived.fitsP2S ? 'cloud-fit' : 'cloud-fit cloud-fit--over'} data-testid={`${noun}Fit`}>
+        <span className={derived.fitsP2S ? 'cloud-fit' : 'cloud-fit cloud-fit--over'} data-testid={`${noun}Fit`} aria-live="polite">
           {derived.fitsP2S ? 'All pieces fit P2S + 8 mm brim' : `Exceeds P2S bed · reduce ${noun} width`}
         </span>
         {!assembly && (
@@ -108,7 +108,7 @@ export function CloudPreviewPane({ parameters, kit, revision, updating, view, on
         </Checkbox>
       </div>
 
-      <MetricRow testId={`${noun}Metrics`}>
+      <MetricRow size={18} testId={`${noun}Metrics`}>
         <Metric title={`${title.toUpperCase()} SIZE`} value={`${number(p.width)} × ${number(derived.height)}`} unit="mm" />
         <Metric title="ASSEMBLED DEPTH" value={number(derived.totalDepth)} unit="mm" />
         <Metric title={isSun ? 'DIFFUSER' : 'WHITE FACE'} value={number(p.diffuserThickness)} unit="mm" />

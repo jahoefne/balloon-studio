@@ -1,6 +1,6 @@
 // Shared vitest setup. In jsdom, add the browser APIs jsdom does not implement:
-// HTMLDialogElement.showModal/show/close, ResizeObserver and matchMedia
-// (URL.createObjectURL follows with WP-U10). Node-environment suites skip all of this.
+// HTMLDialogElement.showModal/show/close, ResizeObserver, matchMedia and
+// URL.createObjectURL. Node-environment suites skip all of this.
 import { afterEach } from 'vitest';
 
 if (typeof window !== 'undefined') {
@@ -46,5 +46,10 @@ if (typeof window !== 'undefined') {
       removeEventListener() {},
       dispatchEvent: () => false,
     });
+  }
+
+  if (typeof URL.createObjectURL !== 'function') {
+    URL.createObjectURL = () => 'blob:test';
+    URL.revokeObjectURL = () => {};
   }
 }

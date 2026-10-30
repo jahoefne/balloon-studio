@@ -22,7 +22,7 @@ import {
   Select,
 } from '../../ui';
 import { startExport } from '../../io';
-import { ExportFooter, PartEditor, PreviewStatus, StageFrame, StageResetButton, useOnChange } from '../basket/PartEditor';
+import { ExportFooter, PartEditor, PreviewStatus, StageFrame, StageResetButton, useOnChange } from '../shared/PartEditor';
 import { ContinuousCordDiagram, SeparateCordDiagram } from './CordDiagrams';
 import { LEDReflectorDiagram } from './LEDReflectorDiagram';
 import { RingGuideSheet } from './RingGuideSheet';
@@ -89,7 +89,7 @@ export function RingEditor() {
         <SegmentedControl
           label="Construction"
           testId="ringConstruction"
-          className="ring-construction"
+          hug
           options={[
             { value: 'one', label: 'One piece' },
             { value: 'six', label: 'Six sections' },
@@ -152,7 +152,7 @@ export function RingEditor() {
         <Select
           label="Light mount"
           testId="ringLightMount"
-          className="ring-light-mount"
+          hug
           options={[
             { value: 'reflected', label: 'Reflected uplight' },
             { value: 'flat', label: 'Flat top channel' },
@@ -273,6 +273,7 @@ export function RingEditor() {
             label="Preview part"
             labelHidden
             testId="ringPreviewPart"
+            hug
             className="ring-part-select"
             options={RING_VIEWS}
             value={selection}
@@ -339,25 +340,23 @@ export function RingEditor() {
           Wireframe
         </Checkbox>
       </div>
-      <div className="part-metrics part-metrics--ring">
-        <MetricRow testId="ringMetrics">
-          <Metric
-            title={assembling ? 'RING DIAMETER' : 'PART FOOTPRINT'}
-            value={assembling ? number01(p.diameter) : size ? `${Math.ceil(size.x)} × ${Math.ceil(size.y)}` : '–'}
-            unit="mm"
-          />
-          <Metric
-            title={assembling ? (p.reflectedLED ? 'LED STRIP' : 'LED CHANNEL') : 'PART HEIGHT'}
-            value={assembling ? number01(p.reflectedLED ? p.stripWidth : shown.channelWidth) : size ? number01(size.z) : '–'}
-            unit={assembling ? 'mm wide' : 'mm'}
-          />
-          <Metric
-            title={assembling ? 'STRIP PATH ≈' : 'PRINT QUANTITY'}
-            value={assembling ? String(roundHalfAwayFromZero(shown.stripPathLength)) : String(selection === PIN ? 12 : selection === PLATE ? 6 : 3)}
-            unit={assembling ? 'mm' : 'copies'}
-          />
-        </MetricRow>
-      </div>
+      <MetricRow size={20} testId="ringMetrics">
+        <Metric
+          title={assembling ? 'RING DIAMETER' : 'PART FOOTPRINT'}
+          value={assembling ? number01(p.diameter) : size ? `${Math.ceil(size.x)} × ${Math.ceil(size.y)}` : '–'}
+          unit="mm"
+        />
+        <Metric
+          title={assembling ? (p.reflectedLED ? 'LED STRIP' : 'LED CHANNEL') : 'PART HEIGHT'}
+          value={assembling ? number01(p.reflectedLED ? p.stripWidth : shown.channelWidth) : size ? number01(size.z) : '–'}
+          unit={assembling ? 'mm wide' : 'mm'}
+        />
+        <Metric
+          title={assembling ? 'STRIP PATH ≈' : 'PRINT QUANTITY'}
+          value={assembling ? String(roundHalfAwayFromZero(shown.stripPathLength)) : String(selection === PIN ? 12 : selection === PLATE ? 6 : 3)}
+          unit={assembling ? 'mm' : 'copies'}
+        />
+      </MetricRow>
       <div className="ring-advice">
         {shown.continuousCords ? <ContinuousCordDiagram /> : <SeparateCordDiagram />}
         <div className="ring-advice__text">
