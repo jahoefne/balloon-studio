@@ -1,0 +1,114 @@
+/* Sizes from RingEditor.swift and LEDReflectorDiagram.swift. */
+
+/* .font(.system(size:16,weight:.semibold,design:.rounded)) */
+.ring-headline {
+  font-family: var(--font-rounded);
+  font-size: 16px;
+  font-weight: var(--weight-semibold);
+}
+
+/* Both pickers are as wide as their content on the Mac. */
+.ring-construction {
+  align-self: flex-start;
+}
+.ring-construction .ui-segmented__segment {
+  flex: 0 0 auto;
+}
+.ring-light-mount .ui-select__control,
+.ring-part-select .ui-select__control {
+  flex: 0 1 auto;
+}
+
+/* padding 12, accent.opacity(0.07), radius 10 */
+.ring-led-panel {
+  padding: var(--space-12);
+  border-radius: var(--radius-10);
+  background: var(--accent-wash);
+}
+.ring-led-panel__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  font-size: var(--text-12);
+  font-weight: var(--weight-semibold);
+}
+
+/* LEDReflectorDiagram: VStack(spacing:5) in .frame(height:155) */
+.ring-reflector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  height: 155px;
+}
+.ring-reflector__caption {
+  flex: 0 0 auto;
+  font-size: var(--text-9);
+  font-weight: var(--weight-semibold);
+  line-height: 11px;
+  text-align: center;
+  color: var(--ink-secondary);
+}
+.ring-reflector__canvas {
+  display: block;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+}
+.ring-reflector__legend {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-9);
+  line-height: 11px;
+  color: var(--ink-secondary);
+}
+
+/* Picker("Preview part").frame(maxWidth:265) */
+.ring-part-select {
+  flex: 0 1 auto;
+  max-width: 265px;
+}
+
+/* HStack(alignment:.center, spacing:16) { diagram 106×100 · VStack(spacing:5) } */
+.ring-advice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+}
+.ring-cords {
+  flex: 0 0 106px;
+}
+.ring-advice__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+}
+.ring-advice__title {
+  font-size: var(--text-12);
+  font-weight: var(--weight-semibold);
+}
+.part-caption--accent-plain {
+  color: var(--accent);
+}
+
+/* The guide sheet: VStack(alignment:.leading, spacing:20), each step VStack(spacing:6) */
+.ring-guide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+}
+.ring-guide__step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.ring-guide__title {
+  margin: 0;
+  font-size: inherit;
+  font-weight: var(--weight-semibold);
+}
+.ring-guide__body {
+  margin: 0;
+  color: var(--ink-secondary);
+}
