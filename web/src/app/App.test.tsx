@@ -57,20 +57,20 @@ describe('App shell', () => {
     expect(useAppStore.getState().part).toBe('basket');
   });
 
-  it('shows a placeholder for tabs without an editor', async () => {
+  it('renders each part’s editor behind its tab', async () => {
     const user = userEvent.setup();
     render(<App />);
     expect(screen.getByTestId('exportBalloon')).toBeTruthy();
-    for (const [title, key] of [
-      ['Basket', 'basket'],
-      ['Ring', 'ring'],
-      ['Cloud', 'cloud'],
-      ['Sun', 'sun'],
-      ['Figures', 'figure'],
-      ['Cable clip', 'clip'],
+    for (const [title, exportId] of [
+      ['Basket', 'exportBasket'],
+      ['Ring', 'exportRing'],
+      ['Cloud', 'exportCloud'],
+      ['Sun', 'exportSun'],
+      ['Figures', 'exportFigure'],
+      ['Cable clip', 'exportCableClip'],
     ] as const) {
       await user.click(screen.getByRole('radio', { name: title }));
-      expect(within(screen.getByTestId(`partPlaceholder-${key}`)).getByRole('heading', { name: title })).toBeTruthy();
+      expect(screen.getByTestId(exportId)).toBeTruthy();
       expect(screen.queryByTestId('exportBalloon')).toBeNull();
     }
   });
