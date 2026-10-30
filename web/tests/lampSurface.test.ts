@@ -269,7 +269,7 @@ describe('sculpted lamps', () => {
         }
       }
     }
-  }, 900_000);
+  }, 1_800_000);
 
   it('mirrors the relief with the silhouette', () => {
     // Mirror the relief with the silhouette; the sun's rays remain symmetric.

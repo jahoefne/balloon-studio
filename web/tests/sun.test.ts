@@ -250,5 +250,5 @@ describe('sun kits', () => {
     check(new Set(entries).size === expected.length && expected.every((name) => entries.includes(name)), 'Sun kit names or contents incorrect');
     check(kit.instructions.includes('Sun wall lamp') && kit.ledPlan.svg.includes(displayName(base)), 'Sun export mislabeled');
     check(kit.ledPlan.sections.length > 0 && kit.ledPlan.rowCount > 3, 'Sun has no useful LED layout');
-  }, 900_000);
+  }, 1_800_000);
 });

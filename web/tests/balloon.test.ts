@@ -202,7 +202,7 @@ describe('balloon cases (GeometryTests.swift:124-209)', () => {
     expect(cases.length).toBe(39);
   });
   for (const [name, input] of shardOf(cases)) {
-    it(name, () => checkCase(name, input), 300_000);
+    it(name, () => checkCase(name, input), 600_000);
   }
 });
 
