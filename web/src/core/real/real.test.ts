@@ -11,6 +11,9 @@ import { FIGURE_STYLES, type CableClipParameters, type MeshBuffers } from '../ty
 import { core } from './index';
 import { core as parameters } from './parameters';
 
+// Real geometry, also under the stub's config with its 5 s, and on slow CI runners.
+vi.setConfig({ testTimeout: 120_000 });
+
 const fixtureDir = new URL('../../../../references/fixtures/legacy-settings/', import.meta.url);
 const fixtures = readdirSync(fixtureDir)
   .filter((name) => name.endsWith('.json'))
@@ -142,13 +145,13 @@ describe('previews through the worker route', () => {
     expect(fresh.balloon.preview({ ...snapshot, pattern: { ...snapshot.pattern, style: 'Hearts' } }).mesh.indices.length).toBeGreaterThan(0);
   });
 
-  it('night flight: a relief in two colors', { timeout: 120_000 }, () => {
+  it('night flight: a relief in two colors', () => {
     const preview = core.balloon.preview({ ...snapshot, pattern: { ...snapshot.pattern, style: 'Night Flight' } });
     checkMesh(preview.mesh, true);
     expect(new Set(preview.mesh.faceColors)).toEqual(new Set([0, 1]));
   });
 
-  it('summit: previews without its scene and refuses to export (WP-R5)', { timeout: 120_000 }, () => {
+  it('summit: previews without its scene and refuses to export (WP-R5)', () => {
     const summit = { ...snapshot, pattern: { ...snapshot.pattern, style: 'Summit Cable Car' as const } };
     checkMesh(core.balloon.preview(summit).mesh, true);
     expect(failure(() => core.balloon.export(summit)).code).toBe('export-blocked');
@@ -232,7 +235,7 @@ describe('exports', () => {
     expect(route({ part: 'figure', input: { parameters: core.figure.defaults, variant: 'single' } }).mime).toBe('model/stl');
   });
 
-  it('honor the quality', { timeout: 60_000 }, () => {
+  it('honor the quality', () => {
     const size = (quality: 'preview' | 'export') => core.basket.export(core.basket.defaults, { quality }).files[0]!.bytes.length;
     expect(size('preview')).toBeLessThan(size('export'));
   });
