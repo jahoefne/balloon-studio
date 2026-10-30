@@ -214,7 +214,7 @@ For parity, “+ n” is the rows of decided differences on top of the identical
 | --- | --- |
 | Test and deploy to GitHub Pages: `build`, `real-core`, `browser-hashes`, `deploy` | success |
 | Full reference comparison, 4 shards with the pack | success |
-| Full test tier, 4 shards | still running when this was written; see the PR |
+| Full test tier, 4 shards | running when this was written; its runs on the two commits before were cancelled by later pushes. The last complete run is the one on #47 before its merge: all four shards green, 25 to 32 minutes each. Check the workflow's page for a later result |
 
 ### Open points
 
