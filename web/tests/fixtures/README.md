@@ -18,7 +18,8 @@ web/tests/fixtures/
 ├── relief/<id>.field.f32.gz    height field after the blur (NightFlightRelief `smooth` twice)
 ├── relief/<id>.json            {width, height, columns, rows, bottom, depth, diameter, crest: [rows]}
 ├── primitives/<name>.pgm.gz    64×64 calibration canvases
-└── hashes.json                 SHA-256 of the TS rasters (WP-R6; must match in Node, Chromium, Firefox, WebKit)
+├── primitives/probes/          cg-raster.swift and its output cg-raster.txt.gz (WP-R2)
+└── hashes.json                 SHA-256 of the TS rasters (WP-R2 starts it, WP-R6 runs it in Node, Chromium, Firefox, WebKit)
 ```
 
 `<id>` is the case id from `mac/cases/grid.json` (group `relief` or `text`).
@@ -30,7 +31,8 @@ web/tests/fixtures/
   `bounds` is `CGPath.boundingBoxOfPath`, the tight curve bound **without** control points — port it with
   `Path.pathBounds()`, not `controlBounds()` (measured; see `web/src/core/raster/path.ts`).
 - **primitives**: circle, AA-off triangle, miter polyline, round caps, dash, rounded-rect stroke,
-  radial and linear gradient with clips, nested clips, moon path (NightFlight.swift:84-93).
+  radial and linear gradient with clips, nested clips, moon path (NightFlight.swift:84-93). Measured: gradients
+  are stepped and dithered, the aliased rule is "every touched pixel" (`web/src/core/raster/{gradient,scanline}.ts`).
 
 ## Formats
 
@@ -46,11 +48,16 @@ web/tests/fixtures/
 ## Provenance
 
 Each fixture set records where it came from. WP-R6 fills this table when it commits fixtures; a new row is
-needed whenever the Swift sources, the fonts or macOS change.
+needed whenever the Swift sources, the fonts or macOS change. The 14 primitive canvases are not copied here:
+`raster/primitives.test.ts` reads them from `references/files` through `references/manifest.json`.
+
+`primitives/probes/cg-raster.txt.gz` holds what WP-R2 measured beyond the primitives: coverage of fractional
+edges, unions inside one pixel, the aliased pixel rule, circles and free curves, the gradient table size, the
+16×16 gradient dither tile and its anchor, nested clips. Sections are read with `probeSection`.
 
 | Set | Swift sources (`mac/` commit) | macOS | Swift | Exporter command | Date |
 | --- | --- | --- | --- | --- | --- |
-| — | — | — | — | — | not generated yet |
+| `primitives/probes/cg-raster.txt.gz` | none (stand-alone probe `primitives/probes/cg-raster.swift`, comments there) | 26.6.2 (25G83) | 6.3.3 | `cg-raster \| gzip -9 -n` | 2026-10-30 |
 
 For reference, the CoreGraphics path semantics frozen in `path.ts` (WP-R0) were measured on macOS 26.6.2
 (25G83) with Swift 6.3.3 against the `mac/` sources imported in `cbda68d`. The arc, stroke and dash semantics of
@@ -71,8 +78,9 @@ Implemented in `web/tests/support/compare.ts` (`THRESHOLDS`). Pixel values in by
 | Text mask vs `text/*.pgm` | width/height | ±1 px |
 | | aspect | ±1 % |
 | | `iou(ts, cg)` (nearest-neighbour resampled to the CG size) | ≥ 0.97 |
-| Primitives vs `primitives/*.pgm` | `pixelAgreement(ts, cg, 2)` | ≥ 0.98 |
+| Primitives vs `primitives/*.pgm` | `pixelAgreement(ts, cg, 2)` | ≥ 0.98 (`cubic-dash-8-5-w4` ≥ 0.97: dash drift on curves, see `dash.ts`) |
 | Moon primitive (checks the `addArc` normalisation) | ink at the moon circle's centre, which lies in the bite | 0 |
+| Worst-case scene (3072 × 1200, 700 primitives) | time in Node | < 0.6 s locally, soft 3 s in CI |
 | Determinism | `hashes.json` in Node, Chromium, Firefox, WebKit | identical |
 
 The plan gives the primitives threshold without a tolerance; ±2 gray levels (the fine artwork tolerance) is
