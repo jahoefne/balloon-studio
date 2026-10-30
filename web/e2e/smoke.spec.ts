@@ -19,9 +19,8 @@ test('every tab opens and answers a control', async ({ page }) => {
     if (message.type() === 'error') problems.push(message.text());
   });
 
+  // A fresh context has empty storage. No reload here: WebKit reports the workers' cancelled module loads as errors.
   await page.goto('./');
-  await page.evaluate(() => localStorage.clear());
-  await page.reload();
 
   for (const { title, exportId, control } of TABS) {
     await page.getByRole('radio', { name: title, exact: true }).click();
