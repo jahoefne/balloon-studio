@@ -1,4 +1,4 @@
-// Ported from mac/Tests/LampSettingsTests.swift @ cbda68d. The kit round trip (:21-27) waits for WP-K4b.
+// Ported from mac/Tests/LampSettingsTests.swift @ cbda68d.
 import { describe, it } from 'vitest';
 import { CoreFailure, LAMP_SETTINGS_ERROR } from '../src/core/api';
 import { cloudParameters, encodeCloudParameters, normalized } from '../src/core/lamp/cloudGeometry';
@@ -8,7 +8,7 @@ import { wallLampDefaults } from '../src/core/lamp/sunGeometry';
 import { utf8Decode } from '../src/core/swift/text';
 import { check } from '../src/core/testing/check';
 import type { CloudParameters, WallLampKind } from '../src/core/types';
-import { referenceText, sameParameters, waitsFor } from './support/lamp';
+import { referenceText, sameParameters } from './support/lamp';
 
 describe('lamp settings', () => {
   it('keeps every saved option', () => {
@@ -31,7 +31,7 @@ describe('lamp settings', () => {
   });
 
   // Use the JSON actually packaged alongside the printable parts.
-  it.skipIf(waitsFor.k4b)('restores the settings of an exported kit', () => {
+  it('restores the settings of an exported kit', () => {
     for (const kind of ['cloud', 'sun'] as WallLampKind[]) {
       const kit = new CloudKit(wallLampDefaults(kind));
       const entry = kit.entries().find(([name]) => name === `${kind}-settings.json`)!;

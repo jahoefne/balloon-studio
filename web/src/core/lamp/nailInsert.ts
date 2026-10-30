@@ -1,17 +1,19 @@
 // Ported from mac/Sources/BalloonStudio/NailInsert.swift @ cbda68d.
 //
-// FROZEN SIGNATURES (WP-K4a, part 1). WP-K4b fills every function that throws 'WP-K4b', from:
-//   - NailInsert (:47-120)
-//   - NailInsertGenerator (:126-181)
-// All `static let`s are done. Keep names and shapes: cloudKit and the kit texts of part 2 are
-// written against them. A change here is a small PR of its own, with the K4 sessions told.
+// Names and shapes are frozen (WP-K4a, part 1): cloudKit and the kit texts are written against them.
+// A change here is a small PR of its own, with the K4 sessions told.
 //
 // Swift's `init?(_:)` is `NailInsert.create(p)`, its private `init(unchecked:)` is the constructor,
 // `placed(_:exploded:)` is `placed(mesh, exploded)`.
 // See cloudGeometry.ts for the rule on module-level reads across this cluster.
 
-import type { BalloonMesh } from '../geometry/mesh';
+import { BalloonMesh } from '../geometry/mesh';
+import type { Point3 } from '../geometry/point3';
+import { cos, PI, sin } from '../swift/dmath';
+import { formatFixed } from '../swift/format';
+import { swiftMax, swiftMin } from '../swift/minmax';
 import type { CloudParameters } from '../types';
+import { CloudMeshBuilder, Layout } from './cloudGeometry';
 
 /**
  * A slider that narrows the keyhole's slot for a nail with a small head.
@@ -60,53 +62,80 @@ export class NailInsert {
 
   readonly parameters: CloudParameters;
   /** Half the body's width, clear of the chamber's walls. */
-  readonly halfWidth: number = 0;
+  readonly halfWidth: number;
   /** Half the width across the relaxed finger tips. */
-  readonly tipHalfWidth: number = 0;
-  readonly height: number = 0;
-  readonly slotHalfWidth: number = 0;
-  readonly mouthHalfWidth: number = 0;
+  readonly tipHalfWidth: number;
+  readonly height: number;
+  readonly slotHalfWidth: number;
+  readonly mouthHalfWidth: number;
   /** Outer edge of the plate beside the slot. */
-  readonly cheek: number = 0;
+  readonly cheek: number;
+  /** Half the lamp's own slot. */
+  private readonly lampSlot: number;
   /** The top of the chamber, in the back's frame. The insert's top rests against it. */
-  readonly top: number = 0;
+  readonly top: number;
 
   /** Swift `init?(_:)`: null where the pocket is too small for the insert, or where the nail does not need it or cannot use it. */
-  static create(_p: CloudParameters): NailInsert | null {
-    throw new Error('WP-K4b');
+  static create(p: CloudParameters): NailInsert | null {
+    const insert = new NailInsert(p);
+    return insert.problem === null ? insert : null;
   }
   /** Swift `private init(unchecked:)`. */
   constructor(p: CloudParameters) {
+    const l = new Layout(p);
     this.parameters = p;
-    throw new Error('WP-K4b');
+    const entry = l.head.x1 - l.head.x0;
+    this.halfWidth = entry / 2 - NailInsert.clearance;
+    this.tipHalfWidth = entry / 2 + NailInsert.spring;
+    this.height = swiftMin(entry - NailInsert.endPlay, Layout.slotLength);
+    this.slotHalfWidth = p.nailDiameter / 2 + NailInsert.play;
+    this.cheek = this.halfWidth - NailInsert.finger - NailInsert.slit;
+    this.lampSlot = (l.slot.x1 - l.slot.x0) / 2;
+    this.mouthHalfWidth = swiftMin(this.lampSlot, this.cheek - NailInsert.mouthCheek);
+    this.top = l.slot.y1;
   }
   /** Swift `static func problem(_:)`. */
-  static problem(_p: CloudParameters): string | null {
-    throw new Error('WP-K4b');
+  static problem(p: CloudParameters): string | null {
+    return new NailInsert(p).problem;
   }
   /** Why the insert does not suit this keyhole and nail, if it does not. */
   get problem(): string | null {
-    throw new Error('WP-K4b');
+    const mm = (v: number): string => formatFixed(v, 1);
+    const p = this.parameters, head = p.nailHeadDiameter / 2;
+    if (this.slotHalfWidth + 0.25 > this.lampSlot) {
+      return `A ${mm(p.nailDiameter)} mm shaft is too thick for the insert to narrow the ${mm(p.nailShaft)} mm slot.`;
+    }
+    if (head - this.slotHalfWidth < NailInsert.grip) {
+      return `A ${mm(p.nailHeadDiameter)} mm head is too small for a ${mm(p.nailDiameter)} mm shaft: the insert needs a head of ${mm(2 * (this.slotHalfWidth + NailInsert.grip))} mm or more.`;
+    }
+    if (this.cheek - this.slotHalfWidth < NailInsert.cheekWidth || this.mouthHalfWidth <= this.slotHalfWidth || this.slotCenter - NailInsert.mouth < 0.3) {
+      return 'The keyhole is too small for the insert. Give it a larger head clearance, 8 mm for instance.';
+    }
+    if (head + 0.3 > this.cheek || this.nailY - head - (this.top - this.height) < NailInsert.ramp) {
+      return `A head over ${mm(2 * (this.cheek - 0.3))} mm does not fit between the insert's fingers in this keyhole.`;
+    }
+    return null;
   }
   /** Center of the slot's round end, in the insert's frame. */
   get slotCenter(): number {
-    throw new Error('WP-K4b');
+    return this.height - NailInsert.crown - this.slotHalfWidth;
   }
   /** The shaft at rest against the end of the slot, in the back's frame. */
   get nailY(): number {
-    throw new Error('WP-K4b');
+    return this.top - NailInsert.crown - this.parameters.nailDiameter / 2;
   }
   /** The underside of the head stands this far off the wall at least, with the plate on the lip. */
   get nearestHead(): number {
-    throw new Error('WP-K4b');
+    return Layout.lip + NailInsert.plate;
   }
   /** Room for the head behind the plate, to the cap. */
   get headRoom(): number {
-    throw new Error('WP-K4b');
+    return Layout.headSpace - NailInsert.plate;
   }
   /** As it sits in the back, flat face on the lip, top against the top of the chamber. Exploded, it waits behind the wall side. */
-  placed(_mesh: BalloonMesh, _exploded = false): BalloonMesh {
-    throw new Error('WP-K4b');
+  placed(mesh: BalloonMesh, exploded = false): BalloonMesh {
+    const dy = this.top - this.height, dz = Layout.lip - (exploded ? 14 : 0);
+    return new BalloonMesh(mesh.vertices.map((v) => ({ x: v.x, y: v.y + dy, z: v.z + dz })), mesh.triangles, mesh.maxOverhang, mesh.innerVertexRange);
   }
 }
 
@@ -116,7 +145,72 @@ export class NailInsert {
  * slot's flared mouth and its round end; rows are horizontal lines.
  */
 export const NailInsertGenerator = {
-  generate(_insert: NailInsert): BalloonMesh {
-    throw new Error('WP-K4b');
+  generate(insert: NailInsert): BalloonMesh {
+    const a = insert.slotHalfWidth, h = insert.height, rise = h - NailInsert.band, center = insert.slotCenter;
+    const rows = [0, NailInsert.ramp, NailInsert.mouth, center, rise, h - NailInsert.chamfer, h];
+    // The slot's round end is the row at its center, bent up over these columns.
+    const arc = 12, arcRow = 3, last = rows.length - 1;
+    const outer = (y: number): number => insert.halfWidth + (insert.tipHalfWidth - insert.halfWidth) * swiftMax(0, 1 - y / rise);
+    const mouth = (y: number): number => (y >= NailInsert.mouth ? a : insert.mouthHalfWidth + ((a - insert.mouthHalfWidth) * y) / NailInsert.mouth);
+    // From the outside in: finger tip, chamfer, finger's inner edge, plate's edge.
+    const side: ((y: number) => number)[] = [outer, (y) => outer(y) - NailInsert.chamfer, (y) => outer(y) - NailInsert.finger, () => insert.cheek];
+    const slotStart = side.length, slotEnd = slotStart + arc, lines = 2 * side.length + arc + 1;
+    // Above the round end the slot's lines rise straight from it, so its
+    // cells keep convex faces.
+    const point = (i: number, r: number): [number, number] => {
+      const y = rows[r]!;
+      if (i >= slotStart && i <= slotEnd) {
+        const angle = PI * (1 - (i - slotStart) / arc);
+        if (r === arcRow) return [a * cos(angle), center + a * sin(angle)];
+        if (r > arcRow || (i > slotStart && i < slotEnd)) return [a * cos(angle), y];
+        return [i === slotStart ? -mouth(y) : mouth(y), y];
+      }
+      return i < slotStart ? [-side[i]!(y), y] : [side[lines - 1 - i]!(y), y];
+    };
+    const z = (i: number, r: number, level: number): number => {
+      switch (level) {
+        case 0:
+          return r === last ? NailInsert.chamfer : 0;
+        case 1:
+          return r === 0 && i >= slotStart - 1 && i <= slotEnd + 1 ? NailInsert.plate - NailInsert.ramp : NailInsert.plate;
+        default:
+          return i === 0 || i === lines - 1 ? NailInsert.depth - NailInsert.chamfer : NailInsert.depth;
+      }
+    };
+    // Columns: finger (two), slit, plate, the slot's columns, and mirrored.
+    const columns = lines - 1, band = rows.indexOf(rise);
+    const solid = (c: number, r: number, k: number): boolean => {
+      if (!(c >= 0 && c < columns && r >= 0 && r < rows.length - 1 && k >= 0 && k < 2)) return false;
+      const fromEdge = swiftMin(c, columns - 1 - c);
+      switch (fromEdge) {
+        case 0:
+        case 1:
+          return true;
+        case 2:
+          return r >= band;
+        case 3:
+          return k === 0;
+        default:
+          return k === 0 && r >= arcRow;
+      }
+    };
+    const builder = new CloudMeshBuilder();
+    for (let k = 0; k < 2; k++) {
+      for (let r = 0; r < rows.length - 1; r++) {
+        for (let c = 0; c < columns; c++) {
+          if (!solid(c, r, k)) continue;
+          const corners: [number, number][] = [[c, r], [c + 1, r], [c + 1, r + 1], [c, r + 1]];
+          const v: Point3[] = [];
+          for (const level of [k, k + 1]) {
+            for (const [i, row] of corners) {
+              const [x, y] = point(i, row);
+              v.push({ x, y, z: z(i, row, level) });
+            }
+          }
+          builder.cell(v, [solid(c, r, k - 1), solid(c, r, k + 1), solid(c, r - 1, k), solid(c + 1, r, k), solid(c, r + 1, k), solid(c - 1, r, k)]);
+        }
+      }
+    }
+    return builder.mesh;
   },
 };

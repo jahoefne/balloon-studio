@@ -1,7 +1,7 @@
 // Ported from mac/Tests/CloudTests.swift @ cbda68d, without the UserDefaults lines :94-98 (plan §5) and
-// the files written to .build/test-output (:44-51, plan §8). checkCableSettings (:92) is WP-K4b's.
-// What needs kits waits for WP-K4b. Without FULL the sweep of kits runs at preview quality, with
-// the two default cases at export quality too.
+// the files written to .build/test-output (:44-51, plan §8). checkCableSettings (:92) is in
+// cableOutlet.test.ts. Without FULL the sweep of kits runs at preview quality, with the two default
+// cases at export quality too.
 import { describe, it } from 'vitest';
 import {
   cableBossTop,
@@ -21,7 +21,7 @@ import { arrayMax } from '../src/core/swift/minmax';
 import { atan2, hypot } from '../src/core/swift/dmath';
 import { check } from '../src/core/testing/check';
 import { CABLE_SIDES, type CloudParameters } from '../src/core/types';
-import { decoded, roundTripped, sameParameters, waitsFor } from './support/lamp';
+import { decoded, roundTripped, sameParameters } from './support/lamp';
 import { checkCloudFeatures, checkLEDLayout } from './support/lampFeatures';
 
 const FULL = Boolean(process.env['FULL']);
@@ -90,7 +90,7 @@ describe('cloud layout', () => {
   });
 });
 
-describe.skipIf(waitsFor.k4b)('cloud kits', () => {
+describe('cloud kits', () => {
   const small: CloudParameters = { ...cloudParameters(), width: 100, depth: 16 };
   const cases: CloudParameters[] = [cloudParameters(), small];
   // Pairwise extremes plus each mechanical tolerance independently.
@@ -132,7 +132,7 @@ describe.skipIf(waitsFor.k4b)('cloud kits', () => {
         check(euler === (name === 'back' ? 0 : 2), 'Cloud back needs exactly one cable through-path; front must be a single closed shell');
         check(fitsP2S(p) === (dimensions.x + 16 <= 256.001 && dimensions.y + 16 <= 256.001), 'Cloud bed-fit readout mismatch');
       }
-      checkCloudFeatures(p, meshes[0]!, meshes[1]!, FULL && index < 2);
+      checkCloudFeatures(p, meshes[0]!, meshes[1]!, FULL && index < 2, parseSTL(binarySTL(kit.seal)));
     }
   }, 300_000);
 

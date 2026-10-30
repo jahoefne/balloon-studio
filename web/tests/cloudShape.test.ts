@@ -1,5 +1,5 @@
 // Ported from mac/Tests/CloudShapeTests.swift @ cbda68d, without the files written to .build/test-output
-// (:65-71, plan §8; its identity check stays). The kits wait for WP-K4b. Without FULL they run at
+// (:65-71, plan §8; its identity check stays). Without FULL they run at
 // preview quality, with the first and fifth of each shape only.
 import { describe, it } from 'vitest';
 import { binarySTL } from '../src/core/io/binaryStl';
@@ -23,7 +23,7 @@ import { arrayMax } from '../src/core/swift/minmax';
 import { check } from '../src/core/testing/check';
 import { parseSTL } from '../src/core/testing/stl';
 import { CABLE_SIDES, CLOUD_STYLES, type CloudParameters } from '../src/core/types';
-import { decoded, roundTripped, sameParameters, waitsFor } from './support/lamp';
+import { decoded, roundTripped, sameParameters } from './support/lamp';
 import { checkCloudFeatures, checkLEDLayout } from './support/lampFeatures';
 
 const FULL = Boolean(process.env['FULL']);
@@ -115,7 +115,7 @@ describe('cloud shapes', () => {
   });
 });
 
-describe.skipIf(waitsFor.k4b)('cloud shape kits', () => {
+describe('cloud shape kits', () => {
   it.each(shapes)('%s, mirrored %s: 10 kits, fitting clearance and LED layouts', (style, mirrored) => {
     const base: CloudParameters = { ...cloudParameters(), style, mirrored };
     const cases: CloudParameters[] = [];
@@ -146,7 +146,7 @@ describe.skipIf(waitsFor.k4b)('cloud shape kits', () => {
           check(parsed.vertices.length - parsed.triangles.length / 2 === (name === 'back' ? 0 : 2), 'Shape has extra holes or shells');
           check(fitsP2S(p) === (dimensions.x + 16 <= 256.001 && dimensions.y + 16 <= 256.001), 'Shape bed-fit incorrect');
         }
-        checkCloudFeatures(p, parts[0]!, parts[1]!, FULL && (index === 0 || index === 4));
+        checkCloudFeatures(p, parts[0]!, parts[1]!, FULL && (index === 0 || index === 4), parseSTL(binarySTL(kit.seal)));
         if (index === 0 || index === 4) {
           check(kit.instructions.includes(displayName(p)) && kit.ledPlan.svg.includes(displayName(p)), 'Export lost cloud identity');
         }
