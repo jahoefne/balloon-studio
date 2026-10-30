@@ -14,6 +14,8 @@ import { BalloonMesh } from '../geometry/mesh';
 import type { Point3, Triangle } from '../geometry/point3';
 import { binarySTL } from '../io/binaryStl';
 import { storedZipArchive, type ZipEntry } from '../io/storedZip';
+import { CloudGenerator, cloudStyleProfile } from '../lamp/cloudGeometry';
+import { sunProfile } from '../lamp/sunGeometry';
 import { acos, atan2, cos, hypot, PI, pow, sin } from '../swift/dmath';
 import { formatFixed } from '../swift/format';
 import { encodeJSONCompact } from '../swift/json';
@@ -24,115 +26,6 @@ import { utf8 } from '../swift/text';
 import { FIGURE_STYLE_INFO, FIGURE_STYLES, FIGURE_SURFACES, type FigureParameters, type FigureStyle, type FigureSurface, type Range, type Vec2 } from '../types';
 
 const vec2 = (x: number, y: number): Vec2 => ({ x, y });
-
-// ---------------------------------------------------------------------------
-// The lamp outlines the cloud and sun figures are drawn from.
-//
-// SWIFT-DIFF: `CloudStyle.classic.profile` (CloudGeometry.swift:22-23), `CloudProfile` (:51-54),
-// `CloudGenerator.radius` (:824-841), `SunPolygon` (SunGeometry.swift:20-43) and
-// `SunStyle.boldEight.profile` (SunGeometry.swift:118-135) belong to WP-K4a (core/lamp/*), which is
-// not on main yet. This is a private copy of just these lines, so this WP does not depend on K4a.
-// Once K4a has landed it can import from there; the manifest hashes prove the two agree.
-// ---------------------------------------------------------------------------
-
-/** `SunPolygon.Plane` */
-interface Plane {
-  x: number;
-  y: number;
-  offset: number;
-}
-
-/** `SunPolygon.init` (SunGeometry.swift:25-32) */
-function sunPolygonPlanes(points: readonly Vec2[]): Plane[] {
-  return points.map((a, i) => {
-    const b = points[(i + 1) % points.length] as Vec2;
-    const edgeX = b.x - a.x;
-    const edgeY = b.y - a.y;
-    const length = hypot(edgeX, edgeY);
-    const nx = edgeY / length;
-    const ny = -edgeX / length;
-    return { x: nx, y: ny, offset: nx * a.x + ny * a.y };
-  });
-}
-
-/** `SunPolygon.radius(at:inset:width:)` (SunGeometry.swift:33-43) */
-function sunPolygonRadius(planes: readonly Plane[], angle: number, inset: number, width: number): number {
-  let low = 0.0;
-  let high = Infinity;
-  for (const plane of planes) {
-    const along = plane.x * cos(angle) + plane.y * sin(angle);
-    const limit = plane.offset * width - inset;
-    if (Math.abs(along) < 1e-12) {
-      if (limit < 0) return 0;
-    } else if (along > 0) high = swiftMin(high, limit / along);
-    else low = swiftMax(low, limit / along);
-  }
-  return high >= low ? high : 0;
-}
-
-/** `CloudProfile` (CloudGeometry.swift:51-54), polygons as their planes. */
-interface LampProfile {
-  lobes: readonly (readonly [number, number, number])[];
-  body: { x0: number; x1: number; y0: number; y1: number };
-  polygons: readonly (readonly Plane[])[];
-}
-
-/** `CloudStyle.classic.profile` (CloudGeometry.swift:22-23) */
-function classicCloudProfile(): LampProfile {
-  return {
-    lobes: [[-0.31, -0.02, 0.19], [-0.20, 0.10, 0.17], [0.02, 0.11, 0.26], [0.30, -0.005, 0.20]],
-    body: { x0: -0.31, x1: 0.30, y0: -0.21, y1: 0.10 },
-    polygons: [],
-  };
-}
-
-/** `SunGeometry.profile(.boldEight)` (SunGeometry.swift:86-94, 114, 118-135) */
-function boldEightSunProfile(): LampProfile {
-  const rayCount = 8;
-  const sector = (2 * PI) / rayCount;
-  const notchRadius = 0.30;
-  const lean = 0;
-  const tipRadius = 0.5;
-  const notch = (ray: number, side: number): Vec2 => {
-    const angle = (ray + side / 2) * sector + lean;
-    return vec2(cos(angle) * notchRadius, sin(angle) * notchRadius);
-  };
-  const tip = (ray: number): Vec2 => {
-    const angle = ray * sector;
-    return vec2(cos(angle) * tipRadius, sin(angle) * tipRadius);
-  };
-  const triangles: Plane[][] = [];
-  for (let ray = 0; ray < rayCount; ray++) {
-    const t = tip(ray);
-    const corners = [1.0, -1.0].map((side) => {
-      const n = notch(ray, side);
-      return vec2(t.x + (n.x - t.x) * 1.5, t.y + (n.y - t.y) * 1.5);
-    });
-    triangles.push(sunPolygonPlanes([t, ...corners]));
-  }
-  return { lobes: [[0, 0, notchRadius - 0.005]], body: { x0: 0, x1: 0, y0: 0, y1: 0 }, polygons: triangles };
-}
-
-/** `CloudGenerator.radius(_:inset:width:verticalScale:profile:)` (CloudGeometry.swift:824-841) */
-function lampRadius(angle: number, inset: number, width: number, verticalScale: number, profile: LampProfile): number {
-  const stretch = hypot(cos(angle), sin(angle) / verticalScale);
-  const dx = cos(angle) / stretch;
-  const dy = sin(angle) / verticalScale / stretch;
-  let far = 0.0;
-  for (const polygon of profile.polygons) far = swiftMax(far, sunPolygonRadius(polygon, atan2(dy, dx), inset, width));
-  for (const [cx, cy, r] of profile.lobes) {
-    const x = cx * width;
-    const y = cy * width;
-    const rr = r * width - inset;
-    const projection = x * dx + y * dy;
-    const det = rr * rr - x * x - y * y + projection * projection;
-    if (det >= 0) far = swiftMax(far, projection + Math.sqrt(det));
-  }
-  const body = profile.body;
-  const rx = dx >= 0 ? (body.x1 * width - inset) / swiftMax(dx, 1e-12) : (body.x0 * width + inset) / swiftMin(dx, -1e-12);
-  const ry = dy >= 0 ? (body.y1 * width - inset) / swiftMax(dy, 1e-12) : (body.y0 * width + inset) / swiftMin(dy, -1e-12);
-  return swiftMax(far, swiftMin(rx, ry)) / stretch;
-}
 
 // ---------------------------------------------------------------------------
 // FigureOutline (FigureGeometry.swift:37-73)
@@ -266,21 +159,21 @@ function makeOutline(style: FigureStyle): FigureOutline {
       return makeFigureOutline([points.map((p) => vec2(p.x * cos(lean) - p.y * sin(lean), p.x * sin(lean) + p.y * cos(lean)))], 0.045);
     }
     case 'cloud': {
-      const profile = classicCloudProfile();
+      const profile = cloudStyleProfile('classic');
       const points: Vec2[] = [];
       for (let i = 0; i < 240; i++) {
         const a = (i * 2 * PI) / 240;
-        const r = lampRadius(a, 0, 1, 1, profile);
+        const r = CloudGenerator.radius(a, 0, 1, 1, profile);
         points.push(vec2(r * cos(a), r * sin(a)));
       }
       return makeFigureOutline([points], 0.015);
     }
     case 'sun': {
-      const profile = boldEightSunProfile();
+      const profile = sunProfile('bold-eight');
       const points: Vec2[] = [];
       for (let i = 0; i < 480; i++) {
         const a = (i * 2 * PI) / 480;
-        const r = lampRadius(a, 0, 1, 1, profile);
+        const r = CloudGenerator.radius(a, 0, 1, 1, profile);
         points.push(vec2(r * cos(a), r * sin(a)));
       }
       return makeFigureOutline([points], 0.014);
