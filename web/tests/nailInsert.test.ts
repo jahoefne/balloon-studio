@@ -17,8 +17,8 @@ import { inside } from '../src/core/testing/inside';
 import { ray } from '../src/core/testing/ray';
 import { parseSTL } from '../src/core/testing/stl';
 import type { CloudParameters, WallLampKind } from '../src/core/types';
+import { FULL } from './support/tier';
 
-const FULL = Boolean(process.env['FULL']);
 
 const up: Point3 = { x: 0, y: 0, z: 1 }, down: Point3 = { x: 0, y: 0, z: -1 };
 const close = (actual: number, expected: number, message: string, tolerance = 0.003): void => {

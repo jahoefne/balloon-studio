@@ -14,8 +14,8 @@ import { parseSTL } from '../src/core/testing/stl';
 import { CABLE_SIDES, CLOUD_STYLES, SUN_STYLES, type CableSide, type CloudParameters, type WallLampKind } from '../src/core/types';
 import { decoded, roundTripped, sameParameters } from './support/lamp';
 import { checkCableClamp, checkLEDLayout } from './support/lampFeatures';
+import { FULL, shardOf } from './support/tier';
 
-const FULL = Boolean(process.env['FULL']);
 
 const designs = (): CloudParameters[] => [
   ...CLOUD_STYLES.flatMap((style) => [false, true].map((mirrored) => ({ ...cloudParameters(), style, mirrored }))),
@@ -97,7 +97,7 @@ describe('strain relief', () => {
 
 /** Where the clamp fits, and what it leaves alone. `bash scripts/test.sh clamp` */
 describe.skipIf(!FULL)('clamp', () => {
-  it.each(designs().map((design) => [displayName(design), design.mirrored, design] as const))('room for it: %s, mirrored %s', (_, __, design) => {
+  it.each(shardOf(designs()).map((design) => [displayName(design), design.mirrored, design] as const))('room for it: %s, mirrored %s', (_, __, design) => {
     for (const side of CABLE_SIDES) {
       for (const width of strideThrough(minimumWidth(design), 500, 10)) {
         for (const cable of [2.0, 3, 6]) {
@@ -134,7 +134,7 @@ describe.skipIf(!FULL)('clamp', () => {
   }, 900_000);
 
   // Backs on every silhouette and side, from the smallest lamp on.
-  const kits = designs().filter((design) => !design.mirrored).flatMap((design) => (CABLE_SIDES as readonly CableSide[]).map((side) => [displayName(design), side, design] as const));
+  const kits = shardOf(designs().filter((design) => !design.mirrored)).flatMap((design) => (CABLE_SIDES as readonly CableSide[]).map((side) => [displayName(design), side, design] as const));
 
   it.each(kits)('kits: %s, cable at the %s', (_, side, design) => {
     const least = minimumWidth(design);

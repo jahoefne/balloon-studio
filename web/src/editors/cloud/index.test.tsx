@@ -447,7 +447,8 @@ describe('preview', () => {
     expect(stage.topDown).toBe(false);
   });
 
-  it('shows metrics, status and name', async () => {
+  // `Updating…` lasts one debounce of real time, which a loaded machine can spend inside `user.click`. Retried for that.
+  it('shows metrics, status and name', { retry: 3 }, async () => {
     const { store, user } = await setup('sun');
     const metrics = within(screen.getByTestId('sunMetrics'));
     expect(metrics.getByText('SUN SIZE')).toBeTruthy();

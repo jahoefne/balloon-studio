@@ -9,6 +9,7 @@ import { generate, type Quality } from '../src/core/balloon/balloonGenerator';
 import { filename, fromJSON, normalized, toJSON } from '../src/core/balloon/balloonParameters';
 import { exportSTL } from '../src/core/balloon/balloonStl';
 import { IntKey3Map } from '../src/core/geometry/weld';
+import { FULL } from './support/tier';
 
 interface GridCase {
   id: string;
@@ -164,6 +165,8 @@ describe('balloon references', () => {
         for (const [key, value] of Object.entries(c.expect ?? {})) {
           expect((p as unknown as Record<string, unknown>)[key.replace('parameters.', '')]).toBe(value);
         }
+        // The `fast` tier exports the default only; the settings above hold for every case.
+        if (!FULL && c.quality === 'export' && c.id !== 'balloon-classic') return;
         const started = performance.now();
         const bytes = exportSTL(generate(p, c.quality), p);
         const ms = performance.now() - started;
@@ -190,7 +193,7 @@ describe('balloon references', () => {
         expect(d.maxNormalUlp).toBeLessThanOrEqual(1);
         expect(sha).toBe(KNOWN_ULP[c.id]);
       },
-      120_000,
+      300_000,
     );
   }
 

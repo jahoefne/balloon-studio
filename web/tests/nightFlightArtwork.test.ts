@@ -15,6 +15,7 @@ import { dashPath } from '../src/core/raster/dash';
 import { Path, Verb } from '../src/core/raster/path';
 import { decodePGM } from '../src/core/raster/pgm';
 import { blockMeanDifference, heightfieldStats, pixelAgreement, THRESHOLDS } from './support/compare';
+import { FULL, PERF } from './support/tier';
 
 // From relief-night-flight-<shape>.json, so that everything but the pack comparison runs without the pack.
 const SHAPES = {
@@ -433,15 +434,16 @@ describe('determinism', () => {
 });
 
 describe('performance', () => {
-  // docs/plan.md §7, §14: 0.35 s in Node locally; a warning on CI, where the machine is not ours.
-  it('draws classic within the budget', { timeout: 60_000 }, () => {
+  // docs/plan.md §7, §14: 0.35 s in Node, measured on purpose with PERF=1; a warning in the `full` tier, where the
+  // machine is shared. Not in the `fast` tier.
+  it.runIf(PERF || FULL)('draws classic within the budget', { timeout: 60_000 }, () => {
     let best = Infinity;
     for (let i = 0; i < 5; i++) {
       const start = performance.now();
       draw('classic');
       best = Math.min(best, performance.now() - start);
     }
-    if (process.env['CI'] === undefined) expect(best).toBeLessThanOrEqual(350);
+    if (PERF) expect(best).toBeLessThanOrEqual(350);
     else if (best > 350) console.warn(`Night Flight classic took ${best.toFixed(0)} ms (budget 350 ms)`);
   });
 });

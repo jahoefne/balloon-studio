@@ -25,8 +25,8 @@ import { parseSTL } from '../src/core/testing/stl';
 import { CABLE_SIDES, CLOUD_STYLES, type CloudParameters } from '../src/core/types';
 import { decoded, roundTripped, sameParameters } from './support/lamp';
 import { checkCloudFeatures, checkLEDLayout } from './support/lampFeatures';
+import { FULL, shardOf } from './support/tier';
 
-const FULL = Boolean(process.env['FULL']);
 
 const shapes = CLOUD_STYLES.flatMap((style) => [false, true].map((mirrored) => [style, mirrored] as const));
 
@@ -116,7 +116,7 @@ describe('cloud shapes', () => {
 });
 
 describe('cloud shape kits', () => {
-  it.each(shapes)('%s, mirrored %s: 10 kits, fitting clearance and LED layouts', (style, mirrored) => {
+  it.each(shardOf(shapes))('%s, mirrored %s: 10 kits, fitting clearance and LED layouts', (style, mirrored) => {
     const base: CloudParameters = { ...cloudParameters(), style, mirrored };
     const cases: CloudParameters[] = [];
     // All four outlets for every silhouette and orientation. Mirrored

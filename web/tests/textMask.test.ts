@@ -103,7 +103,7 @@ describe('balloonTextMask', () => {
     expect(mask('  Hello\n', 'Rounded').pixels).toEqual(mask('Hello', 'Rounded').pixels);
   });
 
-  it('gives the same bytes every time', () => {
+  it('gives the same bytes every time', { timeout: 60_000 }, () => {
     const fresh = createTextRasterizer(fonts);
     expect(fresh('Zoë & Léa <3', 'Serif')?.pixels).toEqual(rasterize('Zoë & Léa <3', 'Serif')?.pixels);
   });

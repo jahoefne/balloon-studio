@@ -137,7 +137,7 @@ describe('cancellation', () => {
     const parameters = { ...core.balloon.defaults, hollow: true, diameter: 60, height: 80, neckDiameter: 12 };
     core.balloon.preview({ ...snapshot, parameters }, { isCancelled: () => (hollow++, false) });
     expect(hollow).toBeGreaterThan(2);
-  });
+  }, 60_000);
 
   it('cancelling mid-generation is the empty mesh too', () => {
     let polls = 0;

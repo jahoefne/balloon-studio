@@ -23,8 +23,8 @@ import { check } from '../src/core/testing/check';
 import { CABLE_SIDES, type CloudParameters } from '../src/core/types';
 import { decoded, roundTripped, sameParameters } from './support/lamp';
 import { checkCloudFeatures, checkLEDLayout } from './support/lampFeatures';
+import { FULL } from './support/tier';
 
-const FULL = Boolean(process.env['FULL']);
 
 describe('cloud settings', () => {
   it('keeps the fittings of a small cloud', () => {

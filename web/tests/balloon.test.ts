@@ -30,9 +30,9 @@ import { lateralHits, verticalHits } from '../src/core/testing/hits';
 import { parseSTL } from '../src/core/testing/stl';
 import type { BalloonParameters } from '../src/core/types';
 import { fixtureText, probeSection } from './support/swiftProbe';
+import { FULL, shardOf } from './support/tier';
 
-const FULL = process.env.FULL === '1';
-const EXPORT_IN_FAST = new Set(['classic', 'hanger-hollow-tethers']);
+const EXPORT_IN_FAST = new Set(['classic']);
 
 const P = makeBalloonParameters;
 const cases: [string, BalloonParameters][] = [['classic', classic], ['round', round], ['tall', tall]];
@@ -201,7 +201,7 @@ describe('balloon cases (GeometryTests.swift:124-209)', () => {
   it('builds the same 39 cases as Swift', () => {
     expect(cases.length).toBe(39);
   });
-  for (const [name, input] of cases) {
+  for (const [name, input] of shardOf(cases)) {
     it(name, () => checkCase(name, input), 300_000);
   }
 });

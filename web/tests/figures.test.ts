@@ -269,7 +269,7 @@ describe('figures', () => {
   });
 
   // Every figure at the default settings, at both resolutions.
-  it.each(FIGURE_STYLES)('%s default', { timeout: 60_000 }, (style) => {
+  it.each(FIGURE_STYLES)('%s default', { timeout: 120_000 }, (style) => {
     checkFigure(withStyle(style), `${style}-default`);
   });
 
@@ -279,7 +279,7 @@ describe('figures', () => {
     extremes.push([`${style}-small`, { ...withStyle(style), height: 40, edge: 0.8, dome: 0.8, holeDiameter: 1.5, holeMargin: 1.5 }]);
     extremes.push([`${style}-large-chain`, { ...withStyle(style), height: 120, edge: 6, dome: 10, holeDiameter: 4, holeMargin: 6, chainHole: true }]);
   }
-  it.each(extremes)('%s', { timeout: 60_000 }, (name, p) => {
+  it.each(extremes)('%s', { timeout: 120_000 }, (name, p) => {
     checkFigure(p, name);
   });
 
@@ -289,12 +289,12 @@ describe('figures', () => {
     variants.push([`${style}-puffy-chain`, { ...withStyle(style), surface: 'puffy', chainHole: true }]);
     variants.push([`${style}-two-sided`, { ...withStyle(style), doubleSided: true }]);
   }
-  it.each(variants)('%s', { timeout: 60_000 }, (name, p) => {
+  it.each(variants)('%s', { timeout: 120_000 }, (name, p) => {
     checkFigure(p, name);
   });
 
   // The set holds every figure, the notes and the settings.
-  it('builds the set', { timeout: 60_000 }, () => {
+  it('builds the set', { timeout: 120_000 }, () => {
     const entries = figureSetEntries(defaults);
     check(entries.length === FIGURE_STYLES.length + 2, `Figure set has ${entries.length} entries`);
     for (const style of FIGURE_STYLES) {

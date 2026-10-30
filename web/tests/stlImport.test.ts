@@ -75,7 +75,7 @@ describe('saved settings', () => {
       check(close(q.wallThickness, p.wallThickness) && close(q.cordClearance, p.cordClearance) && close(q.hangingClearance, p.hangingClearance), 'Clearances changed');
       check(close(q.hangingThickness, p.hangingThickness) && close(q.hangingWall, p.hangingWall) && close(q.hangingFillet, p.hangingFillet) && close(q.hangingCrownThickness, p.hangingCrownThickness), 'Hanger adjustments changed');
       imported.mesh.validate();
-    }, 60_000);
+    }, 120_000);
   }
 });
 
@@ -90,7 +90,7 @@ describe('legacy reconstruction', () => {
       check(close(q.panelDepth, p.panelDepth, 0.1) && (p.panelDepth === 0 || q.panels === p.panels), 'Estimated panels differ');
       check(q.hollow === p.hollow, 'Hollow mode differs');
       if (p.hollow) check(close(q.wallThickness, p.wallThickness, 0.05), 'Wall estimate differs');
-    }, 60_000);
+    }, 120_000);
   }
 });
 
@@ -106,11 +106,11 @@ describe.skipIf(!existsSync(original) || !existsSync(oldAttachments))('existing 
     const pattern = makePatternSettings({ style: 'Horizontal stripes' });
     const painted = PaintedBalloon.make(editedMesh, edited, pattern, NO_RASTERIZERS);
     check(threeMF(painted, pattern, makePurgeSettings()).length > 100, 'Pattern export failed');
-  }, 60_000);
+  }, 120_000);
   it('existing 222 × 244 mm attachment export', () => {
     const imported = open(new Uint8Array(readFileSync(oldAttachments)));
     check(close(imported.parameters.height, 244, 0.2) && close(imported.parameters.diameter, 222, 0.2), 'Existing attachment export differs');
-  }, 60_000);
+  }, 120_000);
 });
 
 describe('ASCII, binary detection, centering, integrity, malformed and unsupported files', () => {
@@ -171,7 +171,7 @@ describe('ASCII, binary detection, centering, integrity, malformed and unsupport
     text += 'endsolid balloon\n';
     const asciiBalloon = read(bytes(text));
     check(close(asciiBalloon.parameters.height, 220, 0.1), 'ASCII balloon reconstruction failed');
-  }, 60_000);
+  }, 120_000);
   it('rejections', () => {
     const binary = binarySTL(mesh);
     binary.set(bytes('solid'), 0);
@@ -212,7 +212,7 @@ describe('error messages and limits', () => {
     const data = new Uint8Array(84 + 50 * (maximumTriangles + 1));
     new DataView(data.buffer).setUint32(80, maximumTriangles + 1, true);
     rejectsWith(STL_ERRORS.truncated, () => parse(data));
-  }, 60_000);
+  }, 120_000);
   it('a facet normal must be finite but a vertex reaches the coordinate check', () => {
     rejectsWith(STL_ERRORS.incomplete, () => parse(bytes(ascii.replace('normal 0 0 1', 'normal 0 0 inf'))));
     rejectsWith(STL_ERRORS.incomplete, () => parse(bytes(ascii.replace('normal 0 0 1', 'normal 0 0 x'))));

@@ -9,6 +9,7 @@ import { CloudKit } from '../src/core/lamp/cloudKit';
 import { wallLampDefaults } from '../src/core/lamp/sunGeometry';
 import { check } from '../src/core/testing/check';
 import { decodedCase, LIBM_FLIPPED_FRONTS, waitsFor, type GridCase } from './support/lamp';
+import { FULL } from './support/tier';
 
 const lampCases = allCases().filter((c) => c.part === 'cloud' || c.part === 'sun');
 const isSculpted = (c: ReferenceCase): boolean => (c.parameters as { surface?: string } | null | undefined)?.surface === 'sculpted';
@@ -16,6 +17,8 @@ const runKit = (c: ReferenceCase): void => {
   const p = normalized(decodedCase(c as unknown as GridCase, wallLampDefaults));
   expectNormalized(c.id, encodeCloudParameters(p));
   if ('filename' in c) check(filename(p) === c.filename, `${c.id}: kit name`);
+  // The `fast` tier exports the defaults only; the settings above hold for every kit.
+  if (!FULL && c.quality === 'export' && c.id !== 'cloud-classic' && c.id !== 'sun-soft-star') return;
   const started = Date.now();
   const bytes = new CloudKit(p, c.quality).archive();
   const tsMs = Date.now() - started;

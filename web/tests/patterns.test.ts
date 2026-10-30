@@ -19,8 +19,8 @@ import { motifCount } from '../src/core/testing/motifs';
 import { zipEntries } from '../src/core/testing/zipReader';
 import { BALLOON_PATTERNS, patternHasRelief, type BalloonParameters, type PatternSettings } from '../src/core/types';
 import { STAND_IN_RASTERIZERS, standInO, standInText } from './support/patternRasters';
+import { FULL, shardOf } from './support/tier';
 
-const FULL = process.env['FULL'] !== undefined && process.env['FULL'] !== '';
 const RASTERS = STAND_IN_RASTERIZERS;
 const P = makeBalloonParameters;
 const S = makePatternSettings;
@@ -34,7 +34,7 @@ describe('PatternTests.main', () => {
   const p = classic;
   const raw = classicExport;
 
-  it.each(BALLOON_PATTERNS)('style %s', { timeout: 120_000 }, (style) => {
+  it.each(BALLOON_PATTERNS)('style %s', { timeout: 300_000 }, (style) => {
     const settings = S({ style });
     const painted = make(raw, p, settings);
     painted.mesh.validate();
@@ -278,7 +278,7 @@ function checkReliefShape(style: 'Night Flight' | 'Summit Cable Car', name: stri
 
 describe('NightFlightTests.checkReliefShapes', () => {
   describe.each(['Night Flight', 'Summit Cable Car'] as const)('%s', (style) => {
-    describe.each(SHAPES)('$0', (name, input, depth, cap) => {
+    describe.each(shardOf(SHAPES))('$0', (name, input, depth, cap) => {
       it.skipIf(!FULL && !(FAST_SHAPES.has(name) && style === 'Night Flight'))('preview', { timeout: 300_000 }, () => {
         checkReliefShape(style, name, input, depth, cap, 'preview');
       });

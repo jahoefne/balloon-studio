@@ -47,10 +47,10 @@ import { ray } from '../src/core/testing/ray';
 import { parseSTL } from '../src/core/testing/stl';
 import { zipEntries } from '../src/core/testing/zipReader';
 import type { RingParameters } from '../src/core/types';
+import { FULL as full } from './support/tier';
 
 const FAST = 8;
 const TIMEOUT = 120_000;
-const full = Boolean(process.env.FULL);
 const PI = Math.PI;
 const { abs, cos, sin } = Math;
 const pow2 = (x: number): number => x * x;
