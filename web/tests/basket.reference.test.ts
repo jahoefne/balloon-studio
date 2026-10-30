@@ -1,7 +1,7 @@
 // WP-K8: the TS basket against the Swift references (references/manifest.json, group `identity`,
 // part `basket`). Parameters come from mac/cases/grid.json, which the manifest does not repeat.
 //
-// The STLs are in the Tier-B pack only (references/pack/refs-v1, `bash mac/scripts/fetch-pack.sh`),
+// The STLs are in the Tier-B pack only (references/pack/refs-v2, `bash mac/scripts/fetch-pack.sh`),
 // so without the pack this checks the settings, the filenames and the expected decode error, and
 // skips the geometry. The comparison below is the stand-in until the WP-V2 harness replaces it.
 import { createHash } from 'node:crypto';
@@ -17,7 +17,7 @@ import { binarySTL } from '../src/core/io/binaryStl';
 import { parseSTL } from '../src/core/testing/stl';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const packFiles = resolve(repo, 'references/pack/refs-v1/files');
+const packFiles = resolve(repo, 'references/pack/refs-v2/files');
 const hasPack = existsSync(packFiles);
 
 interface ManifestCase {

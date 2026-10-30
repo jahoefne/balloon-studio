@@ -78,7 +78,7 @@ function stlDistance(actual: Uint8Array, expected: Uint8Array): { ulp: number; d
 
 /** The Swift bytes of a pack STL (a stored ZIP entry at its local header offset), or undefined without the pack. */
 function packBytes(c: ManifestCase, entry?: ManifestEntry): Uint8Array | undefined {
-  const path = resolve(root, 'references/pack/refs-v1/files', c.id, c.filename);
+  const path = resolve(root, 'references/pack/refs-v2/files', c.id, c.filename);
   if (!existsSync(path)) return undefined;
   const file = new Uint8Array(readFileSync(path));
   if (entry === undefined) return file;

@@ -3,7 +3,7 @@
 //
 // Without WP-V2's harness on main this file compares by the rules of docs/plan.md §8 (WP-V2):
 // (1) SHA-256 equal to the manifest: `identical`.
-// (2) Otherwise, with the Tier B pack (references/pack/refs-v1/files/<id>/<filename>): same triangle
+// (2) Otherwise, with the Tier B pack (references/pack/refs-v2/files/<id>/<filename>): same triangle
 //     count and order, every corner's Float32 equal or 1 ULP away with the same sign (a +0/-0 flip is
 //     an error), same welded index arrays, same attribute bytes, and `dot(ts, ref) >= 1-1e-6` for the
 //     normals. A normal component close to 0 is rounding noise of the cross product (1e-15), millions
@@ -146,7 +146,7 @@ function compareSTL(name: string, actual: Uint8Array, expected: Uint8Array): Com
 }
 
 function referenceFile(id: string, filename: string): Uint8Array | null {
-  const path = resolve(root, 'references/pack/refs-v1/files', id, filename);
+  const path = resolve(root, 'references/pack/refs-v2/files', id, filename);
   return existsSync(path) ? new Uint8Array(readFileSync(path)) : null;
 }
 

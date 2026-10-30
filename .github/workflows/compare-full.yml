@@ -48,7 +48,7 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - uses: actions/cache@v4
         with:
-          path: references/pack/refs-v1
+          path: references/pack/refs-v2
           key: refs-pack-${{ hashFiles('references/manifest.json') }}
       - run: bash mac/scripts/fetch-pack.sh
       - run: npm ci

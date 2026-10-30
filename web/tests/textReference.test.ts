@@ -63,7 +63,7 @@ describe.each(CASES.map((id) => [id] as const))('%s', (id) => {
   });
 
   it('dump in the local pack matches', () => {
-    const inPack = new URL(`pack/refs-v1/rasters/${id}.ttf.pgm`, references);
+    const inPack = new URL(`pack/refs-v2/rasters/${id}.ttf.pgm`, references);
     if (existsSync(inPack)) expect(sha256(readFileSync(inPack))).toBe(sha256(pgmBytes));
   });
 

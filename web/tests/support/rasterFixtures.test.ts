@@ -93,7 +93,7 @@ describe('pack resolution', () => {
 
   it('defaults to references/pack/<release> at the repo root', () => {
     vi.stubEnv('REFS_PACK_DIR', '');
-    expect(rasterPackDir()).toMatch(/\/references\/pack\/refs-v1\/rasters\/$/);
+    expect(rasterPackDir()).toMatch(/\/references\/pack\/refs-v2\/rasters\/$/);
   });
 
   it('says what to do when the pack is missing', () => {
@@ -131,16 +131,17 @@ describe('case ids', () => {
   it('lists the dumped cases by group', () => {
     const relief = rasterCaseIds('relief');
     const text = rasterCaseIds('text');
-    expect(relief).toHaveLength(6);
+    expect(relief).toHaveLength(9);
     expect(relief.every((id) => id.startsWith('relief-'))).toBe(true);
-    expect(text).toHaveLength(21);
+    expect(text).toHaveLength(22);
     expect(text.every((id) => id.startsWith('text-'))).toBe(true);
     expect(new Set(rasterCaseIds())).toEqual(new Set([...relief, ...text]));
   });
 });
 
 describe('text dumps with the bundled fonts', () => {
-  for (const id of rasterCaseIds('text').filter((c) => c !== 'text-rounded-tokyo')) {
+  // The 20 comparison cases of WP-R3 are committed; `東京` and the Milo migration have their TTF dump in the pack only.
+  for (const id of rasterCaseIds('text').filter((c) => c !== 'text-rounded-tokyo' && c !== 'text-legacy-milo')) {
     it(`${id}: the committed dump matches its JSON and the manifest`, () => {
       const { meta, mask } = loadTextDump(id, 'ttf');
       expect(meta.case).toBe(id);

@@ -43,10 +43,10 @@ Tier A (`references/files`, every output or entry up to 300 KB, all clips) is co
 bash mac/scripts/fetch-pack.sh
 ```
 
-It unpacks to `references/pack/refs-v1/`, gitignored. A pack that already sits in `references/pack/` is used if its hash matches, otherwise the script downloads release `refs-v1`. Worktrees can share one unpacked pack:
+It unpacks to `references/pack/refs-v2/`, gitignored. A pack that already sits in `references/pack/` is used if its hash matches, otherwise the script downloads release `refs-v2`. Worktrees can share one unpacked pack:
 
 ```bash
-export REFS_PACK_DIR=/path/to/checkout/references/pack/refs-v1
+export REFS_PACK_DIR=/path/to/checkout/references/pack/refs-v2
 ```
 
 ## What the statuses mean
