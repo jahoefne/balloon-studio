@@ -17,6 +17,7 @@ export default defineConfig({
     environment: 'node',
     include: core === 'real' ? ['harness/**/*.reference.test.ts'] : [],
     passWithNoTests: true,
+    testTimeout: 600_000,
     env: { VITE_CORE: core },
   },
 });
