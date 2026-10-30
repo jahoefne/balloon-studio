@@ -1,0 +1,34 @@
+{
+  "antialias" : false,
+  "aspect" : 0.67721110393802453,
+  "bounds" : {
+    "height" : 75.634765625,
+    "width" : 51.220703125,
+    "x" : 4.4921875,
+    "y" : -1.416015625
+  },
+  "case" : "text-mono-o",
+  "font" : "Monospaced",
+  "fontPostScriptName" : "DejaVuSansMono-Bold",
+  "fontSource" : "file:DejaVuSansMono-Bold.ttf",
+  "glyphCount" : 1,
+  "height" : 256,
+  "rowOrder" : "row 0 is the bottom of the glyphs",
+  "runs" : [
+    {
+      "font" : "DejaVuSansMono-Bold",
+      "glyphs" : [
+        50
+      ],
+      "positions" : [
+        [
+          0,
+          0
+        ]
+      ]
+    }
+  ],
+  "sha256" : "1c729634684129ec000a34c8d4698c8016c277826641d9847a3e10d64d5e411a",
+  "text" : "O",
+  "width" : 174
+}

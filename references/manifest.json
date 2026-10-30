@@ -2136,6 +2136,20 @@
           "name" : "text-rounded-f.json",
           "sha256" : "ad7806145051035df04da37bdfbc196d0cd8c02946f1f9cf52c5443ebc671309",
           "tierA" : false
+        },
+        {
+          "bytes" : 43279,
+          "kind" : "pgm",
+          "name" : "text-rounded-f.ttf.pgm",
+          "sha256" : "e9767a56f9d888cf540a95c19568a6cd26bc47cbc1d8c6a543c7172f0a81a18b",
+          "tierA" : false
+        },
+        {
+          "bytes" : 720,
+          "kind" : "json",
+          "name" : "text-rounded-f.ttf.json",
+          "sha256" : "88fb078c352afe255bd45c6cba1fe2188447d3ee5bbc65d8bc48c4380f34858f",
+          "tierA" : false
         }
       ],
       "sha256" : "e799dedabf7b84572760207ed8c58de28ddbba4b9336639810ab94d1a534f8ff",
@@ -2222,6 +2236,20 @@
           "kind" : "json",
           "name" : "text-rounded-hello.json",
           "sha256" : "70eaa44b8f6d7581acdbe57caef1a5cca8723de67de51f4d9bee4bbb587e369b",
+          "tierA" : false
+        },
+        {
+          "bytes" : 218383,
+          "kind" : "pgm",
+          "name" : "text-rounded-hello.ttf.pgm",
+          "sha256" : "bc80e4e1aa00904cdea9808215c04e8ff663230faa77b73c0bef21b74f8fbb0e",
+          "tierA" : false
+        },
+        {
+          "bytes" : 1000,
+          "kind" : "json",
+          "name" : "text-rounded-hello.ttf.json",
+          "sha256" : "141658c06e085711d92bf464910fef701b04e062fbb8d247e3a785dd7edbdd4e",
           "tierA" : false
         }
       ],
@@ -2310,6 +2338,20 @@
           "name" : "text-rounded-o.json",
           "sha256" : "1354d3af9122d25b1391e59959b7ef483374bb1f9b60d582daa7a1004708e228",
           "tierA" : false
+        },
+        {
+          "bytes" : 61455,
+          "kind" : "pgm",
+          "name" : "text-rounded-o.ttf.pgm",
+          "sha256" : "c7a718f97094b3ece74c7fc200b6baaff1c5f2d70af4a4ed8caac95ffcc4c924",
+          "tierA" : false
+        },
+        {
+          "bytes" : 689,
+          "kind" : "json",
+          "name" : "text-rounded-o.ttf.json",
+          "sha256" : "57a60a3ced8f8945410495369500e186bef648bc3c329a5e7ade348551cad1b9",
+          "tierA" : false
         }
       ],
       "sha256" : "6d1db33df2e30a736a5c73022375df97a8290f29334058c3b8805fa2963a1de7",
@@ -2396,6 +2438,20 @@
           "kind" : "json",
           "name" : "text-rounded-zoe-lea.json",
           "sha256" : "aaa0481d842f8ecc133f17976bdd5e4dad94489430202c0e4bbea763f7ff382f",
+          "tierA" : false
+        },
+        {
+          "bytes" : 501008,
+          "kind" : "pgm",
+          "name" : "text-rounded-zoe-lea.ttf.pgm",
+          "sha256" : "265b9fd2713104372cad5fcb55ab8bbfcfd46d9ef5b5cab1d2a4714815eed3dc",
+          "tierA" : false
+        },
+        {
+          "bytes" : 1503,
+          "kind" : "json",
+          "name" : "text-rounded-zoe-lea.ttf.json",
+          "sha256" : "094395f2172938f09050093042ec9482b1966468f3f07fe4c0887cd3366eeb75",
           "tierA" : false
         }
       ],
@@ -2484,6 +2540,20 @@
           "name" : "text-sans-f.json",
           "sha256" : "0522197cbe312967e86851c468009f6c781d18cce9379fd4a344bf898166d00b",
           "tierA" : false
+        },
+        {
+          "bytes" : 48399,
+          "kind" : "pgm",
+          "name" : "text-sans-f.ttf.pgm",
+          "sha256" : "9ef55b3bceec643d72851123bf5df5e99793770b2c95f929764d9af52d356722",
+          "tierA" : false
+        },
+        {
+          "bytes" : 679,
+          "kind" : "json",
+          "name" : "text-sans-f.ttf.json",
+          "sha256" : "48c317cf28bf06cfb97cc09f358d15876f3c8e9a827e7bbc86a43bbe5019b61b",
+          "tierA" : false
         }
       ],
       "sha256" : "b8c75846bf579eaf19d5545ca3804f907ced5bec228bc44cffad21d8c8fcfb38",
@@ -2570,6 +2640,20 @@
           "kind" : "json",
           "name" : "text-sans-hello.json",
           "sha256" : "516acf72477a0242dbbe436533a4c93028b25fa599954408d8bcefff9ac3d0ed",
+          "tierA" : false
+        },
+        {
+          "bytes" : 208911,
+          "kind" : "pgm",
+          "name" : "text-sans-hello.ttf.pgm",
+          "sha256" : "08260cfc13cc4bddea62960daef03eb887522daff79ee90eaec06ef3f7e1c082",
+          "tierA" : false
+        },
+        {
+          "bytes" : 966,
+          "kind" : "json",
+          "name" : "text-sans-hello.ttf.json",
+          "sha256" : "29b562138eb373bfd8426b3d6ad929ce638ac921930e3050c23c9d38e229280d",
           "tierA" : false
         }
       ],
@@ -2658,6 +2742,20 @@
           "name" : "text-sans-o.json",
           "sha256" : "e10ebb60783d6ac6ced5a6860a7e1e8c61a3265809c13ab679508e79c59004a4",
           "tierA" : false
+        },
+        {
+          "bytes" : 64527,
+          "kind" : "pgm",
+          "name" : "text-sans-o.ttf.pgm",
+          "sha256" : "265939fe5a8c2573e56c099fa4c5ab9edad0511e689c1dfea27188c2973fe93e",
+          "tierA" : false
+        },
+        {
+          "bytes" : 685,
+          "kind" : "json",
+          "name" : "text-sans-o.ttf.json",
+          "sha256" : "717540a6a17eacafd064716c09107e928c6495d5aba56a430ae90aacd3b2b358",
+          "tierA" : false
         }
       ],
       "sha256" : "cdeb04b4c2a3ae428e453dd47ee59ba3d5cbc2329eb0db51244a2fbebf3415e2",
@@ -2744,6 +2842,20 @@
           "kind" : "json",
           "name" : "text-sans-zoe-lea.json",
           "sha256" : "5be80b4be3343fd6adc7968bff9bedaf9d94d91431830c27537b245bf8557c72",
+          "tierA" : false
+        },
+        {
+          "bytes" : 539664,
+          "kind" : "pgm",
+          "name" : "text-sans-zoe-lea.ttf.pgm",
+          "sha256" : "ee39032149e03b10e34d4f979116df66ad9efe1b59e233d7cd6ae36679c05522",
+          "tierA" : false
+        },
+        {
+          "bytes" : 1461,
+          "kind" : "json",
+          "name" : "text-sans-zoe-lea.ttf.json",
+          "sha256" : "02a96bd1206139089e960783b03a71b919cca33c899b8ae1a22ab98ba5cd8c29",
           "tierA" : false
         }
       ],
@@ -2832,6 +2944,20 @@
           "name" : "text-serif-f.json",
           "sha256" : "c7377af826f730a13714907074e014eb3a1b2df086426e296351d8e4d4e893dd",
           "tierA" : false
+        },
+        {
+          "bytes" : 55823,
+          "kind" : "pgm",
+          "name" : "text-serif-f.ttf.pgm",
+          "sha256" : "5b0120707d49bea355a98426151c420541e0561909a1231c365b8d0d347f38d3",
+          "tierA" : false
+        },
+        {
+          "bytes" : 681,
+          "kind" : "json",
+          "name" : "text-serif-f.ttf.json",
+          "sha256" : "4e58a238ecabce7ffbfdd10dd1e5c5417c0c4e563a1c39d1e253dd8461018eff",
+          "tierA" : false
         }
       ],
       "sha256" : "78988fd243db32e151d383ef61a90aa2497524c59741ddb577fe18c4da55e8ad",
@@ -2918,6 +3044,20 @@
           "kind" : "json",
           "name" : "text-serif-hello.json",
           "sha256" : "aec8fbf7b2bbfa23da8dc0028f8e319b69f2dd2d3afd2b2982fe829ef8ae45f9",
+          "tierA" : false
+        },
+        {
+          "bytes" : 231695,
+          "kind" : "pgm",
+          "name" : "text-serif-hello.ttf.pgm",
+          "sha256" : "9533e42368c908950e1a212b8ed1a8def026a5c6c4ce053ecc6ce34abfb3be38",
+          "tierA" : false
+        },
+        {
+          "bytes" : 978,
+          "kind" : "json",
+          "name" : "text-serif-hello.ttf.json",
+          "sha256" : "c25b28b9114bf4d53e09b321387ca827d8686fae475b1151789182845835d38a",
           "tierA" : false
         }
       ],
@@ -3006,6 +3146,20 @@
           "name" : "text-serif-o.json",
           "sha256" : "9d2d403d759dc4a970a6f41018c0e88dbcbe037a6b6f80715449da938854ce88",
           "tierA" : false
+        },
+        {
+          "bytes" : 66063,
+          "kind" : "pgm",
+          "name" : "text-serif-o.ttf.pgm",
+          "sha256" : "fbae2604577829e15c74fe45757983cae10b70d50209f21c1a9bb10f5c65cc9d",
+          "tierA" : false
+        },
+        {
+          "bytes" : 691,
+          "kind" : "json",
+          "name" : "text-serif-o.ttf.json",
+          "sha256" : "0ede675eb531e8f28eba420291a81792bb7f117df24338039a7424c503aad7a9",
+          "tierA" : false
         }
       ],
       "sha256" : "3454ebd1dbf24ac95d87bfaf2e4ba38b47edf24c271e1db17c94c6b73d1aae06",
@@ -3092,6 +3246,20 @@
           "kind" : "json",
           "name" : "text-serif-zoe-lea.json",
           "sha256" : "182339a32a6febaa1fedf864e6f3250d00a7ff4190e39b1d92d5dc0c517fd4da",
+          "tierA" : false
+        },
+        {
+          "bytes" : 443152,
+          "kind" : "pgm",
+          "name" : "text-serif-zoe-lea.ttf.pgm",
+          "sha256" : "4bedaaa79d4596dad630fd061d060ffd0ced280326892ba0943f6b65b6761802",
+          "tierA" : false
+        },
+        {
+          "bytes" : 1486,
+          "kind" : "json",
+          "name" : "text-serif-zoe-lea.ttf.json",
+          "sha256" : "3888b2b07c6ad89c60506e86e30667c63d8b76a04359c9ba4836321f6d28edd9",
           "tierA" : false
         }
       ],
@@ -3180,6 +3348,20 @@
           "name" : "text-handwritten-f.json",
           "sha256" : "8005e475f46449572d2b20b1ae9fd6bb45777e6531c03c05b8c1b43922954f9c",
           "tierA" : false
+        },
+        {
+          "bytes" : 48399,
+          "kind" : "pgm",
+          "name" : "text-handwritten-f.ttf.pgm",
+          "sha256" : "d050386e76b06acf2c94329c0dbf4eb9d78b08fe54bffc71774d171eb8304c61",
+          "tierA" : false
+        },
+        {
+          "bytes" : 722,
+          "kind" : "json",
+          "name" : "text-handwritten-f.ttf.json",
+          "sha256" : "6510b66bb2ce60447911363f6bd6a482a5426a9c6daa79e83b26b5529d27f4b5",
+          "tierA" : false
         }
       ],
       "sha256" : "89daa3c4d189120e65a42672d371085c022b527e72b2afd79fdaa2769d07d41d",
@@ -3266,6 +3448,20 @@
           "kind" : "json",
           "name" : "text-handwritten-hello.json",
           "sha256" : "576e844b94800d5987feb9e5363f64fdf31687c6438e72b036dbb6e86370d084",
+          "tierA" : false
+        },
+        {
+          "bytes" : 200463,
+          "kind" : "pgm",
+          "name" : "text-handwritten-hello.ttf.pgm",
+          "sha256" : "16d63d23b10eda73f3e9aacf6b380fc211d469a46d905bf2f20cb50ed5257cab",
+          "tierA" : false
+        },
+        {
+          "bytes" : 1016,
+          "kind" : "json",
+          "name" : "text-handwritten-hello.ttf.json",
+          "sha256" : "2c292195f48b635cf1d4dbdfa6e01631163cfb6dda5199f7d5da1a7967de270d",
           "tierA" : false
         }
       ],
@@ -3354,6 +3550,20 @@
           "name" : "text-handwritten-o.json",
           "sha256" : "6d9889bfd2560630cc458d81897b3137119135789a3373d1762fa930fb226765",
           "tierA" : false
+        },
+        {
+          "bytes" : 53775,
+          "kind" : "pgm",
+          "name" : "text-handwritten-o.ttf.pgm",
+          "sha256" : "7ac110539333beb539b1a04aaec29c6715bba67b96804e4e1e36df1ea3f8c099",
+          "tierA" : false
+        },
+        {
+          "bytes" : 720,
+          "kind" : "json",
+          "name" : "text-handwritten-o.ttf.json",
+          "sha256" : "45753960cb582bb0fd10ac1bf817d2b21b85ee942573327a02e1f41b47d1471d",
+          "tierA" : false
         }
       ],
       "sha256" : "664c0787cfd47d948522a35019cb75f1c3ed7c1800c57853cf1c06f0dbb20a28",
@@ -3440,6 +3650,20 @@
           "kind" : "json",
           "name" : "text-handwritten-zoe-lea.json",
           "sha256" : "72519927579af09ce73f7a375466f4f624bb88e495a9b290f017be8833e10992",
+          "tierA" : false
+        },
+        {
+          "bytes" : 495376,
+          "kind" : "pgm",
+          "name" : "text-handwritten-zoe-lea.ttf.pgm",
+          "sha256" : "1c9f3590f2956df82e747b0dbfca4375a6b05af403788bf247e4b0dc72d77239",
+          "tierA" : false
+        },
+        {
+          "bytes" : 1537,
+          "kind" : "json",
+          "name" : "text-handwritten-zoe-lea.ttf.json",
+          "sha256" : "4d93eaea4ee056ea87058c174739acc4fc5a32b98d0e8bfc86aacd9d88904484",
           "tierA" : false
         }
       ],
@@ -3528,6 +3752,20 @@
           "name" : "text-mono-f.json",
           "sha256" : "e3a47defab910b1f89c683b6f801f19d2a95ab569fd81e02e9984c55fda9cb9a",
           "tierA" : false
+        },
+        {
+          "bytes" : 40975,
+          "kind" : "pgm",
+          "name" : "text-mono-f.ttf.pgm",
+          "sha256" : "0ac3e02289b345313d049c5b21fea6a04fdb12c214256e86787d7ff1307e8dd6",
+          "tierA" : false
+        },
+        {
+          "bytes" : 704,
+          "kind" : "json",
+          "name" : "text-mono-f.ttf.json",
+          "sha256" : "6edcb8cb4a6872eaf2f8cc3b152a706ac2ca3af1c514cc2f8b85849cb29130c1",
+          "tierA" : false
         }
       ],
       "sha256" : "90e157a26e471287fa4169ab476181201ff6a76198ac63ea57a05593a668b931",
@@ -3614,6 +3852,20 @@
           "kind" : "json",
           "name" : "text-mono-hello.json",
           "sha256" : "3e700c4a400d5263e90b1bde7978e73f2f37827e14145c17c5b775862e76a45d",
+          "tierA" : false
+        },
+        {
+          "bytes" : 245263,
+          "kind" : "pgm",
+          "name" : "text-mono-hello.ttf.pgm",
+          "sha256" : "de02536cbf26753d76560c41b7e2e8269447d3d6a06ebb7025f330677d440a49",
+          "tierA" : false
+        },
+        {
+          "bytes" : 1000,
+          "kind" : "json",
+          "name" : "text-mono-hello.ttf.json",
+          "sha256" : "e6b95101a1e77c655d1b85fa2863a77e6e5a0dd37b2cb0436e5379ea7ff99941",
           "tierA" : false
         }
       ],
@@ -3702,6 +3954,20 @@
           "name" : "text-mono-o.json",
           "sha256" : "5dab4a7228fbed886a41079d093bf461ac9d2c30f90869b9687cc740baab88a7",
           "tierA" : false
+        },
+        {
+          "bytes" : 44559,
+          "kind" : "pgm",
+          "name" : "text-mono-o.ttf.pgm",
+          "sha256" : "1c729634684129ec000a34c8d4698c8016c277826641d9847a3e10d64d5e411a",
+          "tierA" : false
+        },
+        {
+          "bytes" : 715,
+          "kind" : "json",
+          "name" : "text-mono-o.ttf.json",
+          "sha256" : "4a3ca5066306261d1af4ae3550c395094c9a2b8bd10254450c37c215cfee5430",
+          "tierA" : false
         }
       ],
       "sha256" : "6da327018683a91548322b8ab6fbd3dc42d127f4d222fc1f585d8e9ba3721bfc",
@@ -3789,6 +4055,20 @@
           "name" : "text-mono-zoe-lea.json",
           "sha256" : "14bef593518cd91e87a3d0694cc65da7c473ca100f2441f0662f89885f8b89f3",
           "tierA" : false
+        },
+        {
+          "bytes" : 572176,
+          "kind" : "pgm",
+          "name" : "text-mono-zoe-lea.ttf.pgm",
+          "sha256" : "07a84d8fc3cbc1dfa0618cf54ee1c8512be70ce4d4c9b8818327c42afbfb56e7",
+          "tierA" : false
+        },
+        {
+          "bytes" : 1495,
+          "kind" : "json",
+          "name" : "text-mono-zoe-lea.ttf.json",
+          "sha256" : "1e0896f23b04ed89bbfbfab5399c9bda65b86fa7964f647ad7f9fff94cbc78b7",
+          "tierA" : false
         }
       ],
       "sha256" : "4dac072ff70dff4cd74646d79eb87bde1d7f7415d79a85797e9ea1872eb22f8c",
@@ -3875,6 +4155,20 @@
           "kind" : "json",
           "name" : "text-rounded-tokyo.json",
           "sha256" : "797dde8411e2304c9e4789800fcc3b3af601f4bc52eb849dece33ba7c82a6384",
+          "tierA" : false
+        },
+        {
+          "bytes" : 134159,
+          "kind" : "pgm",
+          "name" : "text-rounded-tokyo.ttf.pgm",
+          "sha256" : "8c5a367714bed461cf6c0fbeaa42f50ebadb4cbc309b500700404e240fdc4d05",
+          "tierA" : false
+        },
+        {
+          "bytes" : 797,
+          "kind" : "json",
+          "name" : "text-rounded-tokyo.ttf.json",
+          "sha256" : "6fbf141a59657c72aefd243d8e46ca34ec115b59edd2421f07ad626e1082b338",
           "tierA" : false
         }
       ],

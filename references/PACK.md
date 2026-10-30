@@ -28,16 +28,16 @@ Written with `--rasters` for cases with `"rasters": true` (group `relief` or `te
 - **Text** (`text-*`): `<id>.pgm` (`P5`, 0/255, first row = bottom of the glyphs) and `<id>.json` with `width, height, aspect, bounds, glyphCount`, the CoreText runs (font, glyph ids, positions), the normalized text and the font source. The mask comes from a copy of `BalloonTextMask.init` with the typeface passed in; with the system fonts the exporter checks it against `BalloonTextMask` itself.
 - **Primitives** (`rasters/primitives/*.pgm` + `index.json`): 64 × 64 DeviceGray calibration canvases for WP-R2, black background, flipped like the artworks (storage row 0 = y 0), one unit = one pixel: filled circle r = 20 gray 0.7, triangle without antialiasing, miter polyline width 6, round-cap/round-join polyline, dashed cubic `[8, 5]` width 4, rounded-rect stroke width 2, radial gradient 0.9 → 0.6 with `drawsAfterEndLocation` in a circle clip, radial gradient under an anisotropic CTM (as `SummitCableCar.rounded`), linear gradient with both extend flags in a rectangle clip, two nested antialiased clips, the moon path of NightFlight.swift:84-93 at r = 24, a filled `copy(strokingWithWidth:)` outline, a dashed-then-stroked copy (SummitCableCar.swift:213) and a circle drawn twice. `index.json` gives every command and number.
 
-### Text dumps use the Apple fonts for now
+### Two text dumps per case
 
-Until WP-R3 bundles the replacement TTFs under `web/public/fonts/`, the text dumps are rendered with the app's own fonts (`fontSource: "system:ArialRoundedMTBold"` etc.). They document what the Mac shapes and rasterizes, but they are **not** the comparison material for the TS text rasterizer, which shapes the bundled fonts. **After WP-R3 the text run is repeated** with the TTFs, so that only shaping and rasterization differ:
+`<id>.pgm` is always the app's own mask with the Apple fonts, the one the 3MF export of that case used; `fileRaster`-style mesh proofs (WP-K3) need it. With `--font-file`, the exporter also writes `<id>.ttf.pgm` and `<id>.ttf.json`, the same text through CoreText and CoreGraphics with the bundled TTF (`fontSource: "file:…"`), so that WP-R3 compares only shaping and rasterization. `--font-file <Font>=<ttf>` loads the file with `CTFontManagerCreateFontDescriptorFromData` → `CTFontCreateWithFontDescriptor(·, 100)`; `<Font>` is the raw value or the case name (`rounded`, `sans`, `serif`, `handwritten`, `mono`); a bare `--font-file <ttf>` applies to every font. File names in `FONT_FILES` must not contain spaces.
+
+`mac/scripts/refresh-text-rasters.sh` adds these dumps without a full run: it draws the text cases one at a time, merges their `rasters` lists into the manifest with `reference-exporter merge-rasters` (which refuses if anything else of a case changed) and copies the new files into `references/pack/refs-v1/rasters/`. The `refs-v1` release does not hold them; the committed copies of the 20 comparison masks are in `web/tests/fixtures/text/`. **The next pack has to be built with the fonts**, or the manifest loses the entries and `web/tests/textReference.test.ts` fails:
 
 ```bash
 FONT_FILES="rounded=web/public/fonts/Nunito-Bold.ttf sans=web/public/fonts/Arimo-Bold.ttf serif=web/public/fonts/Gelasio-Bold.ttf handwritten=web/public/fonts/ComicNeue-Bold.ttf mono=web/public/fonts/DejaVuSansMono-Bold.ttf" \
   bash mac/scripts/make-references.sh
 ```
-
-(Use the file names WP-R3 actually delivers.) `--font-file <Font>=<ttf>` loads the file with `CTFontManagerCreateFontDescriptorFromData` → `CTFontCreateWithFontDescriptor(·, 100)`; `<Font>` is the raw value or the case name (`rounded`, `sans`, `serif`, `handwritten`, `mono`); a bare `--font-file <ttf>` applies to every font. The 3MF exports of the text cases always use the Apple fonts, as the app does. File names in `FONT_FILES` must not contain spaces.
 
 ## Regenerating
 

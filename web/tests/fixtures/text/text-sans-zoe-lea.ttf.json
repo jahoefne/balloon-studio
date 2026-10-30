@@ -1,0 +1,89 @@
+{
+  "antialias" : false,
+  "aspect" : 8.23344262295082,
+  "bounds" : {
+    "height" : 74.462890625,
+    "width" : 613.0859375,
+    "x" : 2.978515625,
+    "y" : -1.123046875
+  },
+  "case" : "text-sans-zoe-lea",
+  "font" : "Sans serif",
+  "fontPostScriptName" : "Arimo-Bold",
+  "fontSource" : "file:Arimo-Bold.ttf",
+  "glyphCount" : 12,
+  "height" : 256,
+  "rowOrder" : "row 0 is the bottom of the glyphs",
+  "runs" : [
+    {
+      "font" : "Arimo-Bold",
+      "glyphs" : [
+        61,
+        82,
+        115,
+        3,
+        9,
+        3,
+        47,
+        112,
+        68,
+        3,
+        31,
+        22
+      ],
+      "positions" : [
+        [
+          0,
+          0
+        ],
+        [
+          61.083984375,
+          0
+        ],
+        [
+          122.16796875,
+          0
+        ],
+        [
+          177.783203125,
+          0
+        ],
+        [
+          205.56640625,
+          0
+        ],
+        [
+          277.783203125,
+          0
+        ],
+        [
+          305.56640625,
+          0
+        ],
+        [
+          366.650390625,
+          0
+        ],
+        [
+          422.265625,
+          0
+        ],
+        [
+          477.880859375,
+          0
+        ],
+        [
+          505.6640625,
+          0
+        ],
+        [
+          564.0625,
+          0
+        ]
+      ]
+    }
+  ],
+  "sha256" : "ee39032149e03b10e34d4f979116df66ad9efe1b59e233d7cd6ae36679c05522",
+  "text" : "Zoë & Léa <3",
+  "width" : 2108
+}
