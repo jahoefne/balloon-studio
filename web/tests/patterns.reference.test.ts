@@ -7,13 +7,13 @@
 // those 4 cases still run: Tier A covers everything but the model, and PINNED_MODELS covers the model. The six
 // big reliefs (85-198 MB each) run with FULL=1.
 //
-// Rounding noise decides a few refinement edges (TIE_FLIPS): those cases cannot pass the harness's
-// line-by-line rule with our libm. With Apple's values for sin, cos, atan, atan2 and hypot all 41 3MF files
-// are byte-identical to Swift's (tests/patterns.replay.test.ts repeats that).
+// Rounding noise decides a few refinement edges in 12 cases: they pass as `equivalent-bounded` from
+// BOUNDED_CASES (harness/equivalentCases.ts, reason and limits there). With Apple's values for sin, cos, atan,
+// atan2 and hypot all 41 3MF files are byte-identical to Swift's (tests/patterns.replay.test.ts repeats that).
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { compareCase, expectNormalized, expectReference, getCase, hasPack, isExported, loadCaseBody, loadManifest, packDir, type CaseResult, type ExportedCase } from '../harness';
+import { expectNormalized, expectReference, getCase, hasPack, isExported, loadManifest, packDir, type CaseResult, type ExportedCase } from '../harness';
 import { generate } from '../src/core/balloon/balloonGenerator';
 import { classic, filename, fromValue, normalized as normalizedParameters, toJSON } from '../src/core/balloon/balloonParameters';
 import { sha256 } from '../src/core/io/sha256';
@@ -23,7 +23,6 @@ import { NightFlightRelief } from '../src/core/patterns/nightFlightRelief';
 import type { PatternRasterizers } from '../src/core/patterns/raster';
 import { threeMF } from '../src/core/patterns/threeMF';
 import { zipEntries } from '../src/core/testing/zipReader';
-import { compareRefinedModels } from './support/refinementFlips';
 import { fixtureBytes } from './support/swiftProbe';
 import { FULL } from './support/tier';
 
@@ -59,30 +58,6 @@ const PINNED_MODELS: Readonly<Record<string, string>> = {
   'text-legacy-milo': '979328202ba1f19717ed0f40feb0f45c59054e93d81a6a4359012d6f1aef22f2',
 };
 
-/**
- * Cases whose refinement differs in a few edges. A vertex on a meridian can land exactly on a pixel
- * column of the mask or the field: `floor(x * columns)` in crossesBoundary and occupied then depends on the
- * last bit of atan2 and of the sin and cos behind the vertex, in Swift as here. A flip subdivides a few
- * more or fewer faces, which renumbers the vertices after them, so the model is compared by position.
- * Measured at most: 52 vertices and 201 triangles without a partner, 1.4e-7 mm between matched vertices
- * (a Float(u) in NightFlightRelief.sample rounding the other way), 1.3e-8 relative volume.
- */
-const TIE_FLIPS: ReadonlySet<string> = new Set([
-  'text-sans-hello',
-  'text-serif-zoe-lea',
-  'text-mono-hello',
-  'relief-night-flight-classic',
-  'relief-night-flight-round',
-  'relief-night-flight-tall',
-  'relief-summit-classic',
-  'relief-summit-round',
-  'relief-summit-tall',
-  'relief-night-flight-legacy',
-  'relief-night-flight-v2',
-  'relief-summit-saved',
-]);
-const TIE_FLIP_LIMITS = { vertices: 200, triangles: 800, maxDistance: 1e-6, volumeDifference: 1e-5 };
-
 function rasterBytes(c: ExportedCase, name: string): Uint8Array | null {
   if (FIXTURE_RASTERS.has(c.id)) return fixtureBytes(`patterns/${name}${name.endsWith('.json') ? '' : '.gz'}`);
   const path = resolve(packDir(), 'rasters', name);
@@ -112,7 +87,7 @@ const hex = (bytes: Uint8Array): string => Array.from(bytes, (b) => b.toString(1
 const results: string[] = [];
 
 function report(result: CaseResult, note: string): void {
-  results.push(`${result.id}: ${result.status} maxUlp ${result.maxUlp} ulpCount ${result.ulpCount} ts ${Math.round(result.tsMs ?? 0)} ms swift ${result.swiftMs} ms ${note}`);
+  results.push(`${result.id}: ${result.status} maxUlp ${result.maxUlp} ulpCount ${result.ulpCount} ts ${Math.round(result.tsMs ?? 0)} ms swift ${result.swiftMs} ms ${note}${result.warnings?.length ? ` ${result.warnings.join(' ')}` : ''}`);
 }
 
 function checkCase(c: ExportedCase, rasterizers: PatternRasterizers): void {
@@ -130,34 +105,8 @@ function checkCase(c: ExportedCase, rasterizers: PatternRasterizers): void {
   const model = zipEntries(bytes).find((entry) => entry.name === MODEL)?.data as Uint8Array;
   const pin = PINNED_MODELS[c.id];
   if (pin !== undefined) expect(hex(sha256(model)), `${c.id}: model SHA-256 (rerun with the pack before changing the pin)`).toBe(pin);
-  if (!TIE_FLIPS.has(c.id)) {
-    const result = expectReference(c.id, bytes, { tsMs, allowUnverified: pin !== undefined });
-    report(result, result.notes.at(-1) ?? '');
-    return;
-  }
-  // A listed case: everything but the model through the harness, the model by position.
-  const result = compareCase(c.id, bytes, { tsMs });
-  if (result.status === 'identical' || result.status === 'ulp') {
-    results.push(`${c.id}: ${result.status}, no flip this time: TIE_FLIPS is stale`);
-    return;
-  }
-  const rest = compareCase(c.id, bytes, { tsMs, skipEntries: [MODEL] });
-  expect(rest.status, `${c.id}: entries other than the model`).not.toBe('mismatch');
-  const body = loadCaseBody(c);
-  if (body === null) {
-    // Without the pack the pin stands in for the model, as for the other pinned cases.
-    results.push(`${c.id}: pinned, the tie flips were counted with the pack`);
-    return;
-  }
-  const flips = compareRefinedModels(zipEntries(body).find((entry) => entry.name === MODEL)?.data as Uint8Array, model);
-  const limits = TIE_FLIP_LIMITS;
-  expect(flips.verticesOnlyTs, `${c.id}: ${JSON.stringify(flips)}`).toBeLessThanOrEqual(limits.vertices);
-  expect(flips.verticesOnlyReference, `${c.id}: ${JSON.stringify(flips)}`).toBeLessThanOrEqual(limits.vertices);
-  expect(flips.trianglesOnlyTs, `${c.id}: ${JSON.stringify(flips)}`).toBeLessThanOrEqual(limits.triangles);
-  expect(flips.trianglesOnlyReference, `${c.id}: ${JSON.stringify(flips)}`).toBeLessThanOrEqual(limits.triangles);
-  expect(flips.maxDistance, `${c.id}: ${JSON.stringify(flips)}`).toBeLessThanOrEqual(limits.maxDistance);
-  expect(flips.volumeDifference, `${c.id}: ${JSON.stringify(flips)}`).toBeLessThanOrEqual(limits.volumeDifference);
-  results.push(`${c.id}: tie flip ${JSON.stringify(flips)} ts ${Math.round(tsMs)} ms swift ${result.swiftMs} ms`);
+  const result = expectReference(c.id, bytes, { tsMs, allowUnverified: pin !== undefined });
+  report(result, result.notes.at(-1) ?? '');
 }
 
 describe('patterns against the Swift references', () => {
