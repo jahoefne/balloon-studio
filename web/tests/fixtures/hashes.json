@@ -7,5 +7,8 @@
   "primitive/nested-aa-clips": "14fe64951c1a4265cd85efabfcd5cba0d91b97c74af97074c99951c0b59d6ca6",
   "primitive/moon-r24": "98718a623d1ebb5eeed1922c67bda7b8b0d140fec3815f58b90e54eda9a2351b",
   "primitive/overlap-twice-circle": "2ce37f37ffa36e8ed8a78c68423c5a6ccd9b1c2a313dbd169598cfe5b1fa500a",
-  "scene/worst-case-3072x1200": "551210609bff885a05c865cd53a901598a14fcc9bd476902dd27180e556a35da"
+  "scene/worst-case-3072x1200": "551210609bff885a05c865cd53a901598a14fcc9bd476902dd27180e556a35da",
+  "artwork/night-flight-classic": "c581afbaaf7ad41d6cfdac7fb67bf7765e1402483c007be24c4b6a177ab7f8b5",
+  "artwork/night-flight-round": "5fa1f704b57bae0269ed6f7e7d87b16b01f149cfd00752b68b6b8222dc5dbbdf",
+  "artwork/night-flight-tall": "3c55074497e021e3992bfe6ad44fd251366a8876a4d0fe9e9de5fdeac384bd40"
 }
