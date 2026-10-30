@@ -4,7 +4,7 @@
 
 import type { MeshBuffers, Vec2 } from '../types';
 import { cos, PI, sin } from '../swift/dmath';
-import { swiftMax } from './swiftCompat';
+import { swiftMax } from '../swift/minmax';
 
 /** A mesh under construction, with one color group per triangle. */
 export interface StubMesh {

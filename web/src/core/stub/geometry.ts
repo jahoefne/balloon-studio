@@ -8,7 +8,7 @@ import type {
   CloudGeometryApi,
   FigureGeometryApi,
   RingGeometryApi,
-  StlApi,
+  StlGeometryApi,
 } from '../api';
 import { CoreFailure, STL_ERRORS } from '../api';
 import {
@@ -41,7 +41,7 @@ import { FIGURE_STYLES } from '../types';
 import { figureFilename, figureOutline, figureParameters, figureSetFilename, normalizeFigure } from './figure';
 import { append, binarySTL, box, emptyMesh, extrude, lathe, storedZip, toBuffers, torus, transformed, translated, utf8, type StubMesh } from './mesh';
 import { normalizeRing, ringFilename, ringParameters } from './ring';
-import { swiftMax, swiftMin } from './swiftCompat';
+import { swiftMax, swiftMin } from '../swift/minmax';
 
 const single = (filename: string, mime: ExportResult['mime'], bytes: Uint8Array): ExportResult => ({
   filename,
@@ -109,7 +109,7 @@ const balloon: BalloonGeometryApi = {
     paint(m, parameters, pattern);
     const multicolor = balloonParameters.pattern.derived(pattern, parameters).multicolor;
     const layers = Math.ceil(parameters.height / purge.layerHeight);
-    return { parameters, pattern, purge, mesh: toBuffers(m), estimate: stubEstimate(multicolor, pattern.bands, layers) };
+    return { parameters, pattern, purge, mesh: toBuffers(m), estimate: stubEstimate(multicolor, pattern.bands, layers), missingGlyphs: [] };
   },
   export(snapshot) {
     const parameters = normalizeBalloon(snapshot.parameters);
@@ -353,13 +353,9 @@ const clip: ClipGeometryApi = {
 
 // --- STL import ----------------------------------------------------------------------
 
-const MAXIMUM_BYTES = 150_000_000;
-
-const stl: StlApi = {
-  maximumBytes: MAXIMUM_BYTES,
-  maximumTriangles: 2_000_000,
+const stl: StlGeometryApi = {
   open(bytes) {
-    if (bytes.length > MAXIMUM_BYTES) throw new CoreFailure('invalid-stl', STL_ERRORS.tooLarge);
+    if (bytes.length > 150_000_000) throw new CoreFailure('invalid-stl', STL_ERRORS.tooLarge);
     if (bytes.length === 0) throw new CoreFailure('invalid-stl', STL_ERRORS.emptyOrTooLarge);
     if (bytes.length < 84) throw new CoreFailure('invalid-stl', STL_ERRORS.incomplete);
     // STUB: the file is not parsed; it opens as the classic balloon.

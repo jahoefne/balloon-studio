@@ -15,10 +15,12 @@ copied here. `deploy.yml` has no pack, so tests of pack data skip themselves on 
 | Set | Where | Read with |
 | --- | --- | --- |
 | Relief: Night Flight and Summit Cable Car × classic, round, tall (6 cases) | Pack: `rasters/relief-*.{raw.pgm,field.f32,json}` | `loadReliefDump(id)` |
-| Text: 5 fonts × `F`, `Hello`, `O`, `Zoë & Léa <3`, plus `東京` in Rounded (21 cases) | Pack: `rasters/text-*.{pgm,json}` | `loadTextDump(id)` |
+| Text with the Apple fonts: 5 fonts × `F`, `Hello`, `O`, `Zoë & Léa <3`, plus `東京` in Rounded (21 cases) | Pack: `rasters/text-*.{pgm,json}` | `loadTextDump(id)` |
+| Text with the bundled TTFs: the same without `東京` (20 cases) | Here: `text/<id>.ttf.{pgm.gz,json}` (WP-R3; the release `refs-v1` has them only after its next rebuild) | `loadTextDump(id, 'ttf')` |
 | Primitives: 14 calibration canvases, `index.json` with their commands | Tier A: `references/files`, through `references/manifest.json` | `loadPrimitive(name)`, `loadPrimitiveIndex()` |
 | What WP-R2 measured beyond the primitives | Here: `primitives/probes/cg-raster.txt.gz`, source `cg-raster.swift` | `fixtureText`, `probeSection` |
 | SHA-256 of the TS rasters | Here: `hashes.json` | `tests/hashes.test.ts` |
+| SHA-256 of the TS text masks | Here: `text/mask-hashes.json` (WP-R3) | `tests/hashes.test.ts`, `tests/textReference.test.ts` |
 
 `<id>` is the case id from `mac/cases/grid.json` (group `relief` or `text`); the file names are in the `rasters` field of
 each case in `references/manifest.json`.
@@ -30,10 +32,10 @@ each case in `references/manifest.json`.
   bounds, glyphCount`, the runs (font, glyph ids, positions), the text and the font source. `bounds` is
   `CGPath.boundingBoxOfPath`, the tight curve bound **without** control points: port it with `Path.pathBounds()`, not
   `controlBounds()` (measured; see `web/src/core/raster/path.ts`).
-  **refs-v1 has the Apple fonts** (`fontSource: "system:…"`), so these masks document what the Mac shapes and rasterizes.
-  The comparison material for the TS text rasterizer comes from the rerun after WP-R3, which loads the bundled TTFs
-  (`web/public/fonts`, `CTFontManagerCreateFontDescriptorFromData` → `CTFontCreateWithFontDescriptor(·, 100)`, so only shaping
-  and rasterization differ); see `references/PACK.md`. The loader reads whatever the manifest then names.
+  There are **two dumps per case** (`references/PACK.md`). `<id>.pgm` has the Apple fonts (`fontSource: "system:…"`), the mask
+  the 3MF export of that case used. `<id>.ttf.pgm` has the bundled TTFs (`fontSource: "file:…"`, loaded with
+  `CTFontManagerCreateFontDescriptorFromData` → `CTFontCreateWithFontDescriptor(·, 100)`, so only shaping and rasterization
+  differ), the comparison material for the TS text rasterizer.
 - **primitives**: circle, AA-off triangle, miter polyline, round caps, dash, rounded-rect stroke, radial and linear
   gradient with clips, nested clips, moon path (NightFlight.swift:84-93), stroked and dashed copies, a circle drawn twice.
   Measured: gradients are stepped and dithered, the aliased rule is "every touched pixel"
@@ -67,7 +69,7 @@ for (const id of rasterCaseIds('relief')) {
     expect(float32BitDifference(smooth(raw.pixels, meta), field)).toBeNull();  // Float32 arrays, bit for bit
   });
 }
-const { meta, mask } = loadTextDump('text-rounded-f');  // needs the skipIf too
+const { meta, mask } = loadTextDump('text-rounded-f', 'ttf');  // bundled fonts, no pack; without 'ttf' the Apple dump, needs the skipIf
 const moon = loadPrimitive('moon-r24');                 // Tier A, no pack: { width, height, pixels }
 ```
 
@@ -76,7 +78,7 @@ const moon = loadPrimitive('moon-r24');                 // Tier A, no pack: { wi
 | `hasRasterPack()`, `rasterPackDir()` | Whether the dumps are there; their directory |
 | `rasterCaseIds(group?)` | Case ids with dumps, optionally only `relief` or `text` |
 | `loadReliefDump(id)` | `{ meta, raw, field }`; about 11 MB, so load once per test file |
-| `loadTextDump(id)` | `{ meta, mask }` |
+| `loadTextDump(id, fonts?)` | `{ meta, mask }`; `'apple'` (default) from the pack, `'ttf'` from `tests/fixtures/text` |
 | `primitiveNames()`, `loadPrimitive(name)`, `loadPrimitiveIndex()` | The canvases from Tier A |
 | `fixtureBytes(rel)`, `fixtureText(rel)`, `fixturePGM(rel)`, `fixtureFloat32(rel, count?)` | Files under `tests/fixtures`, gunzipped if `.gz` |
 | `probeSection(text, name)`, `probeValue(text, name)` | Parts of a probe dump |
@@ -87,9 +89,10 @@ The pure parts are in `web/src/core/testing/raster.ts` (`decodeFloat32LE`, `floa
 
 ## Hashes
 
-`hashes.json` maps `primitive/<name>`, `scene/worst-case-3072x1200` and later `artwork/<id>` to the SHA-256 of the bytes the TS
-core draws. `tests/hashes.test.ts` draws every one again, in Node under `npm test` and in the browsers under
-`npm run test:browser`. It also fails when a key has no drawing or a drawing has no key.
+`hashes.json` maps `primitive/<name>`, `scene/worst-case-3072x1200` and `artwork/<id>` to the SHA-256 of the bytes the TS core
+draws; `text/mask-hashes.json` does the same for the text masks, keyed by case id. `tests/hashes.test.ts` draws every one again,
+in Node under `npm test` and in the browsers under `npm run test:browser`. It also fails when a key has no drawing or a drawing
+has no key.
 
 To add a raster or take over an intended change:
 
@@ -99,6 +102,8 @@ To add a raster or take over an intended change:
    Check the diff: an unintended change shows as a changed line. The same variable on `src/core/raster/primitives.test.ts`
    rewrites the file with its own keys only, so do not use that one.
 3. Run `npm run test:browser`.
+
+Masks: add the case to `TEXT_MASK_SCENES` and refresh with `UPDATE_TEXT_HASHES=1 npx vitest run tests/textReference.test.ts`.
 
 ### Browser run
 
@@ -122,9 +127,10 @@ A new row is needed whenever the Swift sources, the fonts or macOS change. The p
 | --- | --- | --- | --- | --- | --- |
 | Relief, text, primitives | `04553ee` (app), `41a2ab1` (exporter) | 26.6.2 (25G83) | 6.3.3 | `bash mac/scripts/make-references.sh` (`--rasters`, `JOBS=6`) | 2026-10-29 |
 | `primitives/probes/cg-raster.txt.gz` | none (stand-alone probe `primitives/probes/cg-raster.swift`, comments there) | 26.6.2 (25G83) | 6.3.3 | `cg-raster \| gzip -9 -n` | 2026-10-30 |
-| `hashes.json` | none: TS rasters, checked against the dumps by tolerance in `raster/primitives.test.ts` | any | none | `UPDATE_RASTER_HASHES=1 npx vitest run tests/hashes.update.test.ts` | 2026-10-30 |
+| `text/<id>.ttf.*` | `04553ee` (app), `c1a641b` (exporter), fonts in `web/public/fonts` | 26.6.2 (25G83) | 6.3.3 | `bash mac/scripts/refresh-text-rasters.sh` (WP-R3) | 2026-10-30 |
+| `hashes.json`, `text/mask-hashes.json` | none: TS rasters, checked against the dumps by tolerance in their own tests | any | none | see "Hashes" | 2026-10-30 |
 
-Identical hashes measured for `hashes.json` on 2026-10-30, macOS 26.6.2: Node 26, Chromium 156.0.8078.4, Firefox 157.0,
+Identical hashes measured for both files on 2026-10-30, macOS 26.6.2: Node 26, Chromium 156.0.8078.4, Firefox 157.0,
 WebKit 27.2 (Playwright 1.64.1).
 
 For reference, the CoreGraphics path semantics frozen in `path.ts` (WP-R0) were measured on macOS 26.6.2
@@ -143,13 +149,13 @@ Implemented in `web/tests/support/compare.ts` (`THRESHOLDS`). Pixel values in by
 | | `blockMeanDifference(ts, cg, w, h, 8)` | ≤ 8 |
 | Height field vs `<id>.field.f32` (× 2.4 mm) | `heightfieldStats(ts, cg, 2.4)` | rms ≤ 0.03 mm, p99.9 ≤ 0.15 mm, max ≤ 0.4 mm |
 | Blur + SAT fed with the Swift `.raw.pgm` | bitwise vs `.field.f32` (`float32BitDifference`) | identical (tolerance 0) |
-| Text mask vs `text-*.pgm` | width/height | ±1 px |
+| Text mask vs `text/*.ttf.pgm.gz` | width/height | ±1 px |
 | | aspect | ±1 % |
 | | `iou(ts, cg)` (nearest-neighbour resampled to the CG size) | ≥ 0.97 |
 | Primitives vs `loadPrimitive(name)` | `pixelAgreement(ts, cg, 2)` | ≥ 0.98 (`cubic-dash-8-5-w4` ≥ 0.97: dash drift on curves, see `dash.ts`) |
 | Moon primitive (checks the `addArc` normalisation) | ink at the moon circle's centre, which lies in the bite | 0 |
 | Worst-case scene (3072 × 1200, 700 primitives) | time in Node | < 0.6 s, hard only with `PERF=1`; otherwise a warning from 3 s |
-| Determinism | `hashes.json` in Node, Chromium, Firefox, WebKit | identical |
+| Determinism | `hashes.json`, `text/mask-hashes.json` in Node, Chromium, Firefox, WebKit | identical |
 
 The plan gives the primitives threshold without a tolerance; ±2 gray levels (the fine artwork tolerance) is
 assumed here.

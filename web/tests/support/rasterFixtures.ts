@@ -3,8 +3,8 @@
 //
 //   Pack, cases with `rasters` in references/manifest.json (guard with `it.skipIf(!hasRasterPack())`):
 //     rasterCaseIds('relief' | 'text'), loadReliefDump(id), loadTextDump(id)
-//   Tier A, committed:
-//     primitiveNames(), loadPrimitive(name), loadPrimitiveIndex()
+//   Committed, no pack:
+//     loadTextDump(id, 'ttf'), primitiveNames(), loadPrimitive(name), loadPrimitiveIndex()
 //   tests/fixtures, gunzipped when the name ends in .gz:
 //     fixtureBytes, fixtureText, fixturePGM, fixtureFloat32, probeSection, probeValue
 //
@@ -84,7 +84,7 @@ export interface TextDumpMeta {
   readonly text: string;
   readonly font: string;
   readonly fontPostScriptName: string;
-  /** `system:<name>` for the Apple fonts of refs-v1, `file:<ttf>` for the rerun after WP-R3 (references/PACK.md). */
+  /** `system:<name>` for the Apple fonts, `file:<ttf>` for the bundled ones (references/PACK.md). */
   readonly fontSource: string;
   readonly antialias: boolean;
   readonly width: number;
@@ -111,32 +111,52 @@ function verified(bytes: Uint8Array, record: ManifestRaster, what: string): Uint
   return bytes;
 }
 
-function readDumpFile(id: string, kind: string): Uint8Array {
+function dumpRecord(name: string, id: string): ManifestRaster {
   const c = getCase(id);
-  const record = isExported(c) ? c.rasters?.find((r) => r.kind === kind) : undefined;
-  if (record === undefined) throw new Error(`Case ${id} has no ${kind} raster in references/manifest.json`);
+  const record = isExported(c) ? c.rasters?.find((r) => r.name === name) : undefined;
+  if (record === undefined) throw new Error(`Case ${id} has no raster ${name} in references/manifest.json`);
+  return record;
+}
+
+function readDumpFile(id: string, suffix: string): Uint8Array {
+  const record = dumpRecord(`${id}${suffix}`, id);
   const path = `${rasterPackDir()}${record.name}`;
   if (!existsSync(path)) throw new Error(`${path} is missing: fetch the pack (harness/README.md) and guard the test with it.skipIf(!hasRasterPack())`);
   return verified(new Uint8Array(readFileSync(path)), record, record.name);
 }
 
-function dumpMeta<T>(id: string): T {
-  return JSON.parse(new TextDecoder().decode(readDumpFile(id, 'json'))) as T;
+function readCommittedTextDump(id: string, suffix: string): Uint8Array {
+  const record = dumpRecord(`${id}${suffix}`, id);
+  const relative = `text/${record.name}${record.kind === 'pgm' ? '.gz' : ''}`;
+  // The manifest also lists the tokyo dump, which only the local pack has.
+  if (!existsSync(new URL(`../fixtures/${relative}`, import.meta.url))) throw new Error(`tests/fixtures/${relative} is not committed`);
+  return verified(fixtureBytes(relative), record, record.name);
+}
+
+function dumpMeta<T>(bytes: Uint8Array): T {
+  return JSON.parse(new TextDecoder().decode(bytes)) as T;
 }
 
 /** Reads and checks one relief case from the pack; throws without the pack. About 11 MB, so load once per test file. */
 export function loadReliefDump(id: string): ReliefDump {
-  const meta = dumpMeta<ReliefDumpMeta>(id);
-  const raw = decodePGM(readDumpFile(id, 'pgm'));
+  const meta = dumpMeta<ReliefDumpMeta>(readDumpFile(id, '.json'));
+  const raw = decodePGM(readDumpFile(id, '.raw.pgm'));
   if (raw.width !== meta.columns || raw.height !== meta.rows) throw new Error(`${id}: bitmap ${raw.width}×${raw.height}, JSON says ${meta.columns}×${meta.rows}`);
   if (meta.crest.length !== meta.rows) throw new Error(`${id}: ${meta.crest.length} crest values for ${meta.rows} rows`);
-  return { meta, raw, field: decodeFloat32LE(readDumpFile(id, 'f32'), meta.columns * meta.rows) };
+  return { meta, raw, field: decodeFloat32LE(readDumpFile(id, '.field.f32'), meta.columns * meta.rows) };
 }
 
-/** Reads and checks one text case from the pack; throws without the pack. */
-export function loadTextDump(id: string): TextDump {
-  const meta = dumpMeta<TextDumpMeta>(id);
-  const mask = decodePGM(readDumpFile(id, 'pgm'));
+/**
+ * Reads and checks one text case. `'apple'` (default) is the app's own mask from the pack, the one the 3MF export used; it
+ * throws without the pack. `'ttf'` is CoreText drawing the bundled fonts, the comparison material for the TS rasterizer,
+ * committed under tests/fixtures/text; it needs no pack and has 20 cases (no `text-rounded-tokyo`).
+ */
+export function loadTextDump(id: string, fonts: 'apple' | 'ttf' = 'apple'): TextDump {
+  const read = fonts === 'apple' ? (suffix: string): Uint8Array => readDumpFile(id, suffix) : (suffix: string): Uint8Array => readCommittedTextDump(id, suffix);
+  const metaBytes = read(fonts === 'apple' ? '.json' : '.ttf.json');
+  const maskBytes = read(fonts === 'apple' ? '.pgm' : '.ttf.pgm');
+  const meta = dumpMeta<TextDumpMeta>(metaBytes);
+  const mask = decodePGM(maskBytes);
   if (mask.width !== meta.width || mask.height !== meta.height) throw new Error(`${id}: mask ${mask.width}×${mask.height}, JSON says ${meta.width}×${meta.height}`);
   return { meta, mask };
 }

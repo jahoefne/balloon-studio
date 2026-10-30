@@ -122,7 +122,7 @@ describe('pack resolution', () => {
   });
 
   it('refuses a case without dumps', () => {
-    expect(() => loadReliefDump('clip-default')).toThrow('Case clip-default has no json raster');
+    expect(() => loadReliefDump('clip-default')).toThrow('Case clip-default has no raster clip-default.json');
     expect(() => loadReliefDump('no-such-case')).toThrow('Unknown reference case');
   });
 });
@@ -136,6 +136,22 @@ describe('case ids', () => {
     expect(text).toHaveLength(21);
     expect(text.every((id) => id.startsWith('text-'))).toBe(true);
     expect(new Set(rasterCaseIds())).toEqual(new Set([...relief, ...text]));
+  });
+});
+
+describe('text dumps with the bundled fonts', () => {
+  for (const id of rasterCaseIds('text').filter((c) => c !== 'text-rounded-tokyo')) {
+    it(`${id}: the committed dump matches its JSON and the manifest`, () => {
+      const { meta, mask } = loadTextDump(id, 'ttf');
+      expect(meta.case).toBe(id);
+      expect(meta.fontSource).toMatch(/^file:/);
+      expect(mask.pixels.every((p) => p === 0 || p === 255)).toBe(true);
+      expect(mask.pixels.some((p) => p === 255)).toBe(true);
+    });
+  }
+
+  it('has none for the tokyo case', () => {
+    expect(() => loadTextDump('text-rounded-tokyo', 'ttf')).toThrow('tests/fixtures/text/text-rounded-tokyo.ttf.json is not committed');
   });
 });
 

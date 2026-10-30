@@ -1,0 +1,54 @@
+{
+  "antialias" : false,
+  "aspect" : 3.1848404255319149,
+  "bounds" : {
+    "height" : 73.4375,
+    "width" : 233.88671875,
+    "x" : 6.689453125,
+    "y" : -0.9765625
+  },
+  "case" : "text-sans-hello",
+  "font" : "Sans serif",
+  "fontPostScriptName" : "Arimo-Bold",
+  "fontSource" : "file:Arimo-Bold.ttf",
+  "glyphCount" : 5,
+  "height" : 256,
+  "rowOrder" : "row 0 is the bottom of the glyphs",
+  "runs" : [
+    {
+      "font" : "Arimo-Bold",
+      "glyphs" : [
+        43,
+        72,
+        79,
+        79,
+        82
+      ],
+      "positions" : [
+        [
+          0,
+          0
+        ],
+        [
+          72.216796875,
+          0
+        ],
+        [
+          127.83203125,
+          0
+        ],
+        [
+          155.615234375,
+          0
+        ],
+        [
+          183.3984375,
+          0
+        ]
+      ]
+    }
+  ],
+  "sha256" : "08260cfc13cc4bddea62960daef03eb887522daff79ee90eaec06ef3f7e1c082",
+  "text" : "Hello",
+  "width" : 816
+}

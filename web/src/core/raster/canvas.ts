@@ -22,9 +22,11 @@ import {
   radialDeviceLength,
   radialField,
 } from './gradient';
+import { dashPath } from './dash';
 import { type GrayImage, encodePGM } from './pgm';
 import { Path, type Rect } from './path';
 import { addPathEdges, EdgeTable, rasterizeRows, type FillRule } from './scanline';
+import { strokePath } from './stroke';
 
 /** CGLineCap. */
 export type LineCap = 'butt' | 'round' | 'square';
@@ -68,17 +70,7 @@ export interface StrokeGeometry {
   dashPath(path: Path, lengths: readonly number[], phase: number, tolerance: number): Path;
 }
 
-// TODO(WP-R1): a static import of strokePath and dashPath once stroke.ts and dash.ts are on main. Until then the glob
-// finds them if they are there, so the two work packages can merge in either order.
-const r1Modules = import.meta.glob(['./stroke.ts', './dash.ts'], { eager: true }) as Record<string, Partial<StrokeGeometry> | undefined>;
-const r1Stroke = r1Modules['./stroke.ts']?.strokePath;
-const r1Dash = r1Modules['./dash.ts']?.dashPath;
-let strokeGeometry: StrokeGeometry | null = r1Stroke !== undefined && r1Dash !== undefined ? { strokePath: r1Stroke, dashPath: r1Dash } : null;
-
-/** Whether GrayCanvas.strokePath can draw. */
-export function hasStrokeGeometry(): boolean {
-  return strokeGeometry !== null;
-}
+let strokeGeometry: StrokeGeometry = { strokePath, dashPath };
 
 /** Replaces the stroke geometry (tests). */
 export function installStrokeGeometry(geometry: StrokeGeometry): void {
@@ -246,7 +238,6 @@ export class GrayCanvas implements GrayImage {
    * CoreGraphics, then filled nonzero under the CTM.
    */
   strokePath(path: Path): void {
-    if (strokeGeometry === null) throw new Error('GrayCanvas.strokePath: WP-R1 stroke geometry is not on this branch');
     const scale = maxScale(this.state.ctm);
     const dash = this.state.dash;
     const source = dash === null ? path : strokeGeometry.dashPath(path, dash.lengths, dash.phase, DASH_FLATTEN_TOLERANCE / scale);

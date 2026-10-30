@@ -1,0 +1,107 @@
+/* STLImportReviewView: VStack(spacing:16), padding 24, width 860 (STLImportView.swift:79-103) */
+.open-review {
+  width: min(860px, calc(100vw - 32px));
+}
+.open-review[open] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+.open-review__title {
+  margin: 0;
+  font-family: var(--font-rounded);
+  font-size: var(--text-22);
+  font-weight: var(--weight-semibold);
+}
+.open-review__name {
+  margin: 0;
+  font-size: var(--text-13);
+  color: var(--ink-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.open-review__notes,
+.open-review__hint {
+  margin: 0;
+  font-size: var(--text-12);
+  line-height: 1.45;
+}
+.open-review__hint {
+  color: var(--ink-secondary);
+}
+.open-review__previews {
+  display: flex;
+  gap: var(--space-16);
+}
+.open-review__preview {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+.open-review__preview-title {
+  margin: 0;
+  font-size: var(--text-13);
+  font-weight: var(--weight-semibold);
+}
+.open-review__stage {
+  height: 300px;
+  border-radius: var(--radius-12);
+  overflow: hidden;
+}
+.open-review__size,
+.open-review__settings {
+  margin: 0;
+  font-size: var(--text-11);
+  color: var(--ink-secondary);
+}
+.open-review__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.open-review__settings {
+  margin-left: auto;
+}
+.open-review__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-8);
+}
+
+/* The drag overlay */
+.open-drop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background: var(--backdrop);
+  pointer-events: none;
+}
+.open-drop__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  max-width: 420px;
+  padding: var(--space-24);
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius-16);
+  background: var(--paper);
+  color: var(--accent);
+  text-align: center;
+}
+.open-drop__title {
+  margin: 0;
+  font-size: var(--text-13);
+  font-weight: var(--weight-semibold);
+  color: var(--ink);
+}
+.open-drop__message {
+  margin: 0;
+  font-size: var(--text-12);
+  color: var(--ink-secondary);
+}

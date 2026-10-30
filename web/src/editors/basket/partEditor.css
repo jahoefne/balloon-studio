@@ -1,0 +1,343 @@
+/* The layout BasketEditor.swift and RingEditor.swift share; sizes are the Swift values. */
+
+.part-editor {
+  display: flex;
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  font-family: var(--font-ui);
+  color: var(--ink);
+}
+.part-editor p {
+  margin: 0;
+}
+
+.part-editor__sidebar {
+  display: flex;
+  flex: 0 0 312px;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 312px;
+  min-height: 0;
+  border-right: 1px solid rgb(0 0 0 / 0.045);
+}
+.part-editor__scroll {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+  min-height: 0;
+  padding: var(--space-22);
+  overflow-y: auto;
+}
+.part-editor__footer {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-9);
+  padding: var(--space-20);
+  background: rgb(255 255 255 / 0.45);
+}
+.part-editor__status {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+.part-editor__preview {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+  min-width: 0;
+  padding: var(--space-22);
+  overflow-y: auto;
+}
+.part-editor__preview > * {
+  flex: 0 0 auto;
+}
+
+/* VStack(alignment:.leading, spacing:n) */
+.part-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-13);
+  min-width: 0;
+}
+.part-stack--8 {
+  gap: var(--space-8);
+}
+.part-stack--12 {
+  gap: var(--space-12);
+}
+.part-stack > .ui-button {
+  align-self: flex-start;
+}
+
+.part-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  min-width: 0;
+}
+.part-spacer {
+  flex: 1 1 auto;
+}
+
+/* .font(.system(size:11)).foregroundStyle(.secondary).lineSpacing(2) */
+.part-text {
+  font-size: var(--text-11);
+  line-height: 1.45;
+  color: var(--ink-secondary);
+}
+.part-caption {
+  font-size: var(--text-10);
+  line-height: 1.4;
+  color: var(--ink-secondary);
+}
+.part-caption--accent {
+  font-weight: var(--weight-medium);
+  color: var(--accent);
+}
+
+/* Plain buttons in accent, like "Match balloon". */
+.part-link {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--text-10);
+  cursor: pointer;
+}
+.part-link--medium {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--space-5);
+  font-size: var(--text-11);
+  font-weight: var(--weight-medium);
+}
+.part-link:focus-visible,
+.part-wash-button:focus-visible,
+.part-swatch:focus-visible,
+.part-card:focus-visible,
+.part-stage__button:focus-visible,
+.part-export:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.part-accent-button.ui-button {
+  color: var(--accent);
+  font-size: var(--text-11);
+}
+
+/* "Add matching balloon holes": accent.opacity(0.08), radius 8, 9 pt vertical padding */
+.part-wash-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  width: 100%;
+  margin: 0;
+  padding: var(--space-9) 0;
+  border: 0;
+  border-radius: var(--radius-8);
+  background: rgb(31 102 89 / 0.08);
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--text-11);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+/* The basket and ring sections divided like `Divider()` */
+.part-divider {
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: var(--divider);
+}
+
+/* Export button: height 42, radius 10 */
+.part-export {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 42px;
+  margin: 0;
+  padding: 0 var(--space-13);
+  border: 0;
+  border-radius: var(--radius-10);
+  background: var(--accent);
+  color: var(--surface);
+  font: inherit;
+  font-size: var(--text-13);
+  cursor: pointer;
+}
+.part-export:disabled {
+  cursor: default;
+}
+.part-export__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--weight-semibold);
+}
+.part-export__shortcut {
+  flex: 0 0 auto;
+  opacity: 0.65;
+}
+.part-export__spinner {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgb(255 255 255 / 0.35);
+  border-top-color: var(--surface);
+  border-radius: 50%;
+  animation: part-spin 0.8s linear infinite;
+}
+@keyframes part-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .part-export__spinner {
+    animation-duration: 2.4s;
+  }
+}
+.part-saved {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  min-width: 0;
+  font-size: var(--text-11);
+  color: var(--accent);
+}
+.part-saved__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Preview column */
+.part-preview-title {
+  margin: 0;
+  font-family: var(--font-rounded);
+  font-size: var(--text-18);
+  font-weight: var(--weight-semibold);
+}
+.part-preview-status {
+  flex: 0 0 auto;
+  font-size: var(--text-10);
+  font-weight: var(--weight-medium);
+  color: var(--accent);
+}
+
+.part-editor__preview > .part-stage {
+  flex: 1 1 0;
+}
+.part-stage {
+  position: relative;
+  border-radius: var(--radius-16);
+  overflow: hidden;
+  background: rgb(24 31 41);
+}
+.part-stage__canvas {
+  position: absolute;
+  inset: 0;
+}
+.part-stage__badge {
+  position: absolute;
+  top: var(--space-15);
+  left: var(--space-15);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-5);
+  max-width: calc(100% - 30px);
+  padding: var(--space-8) 11px;
+  border-radius: var(--radius-pill);
+  background: var(--stage-badge);
+  color: var(--surface);
+  font-size: var(--text-11);
+  font-weight: var(--weight-medium);
+  pointer-events: none;
+}
+.part-stage__bar {
+  position: absolute;
+  right: var(--space-15);
+  bottom: var(--space-15);
+  left: var(--space-15);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  pointer-events: none;
+}
+.part-stage__hint {
+  font-size: var(--text-10);
+  color: var(--stage-hint);
+  white-space: pre;
+}
+.part-stage__spacer {
+  flex: 1 1 auto;
+}
+.part-stage__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  height: 29px;
+  margin: 0;
+  padding: 0 var(--space-9);
+  border: 0;
+  border-radius: var(--radius-7);
+  background: var(--stage-control);
+  color: var(--surface);
+  font: inherit;
+  font-size: var(--text-10);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  pointer-events: auto;
+}
+.part-stage__button--icon {
+  width: 29px;
+  padding: 0;
+}
+
+/* Toggles row: font 11 */
+.part-toggles {
+  display: flex;
+  align-items: center;
+  gap: var(--space-9);
+  min-height: 24px;
+  font-size: var(--text-11);
+}
+.part-toggles__hint {
+  color: var(--ink-secondary);
+}
+
+/* Metrics of these two tabs: tracking 0.7, leading padding 16, unit 10 (basket value 21, ring value 20) */
+.part-metrics .ui-metric {
+  padding-left: var(--space-16);
+}
+.part-metrics .ui-metric__title {
+  letter-spacing: 0.7px;
+}
+.part-metrics .ui-metric__number {
+  font-size: var(--text-21);
+}
+.part-metrics--ring .ui-metric__number {
+  font-size: 20px;
+}
+.part-metrics .ui-metric__unit {
+  font-size: var(--text-10);
+}

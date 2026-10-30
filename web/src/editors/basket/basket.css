@@ -1,0 +1,66 @@
+/* Style cards: padding 11, radius 9, icon 20 in a 28 pt frame (BasketEditor.swift:115-127) */
+.part-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  width: 100%;
+  margin: 0;
+  padding: 11px;
+  border: 0;
+  border-radius: var(--radius-9);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.part-card[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--surface);
+}
+.part-card__icon {
+  flex: 0 0 28px;
+  display: flex;
+  justify-content: center;
+}
+.part-card__text {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.part-card__title {
+  font-size: var(--text-12);
+  font-weight: var(--weight-semibold);
+}
+.part-card__subtitle {
+  font-size: var(--text-9);
+  color: var(--ink-secondary);
+}
+.part-card[aria-pressed='true'] .part-card__subtitle {
+  color: rgb(255 255 255 / 0.8);
+}
+.part-card__check {
+  stroke-width: 3;
+}
+
+/* Swatches: 18 pt circle, 3 pt padding, 1.5 pt accent ring when selected */
+.part-swatch {
+  display: inline-flex;
+  margin: 0;
+  padding: var(--space-3);
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  box-shadow: inset 0 0 0 1.5px transparent;
+  cursor: pointer;
+}
+.part-swatch[aria-pressed='true'] {
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+.part-swatch__dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+}

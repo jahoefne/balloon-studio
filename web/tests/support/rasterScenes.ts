@@ -1,14 +1,20 @@
-// The rasters behind tests/fixtures/hashes.json, keyed like that file, for tests/hashes.test.ts. No Node APIs: the same
-// module runs in Node and in Chromium, Firefox and WebKit (npm run test:browser).
+// The rasters behind tests/fixtures/hashes.json and tests/fixtures/text/mask-hashes.json, keyed like those files, for
+// tests/hashes.test.ts. No Node APIs: the same module runs in Node and in Chromium, Firefox and WebKit
+// (npm run test:browser).
 //
-// The primitive/* and scene/* drawings are those of src/core/raster/primitives.test.ts, which is not importable here
-// (it needs node:fs and defines tests). Both compare with hashes.json, so a change to one copy alone fails.
+// The primitive/* and scene/* drawings are those of src/core/raster/primitives.test.ts, the artwork/* sizes those of
+// tests/nightFlightArtwork.test.ts and the masks those of tests/textReference.test.ts, none of which is importable here
+// (they need node:fs and define tests). Each compares with the same hash file, so a change to one copy alone fails.
 //
 // To add a raster: a line in RASTER_SCENES, then tests/fixtures/README.md, "Hashes".
+import { nightFlightBytes } from '../../src/core/artwork/nightFlightArtwork';
+import { BALLOON_TEXT_FONTS, type BalloonTextFont } from '../../src/core/patterns/raster';
 import { ellipsePath, GrayCanvas, rectPath } from '../../src/core/raster/canvas';
 import { GrayGradient } from '../../src/core/raster/gradient';
 import { Path } from '../../src/core/raster/path';
 import { cos, PI, sin } from '../../src/core/swift/dmath';
+import { loadFontSet, type FontSet } from '../../src/core/text/fontSet';
+import { balloonTextMask } from '../../src/core/text/textMask';
 
 const BOTH = { drawsBeforeStartLocation: true, drawsAfterEndLocation: true } as const;
 const POLYLINE = [[8, 12], [30, 52], [40, 20], [57, 30]] as const;
@@ -247,4 +253,42 @@ function worstCaseScene(c: GrayCanvas): number {
 export const RASTER_SCENES: Readonly<Record<string, () => Uint8Array>> = {
   ...Object.fromEntries(PRIMITIVES.map(([name, body]) => [`primitive/${name}`, () => draw(body).pixels])),
   'scene/worst-case-3072x1200': () => draw(worstCaseScene, 3072, 1200).pixels,
+  'artwork/night-flight-classic': () => nightFlightBytes(531.557476987393, 152.50000000000003, 180, 2658, 848),
+  'artwork/night-flight-round': () => nightFlightBytes(561.088447931137, 130.96, 190, 2806, 728),
+  'artwork/night-flight-tall': () => nightFlightBytes(472.4955350999049, 168.63, 160, 2363, 937),
 };
+
+// The fonts as bundled bytes: the browser run has no file system, and these URLs are data: URLs in every engine.
+const FONT_URLS = import.meta.glob<string>('../../public/fonts/*.ttf', { query: '?inline', import: 'default', eager: true });
+
+async function fontBytes(file: string): Promise<Uint8Array> {
+  const url = FONT_URLS[`../../public/fonts/${file}`];
+  if (url === undefined) throw new Error(`no bundled font ${file}`);
+  return Uint8Array.from(atob(url.slice(url.indexOf(',') + 1)), (c) => c.charCodeAt(0));
+}
+
+let fonts: Promise<FontSet> | null = null;
+
+const FONT_STEMS: Readonly<Record<BalloonTextFont, string>> = {
+  Rounded: 'rounded',
+  'Sans serif': 'sans',
+  Serif: 'serif',
+  Handwritten: 'handwritten',
+  Monospaced: 'mono',
+};
+const TEXTS: Readonly<Record<string, string>> = { f: 'F', hello: 'Hello', o: 'O', 'zoe-lea': 'Zoë & Léa <3' };
+
+/** The masks of WP-R3, keyed by case id like mask-hashes.json. The fonts load once, on the first call. */
+export const TEXT_MASK_SCENES: Readonly<Record<string, () => Promise<Uint8Array>>> = Object.fromEntries(
+  BALLOON_TEXT_FONTS.flatMap((font) =>
+    Object.entries(TEXTS).map(([stem, text]) => [
+      `text-${FONT_STEMS[font]}-${stem}`,
+      async () => {
+        fonts ??= loadFontSet(fontBytes);
+        const mask = balloonTextMask(text, font, await fonts);
+        if (mask === null) throw new Error(`no mask for ${text} in ${font}`);
+        return mask.pixels;
+      },
+    ]),
+  ),
+);

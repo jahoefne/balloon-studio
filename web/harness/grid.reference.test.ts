@@ -10,7 +10,8 @@ import { compareCase, compareCaseError, type CaseResult } from './compare';
 import { exportedFile, prepareCase } from './exportCase';
 import { describeResult } from './index';
 import { allCases, isExported, loadManifest, type ReferenceCase } from './manifest';
-import { formatTable, summarize, toRow, writeReport } from './report';
+import { formatTable, skippedRow, summarize, toRow, writeReport } from './report';
+import { skippedBy } from './skipList';
 
 /** What depends on the rasterizer: plan §1 exempts it from the byte criterion, WP-R checks it by tolerances. */
 const RASTER_ENTRIES = ['3D/3dmodel.model', 'Metadata/balloon-studio.txt'];
@@ -55,15 +56,20 @@ describe.skipIf(isReal)('grid structure (stub core)', () => {
 
 describe.skipIf(!isReal)('grid against the Swift references', () => {
   const results: CaseResult[] = [];
+  const compared = cases.filter((c) => skippedBy(c) === null);
 
   afterAll(() => {
-    const rows = results.map(toRow);
+    const skipped = cases.flatMap((c) => {
+      const by = skippedBy(c);
+      return by === null ? [] : [skippedRow(c.id, by, c.durationMs)];
+    });
+    const rows = [...results.map(toRow), ...skipped];
     console.log(formatTable(rows));
     console.log(JSON.stringify(summarize(rows)));
     writeReport(rows, core.implementation);
   });
 
-  it.each(cases.map((c) => [c.id, c] as const))('%s', (id, c) => {
+  it.each(compared.map((c) => [c.id, c] as const))('%s', (id, c) => {
     const started = performance.now();
     let result: CaseResult;
     try {

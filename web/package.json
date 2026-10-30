@@ -28,7 +28,8 @@
     "test:reference": "vitest run --config vitest.reference.config.ts",
     "size": "node scripts/check-bundle-size.mjs",
     "lint": "eslint src/core",
-    "test:browser": "vitest run --config vitest.browser.config.ts"
+    "test:browser": "vitest run --config vitest.browser.config.ts",
+    "bench": "vite build --config bench/vite.config.ts --logLevel warn && node node_modules/.bench/budgets.js"
   },
   "dependencies": {
     "@noble/hashes": "^2.4.0",
@@ -44,6 +45,7 @@
     "@stdlib/math-base-special-sin": "^0.3.1",
     "@stdlib/math-base-special-tan": "^0.3.1",
     "lucide-react": "1.57.0",
+    "opentype.js": "^2.0.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "three": "0.186.1",

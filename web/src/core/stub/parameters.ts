@@ -18,5 +18,6 @@ export const core: CoreParameterApi = {
   cloud: cloudParameters,
   figure: figureParameters,
   clip: clipParameters,
+  stl: { maximumBytes: 150_000_000, maximumTriangles: 2_000_000 },
   lampSettings,
 };

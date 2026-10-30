@@ -13,5 +13,8 @@
   "primitive/stroked-copy-fill": "d8baeb4acd19cb00e38049ab6f8700bf26213fccb6bbe6edd0107ea64ad9297c",
   "primitive/dashed-copy-stroke": "801724940404774a52b2ad2313d4e067f5225ee8d692d91b3046ea7c93d303e4",
   "primitive/overlap-twice-circle": "2ce37f37ffa36e8ed8a78c68423c5a6ccd9b1c2a313dbd169598cfe5b1fa500a",
-  "scene/worst-case-3072x1200": "551210609bff885a05c865cd53a901598a14fcc9bd476902dd27180e556a35da"
+  "scene/worst-case-3072x1200": "551210609bff885a05c865cd53a901598a14fcc9bd476902dd27180e556a35da",
+  "artwork/night-flight-classic": "c581afbaaf7ad41d6cfdac7fb67bf7765e1402483c007be24c4b6a177ab7f8b5",
+  "artwork/night-flight-round": "5fa1f704b57bae0269ed6f7e7d87b16b01f149cfd00752b68b6b8222dc5dbbdf",
+  "artwork/night-flight-tall": "3c55074497e021e3992bfe6ad44fd251366a8876a4d0fe9e9de5fdeac384bd40"
 }

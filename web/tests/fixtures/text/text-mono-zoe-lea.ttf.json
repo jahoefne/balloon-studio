@@ -1,0 +1,89 @@
+{
+  "antialias" : false,
+  "aspect" : 8.7270545890821829,
+  "bounds" : {
+    "height" : 81.396484375,
+    "width" : 710.3515625,
+    "x" : 5.615234375,
+    "y" : -1.416015625
+  },
+  "case" : "text-mono-zoe-lea",
+  "font" : "Monospaced",
+  "fontPostScriptName" : "DejaVuSansMono-Bold",
+  "fontSource" : "file:DejaVuSansMono-Bold.ttf",
+  "glyphCount" : 12,
+  "height" : 256,
+  "rowOrder" : "row 0 is the bottom of the glyphs",
+  "runs" : [
+    {
+      "font" : "DejaVuSansMono-Bold",
+      "glyphs" : [
+        61,
+        82,
+        173,
+        3,
+        9,
+        3,
+        47,
+        171,
+        68,
+        3,
+        31,
+        22
+      ],
+      "positions" : [
+        [
+          0,
+          0
+        ],
+        [
+          60.205078125,
+          0
+        ],
+        [
+          120.41015625,
+          0
+        ],
+        [
+          180.615234375,
+          0
+        ],
+        [
+          240.8203125,
+          0
+        ],
+        [
+          301.025390625,
+          0
+        ],
+        [
+          361.23046875,
+          0
+        ],
+        [
+          421.435546875,
+          0
+        ],
+        [
+          481.640625,
+          0
+        ],
+        [
+          541.845703125,
+          0
+        ],
+        [
+          602.05078125,
+          0
+        ],
+        [
+          662.255859375,
+          0
+        ]
+      ]
+    }
+  ],
+  "sha256" : "07a84d8fc3cbc1dfa0618cf54ee1c8512be70ce4d4c9b8818327c42afbfb56e7",
+  "text" : "Zoë & Léa <3",
+  "width" : 2235
+}
