@@ -1,11 +1,8 @@
 // Test support for the lamp cluster (WP-K4). Test-only: uses node: modules.
 import { readFileSync } from 'node:fs';
-import { CableClamp, CableClampGenerator } from '../../src/core/lamp/cableClamp';
-import { CableOutlet, CableSealGenerator } from '../../src/core/lamp/cableSeal';
 import { BalloonMesh } from '../../src/core/geometry/mesh';
 import { cloudParameters, cloudParametersCodec, encodeCloudParameters } from '../../src/core/lamp/cloudGeometry';
 import { LampSurfaceGenerator } from '../../src/core/lamp/lampSurface';
-import { NailInsert, NailInsertGenerator } from '../../src/core/lamp/nailInsert';
 import type { CloudParameters } from '../../src/core/types';
 
 /** Swift `==` on CloudParameters: every field, with Double equality. */
@@ -78,12 +75,14 @@ const stillFrozen = (probe: () => unknown): boolean => {
 
 /** Which of the frozen signatures (WP-K4a part 1) still throw. A test of a kit skips until they are filled. */
 export const waitsFor = {
-  k4b:
-    stillFrozen(() => new CableOutlet(cloudParameters())) ||
-    stillFrozen(() => CableClamp.create(cloudParameters())) ||
-    stillFrozen(() => CableClampGenerator.bar(cloudParameters())) ||
-    stillFrozen(() => CableClampGenerator.anvil(cloudParameters())) ||
-    stillFrozen(() => CableSealGenerator.generate(cloudParameters(), 'preview')) ||
-    stillFrozen(() => NailInsertGenerator.generate(NailInsert.create(cloudParameters())!)),
   k4c: stillFrozen(() => LampSurfaceGenerator.sculpt(new BalloonMesh([], [], 0), cloudParameters(), 'preview')),
+};
+
+/**
+ * The sculpted fronts where libm noise tips a tie in `refine`, so they are not Swift's triangles
+ * (lampSurface.reference.test.ts). Not the rule's `equivalent`: a few vertices differ.
+ */
+export const LIBM_FLIPPED_FRONTS: Readonly<Record<string, string>> = {
+  'cloud-sculpted-classic': 'B-cloud-front-white-PLA.stl',
+  'cloud-sculpted-billow-min': 'B-cloud-front-white-PLA.stl',
 };
