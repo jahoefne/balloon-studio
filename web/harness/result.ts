@@ -14,6 +14,8 @@ export interface DiffResult {
   ulpCount: number;
   /** Stored normals that differ from the reference but stay within tolerance. */
   normalDiffs: number;
+  /** Differing vertex coordinates that are both within `NEAR_ZERO_MM` of zero (libm noise on a value that should be 0). Not in `ulpCount` or `maxUlp`. */
+  nearZeroCorners: number;
   /** Readable details, most important first. */
   notes: string[];
   /** JSON only: the parsed values agree (`writer`) or they do not (`port`). */
@@ -29,15 +31,15 @@ export interface EntryDiff extends DiffResult {
 const NOTE_LIMIT = 8;
 
 export function identical(): DiffResult {
-  return { status: 'identical', tags: [], maxUlp: 0, ulpCount: 0, normalDiffs: 0, notes: [] };
+  return { status: 'identical', tags: [], maxUlp: 0, ulpCount: 0, normalDiffs: 0, nearZeroCorners: 0, notes: [] };
 }
 
 export function mismatch(tag: string, ...notes: string[]): DiffResult {
-  return { status: 'mismatch', tags: [tag], maxUlp: 0, ulpCount: 0, normalDiffs: 0, notes };
+  return { status: 'mismatch', tags: [tag], maxUlp: 0, ulpCount: 0, normalDiffs: 0, nearZeroCorners: 0, notes };
 }
 
 export function needsPack(...notes: string[]): DiffResult {
-  return { status: 'unverified', tags: ['needs-pack'], maxUlp: 0, ulpCount: 0, normalDiffs: 0, notes };
+  return { status: 'unverified', tags: ['needs-pack'], maxUlp: 0, ulpCount: 0, normalDiffs: 0, nearZeroCorners: 0, notes };
 }
 
 /** `identical`, `ulp`, `mismatch (topology)`, `unverified-needs-pack`. */
@@ -69,6 +71,7 @@ export function rollUp(entries: EntryDiff[], own: DiffResult = identical()): Dif
     maxUlp: differing.reduce((max, entry) => (entry.maxUlp > max ? entry.maxUlp : max), own.maxUlp),
     ulpCount: differing.reduce((sum, entry) => sum + entry.ulpCount, own.ulpCount),
     normalDiffs: differing.reduce((sum, entry) => sum + entry.normalDiffs, own.normalDiffs),
+    nearZeroCorners: differing.reduce((sum, entry) => sum + entry.nearZeroCorners, own.nearZeroCorners),
     notes: notes.slice(0, NOTE_LIMIT),
     entries: differing,
   };

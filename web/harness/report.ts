@@ -15,6 +15,7 @@ export interface ReportRow {
   maxUlp: number;
   ulpCount: number;
   normalDiffs: number;
+  nearZeroCorners: number;
   tsMs: number | null;
   swiftMs: number;
   note: string;
@@ -28,6 +29,7 @@ export function toRow(result: CaseResult): ReportRow {
     maxUlp: result.maxUlp,
     ulpCount: result.ulpCount,
     normalDiffs: result.normalDiffs,
+    nearZeroCorners: result.nearZeroCorners,
     tsMs: result.tsMs ?? null,
     swiftMs: result.swiftMs,
     note: (result.notes[0] ?? '').split('\n')[0] as string,

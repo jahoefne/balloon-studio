@@ -54,7 +54,7 @@ describe.skipIf(!hasPack())('reference pack', () => {
     const c = exported('balloon-hanger-small');
     const body = reference(c);
     expect(compareCase(c.id, body).status).toBe('identical');
-    const moved = bumpVertexEverywhere(body, 100, 1, 2);
+    const moved = bumpVertexEverywhere(body, 100, 1, 0); // x, not z: this z is 0, which the near-zero rule takes
     const result = compareCase(c.id, resealBstl(moved.bytes));
     expect(statusLabel(result)).toBe('ulp');
     expect(result.ulpCount).toBe(moved.occurrences);

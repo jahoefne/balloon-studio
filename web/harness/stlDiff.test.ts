@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { storedZipArchive } from '../src/core/io/storedZip';
 import { compareOutput } from './compare';
 import { TETRA_AND_LONE, at, bump, bumpVertexEverywhere, copy, flipSign, normalAt, resealBstl, setFloat, stl, swapTriangles, withBstlHeader, type Tri } from './fixtures';
+import { toRow } from './report';
 import { statusLabel } from './result';
 import { stlFactsProblem } from './stlDiff';
 
@@ -69,14 +71,56 @@ describe('STL coordinates and topology', () => {
     expect(result.ulpCount).toBe(1);
   });
 
-  it('a sign change next to zero is not a neighbour', () => {
-    // +0 → smallest negative denormal is one step on the number line but crosses the sign.
-    const flipped = setFloat(base, at(LONE, 0, 0), -1e-45);
-    expect(statusLabel(compare(flipped))).toBe('mismatch (ulp)');
+  it.each([1e-14, -1e-14, 1e-45, -1e-45, 9e-10, -9e-10])('0 → %d is near zero: `ulp`, counted apart', (value) => {
+    const result = compare(setFloat(base, at(LONE, 0, 0), value));
+    expect(statusLabel(result)).toBe('ulp');
+    expect(result.nearZeroCorners).toBe(1);
+    expect(result.ulpCount).toBe(0);
+    expect(result.maxUlp).toBe(0);
+    expect(result.notes[0]).toContain('1 coordinates differ below 1e-9 mm');
   });
 
-  it('+0 → smallest positive denormal is 1 ULP', () => {
-    expect(compare(setFloat(base, at(LONE, 0, 0), 1e-45)).status).toBe('ulp');
+  it('near zero against near zero of the other sign, either way round', () => {
+    const plus = setFloat(base, at(LONE, 0, 0), 1e-14);
+    const minus = setFloat(base, at(LONE, 0, 0), -1e-14);
+    expect(compare(minus, plus).nearZeroCorners).toBe(1);
+    expect(compare(base, plus).nearZeroCorners).toBe(1);
+    expect(compare(flipSign(base, at(LONE, 0, 0)), plus).status).toBe('ulp');
+  });
+
+  it.each([
+    ['1e-8 vs 0', 1e-8, 0],
+    ['0 vs 1e-8', 0, 1e-8],
+    ['1.1e-9 vs 0, just above the limit', 1.1e-9, 0],
+    ['1e-8 vs 1e-14', 1e-8, 1e-14],
+    ['-1e-8 vs 1e-8', -1e-8, 1e-8],
+  ])('outside the limit stays strict: %s', (_, actual, expected) => {
+    const result = compare(setFloat(base, at(LONE, 0, 0), actual), setFloat(base, at(LONE, 0, 0), expected));
+    expect(statusLabel(result)).toBe('mismatch (ulp)');
+    expect(result.nearZeroCorners).toBe(0);
+  });
+
+  it('1 ULP above the limit is still a plain ULP', () => {
+    const above = setFloat(base, at(LONE, 0, 0), 2e-9);
+    const result = compare(bump(above, at(LONE, 0, 0)), above);
+    expect(result.status).toBe('ulp');
+    expect(result.ulpCount).toBe(1);
+    expect(result.nearZeroCorners).toBe(0);
+  });
+
+  it('near zero fails `strict` and rolls up from a kit', () => {
+    const noisy = setFloat(base, at(LONE, 0, 0), 1e-14);
+    const archive = (part: Uint8Array) => storedZipArchive([['A-part.stl', part]]);
+    const result = compareOutput(archive(base), archive(noisy), 'zip');
+    expect(statusLabel(result)).toBe('ulp');
+    expect(result.nearZeroCorners).toBe(1);
+    expect(toRow({ ...result, id: 'kit', swiftMs: 0 }).nearZeroCorners).toBe(1);
+  });
+
+  it('a near-zero coordinate moved in one occurrence of a shared vertex still splits it', () => {
+    const result = compare(setFloat(base, at(0, 0, 0), 1e-14));
+    expect(result.tags).toEqual(['topology']);
+    expect(result.nearZeroCorners).toBe(1);
   });
 
   it('a signed zero in one shared occurrence reports both causes', () => {
@@ -173,6 +217,8 @@ describe('manifest facts', () => {
     expect(stlFactsProblem({ triangles: 6 }, base)?.tags).toEqual(['triangle count']);
     expect(stlFactsProblem({ bbox: { ...bbox, max: [10, 21, 31] } }, base)?.tags).toEqual(['bbox']);
     expect(stlFactsProblem({}, base.subarray(0, 90))?.tags).toEqual(['stl format']);
+    expect(stlFactsProblem({ bbox: { ...bbox, min: [-1e-14, 0, 0] } }, base)).toBeNull();
+    expect(stlFactsProblem({ bbox: { ...bbox, min: [-1e-8, 0, 0] } }, base)?.tags).toEqual(['bbox']);
   });
 
   it('checks the signed part and the self-consistency of a BSTL header', () => {

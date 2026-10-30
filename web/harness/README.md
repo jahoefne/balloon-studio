@@ -65,13 +65,14 @@ export REFS_PACK_DIR=/path/to/checkout/references/pack/refs-v1
 
 An archive takes the worst status of its entries: `mismatch` over `unverified` over `ulp`. JSON, text and SVG have no `ulp` state, so they are strict by construction; `strict: true` extends that to everything else.
 
-`maxUlp` and `ulpCount` count vertex coordinates (Float32 steps in an STL, Float64 steps in a model); `normalDiffs` counts stored normals that differ within tolerance.
+`maxUlp` and `ulpCount` count vertex coordinates (Float32 steps in an STL, Float64 steps in a model); `normalDiffs` counts stored normals that differ within tolerance; `nearZeroCorners` counts STL coordinates under the near-zero rule below.
 
 ### Where this differs from the plan
 
 - **Normals.** The plan asks for `normalFrom(vertices) === normal` bit for bit. The writer computes a normal from the Float64 vertices and then rounds both to Float32, so that cannot hold on a parsed file: it is true for 42 % of the 14.2 million triangles in `refs-v1`, and the worst deviation is `1 - dot < 1e-5`. The check on both files is `dot ≥ 1 - 1e-4` (`WRITER_NORMAL_DOT`). TS against Swift stays `dot ≥ 1 - 1e-6` as planned. A triangle with a smallest angle under 1° only gets a note with that angle when it fails either check.
 - **Near zero in a model.** The limit is `1e-12 × max(|a|, |b|, 1)`, so 1e-14 against 2e-14 mm (cancellation) passes.
 - **Signed zero in a model** is a mismatch, as in an STL.
+- **Near zero in an STL.** If both values of a coordinate are below 1e-9 mm in size (`NEAR_ZERO_MM`), they count as equal whatever their sign and ULP distance: a coordinate that should be 0 comes out as ±1e-14 mm under one libm and 0 under the other. The file is `ulp`, the coordinate goes into `nearZeroCorners` and not into `ulpCount` or `maxUlp`. Everything else stays strict, including two exact zeros of opposite sign and the welded topology.
 
 ## The grid
 
