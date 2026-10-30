@@ -8,16 +8,10 @@
 // across all 14.2 million triangles of refs-v1 that holds for 42 %. The worst deviation was
 // 1 - dot < 1e-5, hence WRITER_NORMAL_DOT.
 import { sha256Hex } from './refs';
-import { IntKey3Map } from '../src/core/geometry/weld';
 import type { StlFacts } from './manifest';
 import { NoteList, mismatch, type DiffResult } from './result';
+import { NEAR_ZERO_MM, classifyCoordinate, ordinal, solidEquivalence, weld } from './solidDiff';
 
-/**
- * Both values of a coordinate below this (mm) count as equal: a value that should be exactly 0
- * comes out as ±1e-14 with one libm and 0 with the other, which is no distance in Float32 steps.
- * Two exact zeros of opposite sign stay an error; they do not come from rounding noise.
- */
-export const NEAR_ZERO_MM = 1e-9;
 /** Stored normal against the normal of the stored vertices (writer check, both files). */
 export const WRITER_NORMAL_DOT = 1 - 1e-4;
 /** TS normal against Swift normal. */
@@ -44,38 +38,6 @@ function formatProblem(bytes: Uint8Array): string | null {
 }
 
 const SIGN_BIT = 0x80000000;
-
-/** Float32 bit pattern as a position on the number line: neighbours differ by 1, both zeros are 0. */
-function ordinal(bits: number): number {
-  return bits >= SIGN_BIT ? -(bits - SIGN_BIT) : bits;
-}
-
-function isNonFinite(bits: number): boolean {
-  return (bits & 0x7f800000) === 0x7f800000;
-}
-
-/** Exact-bit weld in first-seen order; +0 and -0 stay distinct, as in `parseSTL`. */
-function weldedIndices(data: DataView, triangles: number): Uint32Array {
-  const lookup = new IntKey3Map(triangles);
-  const indices = new Uint32Array(triangles * 3);
-  let next = 0;
-  for (let i = 0; i < triangles; i++) {
-    const start = HEADER_BYTES + 4 + RECORD_BYTES * i + 12;
-    for (let j = 0; j < 3; j++) {
-      const o = start + j * 12;
-      const x = data.getUint32(o, true);
-      const y = data.getUint32(o + 4, true);
-      const z = data.getUint32(o + 8, true);
-      let index = lookup.get(x, y, z);
-      if (index < 0) {
-        index = next++;
-        lookup.set(x, y, z, index);
-      }
-      indices[i * 3 + j] = index;
-    }
-  }
-  return indices;
-}
 
 /** dot(normal of the stored vertices, stored normal); null for a triangle without area. */
 function writerDot(data: DataView, o: number): number | null {
@@ -160,7 +122,8 @@ function headerProblems(expected: Uint8Array, actual: Uint8Array, bodyDiffers: b
   }
 }
 
-export function diffStl(expected: Uint8Array, actual: Uint8Array): DiffResult {
+/** `allowEquivalent`: this STL is on the allowlist, so the same solid in other triangles may pass as `equivalent`. */
+export function diffStl(expected: Uint8Array, actual: Uint8Array, allowEquivalent = false): DiffResult {
   const referenceProblem = formatProblem(expected);
   if (referenceProblem !== null) throw new Error(`The reference is not a binary STL: ${referenceProblem}`);
   const actualProblem = formatProblem(actual);
@@ -196,20 +159,22 @@ export function diffStl(expected: Uint8Array, actual: Uint8Array): DiffResult {
         if (distance > maxNormalUlp) maxNormalUlp = distance;
         continue;
       }
-      const where = `triangle ${i} vertex ${Math.floor((k - 12) / 12)} ${AXES[((k - 12) / 4) % 3]}: ${a.getFloat32(o + k, true)} vs ${e.getFloat32(o + k, true)}`;
-      if (distance === 0) {
-        signedZeros++;
-        notes.add(`${where}: signed zero`);
-      } else if (Math.abs(a.getFloat32(o + k, true)) < NEAR_ZERO_MM && Math.abs(e.getFloat32(o + k, true)) < NEAR_ZERO_MM) {
+      const kind = classifyCoordinate(eb, ab, e.getFloat32(o + k, true), a.getFloat32(o + k, true));
+      if (kind === 'near zero') {
         nearZeroCorners++;
-      } else if (distance === 1 && !isNonFinite(eb) && !isNonFinite(ab)) {
-        // Neighbours of opposite sign exist only around 0, which the branch above takes.
+      } else if (kind === 'ulp') {
         ulpCount++;
         if (maxUlp < 1) maxUlp = 1;
       } else {
-        far++;
-        if (distance > maxUlp) maxUlp = distance;
-        notes.add(`${where}: ${distance} ULP`);
+        const where = `triangle ${i} vertex ${Math.floor((k - 12) / 12)} ${AXES[((k - 12) / 4) % 3]}: ${a.getFloat32(o + k, true)} vs ${e.getFloat32(o + k, true)}`;
+        if (kind === 'signed zero') {
+          signedZeros++;
+          notes.add(`${where}: signed zero`);
+        } else {
+          far++;
+          if (distance > maxUlp) maxUlp = distance;
+          notes.add(`${where}: ${distance} ULP`);
+        }
       }
     }
     if (e.getUint16(o + 48, true) !== a.getUint16(o + 48, true)) {
@@ -236,8 +201,8 @@ export function diffStl(expected: Uint8Array, actual: Uint8Array): DiffResult {
 
   const tags: string[] = [];
   const topologyEqual = (() => {
-    const eIndices = weldedIndices(e, triangles);
-    const aIndices = weldedIndices(a, triangles);
+    const eIndices = weld(e, triangles).indices;
+    const aIndices = weld(a, triangles).indices;
     for (let i = 0; i < eIndices.length; i++) {
       if (eIndices[i] !== aIndices[i]) {
         notes.add(`Welded topology differs at triangle ${Math.floor(i / 3)} corner ${i % 3}: vertex ${aIndices[i]} vs ${eIndices[i]}`);
@@ -274,6 +239,30 @@ export function diffStl(expected: Uint8Array, actual: Uint8Array): DiffResult {
   const bodyDiffers = !equalRange(expected, actual, HEADER_BYTES, expected.length);
   headerProblems(expected, actual, bodyDiffers, tags, notes);
 
+  // Topology is the only complaint: rule (1) of plan §14 holds, so check the rest of the rule.
+  let solidNote: string | null = null;
+  if (tags.length === 1 && tags[0] === 'topology') {
+    const solid = solidEquivalence(e, a, triangles);
+    if (solid.same) {
+      const description = `${solid.differingTriangles} triangles differ, same solid (volume ${solid.volumes[0]} vs ${solid.volumes[1]}, area ${solid.areas[0]} vs ${solid.areas[1]})`;
+      if (allowEquivalent) {
+        return {
+          status: 'equivalent',
+          tags: [],
+          maxUlp: solid.ulpCount > 0 ? 1 : 0,
+          ulpCount: solid.ulpCount,
+          normalDiffs: 0,
+          nearZeroCorners: solid.nearZeroCorners,
+          differingTriangles: solid.differingTriangles,
+          notes: [description],
+        };
+      }
+      solidNote = `${description}; not on the allowlist (harness/equivalentCases.ts)`;
+    } else {
+      solidNote = `Not the same solid: ${solid.problem}`;
+    }
+  }
+
   const summary: string[] = [];
   if (ulpCount > 0) summary.push(`${ulpCount} coordinates 1 ULP apart`);
   if (nearZeroCorners > 0) summary.push(`${nearZeroCorners} coordinates differ below ${NEAR_ZERO_MM} mm`);
@@ -286,7 +275,8 @@ export function diffStl(expected: Uint8Array, actual: Uint8Array): DiffResult {
     ulpCount,
     normalDiffs,
     nearZeroCorners,
-    notes: tags.length > 0 ? notes.all() : [...(summary.length > 0 ? [summary.join(', ')] : []), ...notes.all()],
+    differingTriangles: 0,
+    notes: tags.length > 0 ? [...(solidNote === null ? [] : [solidNote]), ...notes.all()] : [...(summary.length > 0 ? [summary.join(', ')] : []), ...notes.all()],
   };
 }
 

@@ -27,11 +27,11 @@ Case ids are the ones in `references/manifest.json` and `mac/cases/grid.json`; `
 
 | Call | Throws when |
 | --- | --- |
-| `expectReference(id, bytes, { strict?, allowUnverified?, tsMs?, skipEntries? })` | `mismatch`; `ulp` with `strict`; `unverified` on CI (`CI` set) unless `allowUnverified`. Returns the result, so a test can look at `ulpCount` or `entries`. |
+| `expectReference(id, bytes, { strict?, allowUnverified?, tsMs?, skipEntries? })` | `mismatch`; `ulp` or `equivalent` with `strict`; `unverified` on CI (`CI` set) unless `allowUnverified`. Returns the result, so a test can look at `ulpCount` or `entries`. |
 | `expectReferenceError(id, thrown)` | `thrown` does not contain the manifest's `expectError` (else its `error`), or the case does not fail in Swift. |
 | `expectNormalized(id, json, 'parameters' \| 'pattern' \| 'purge')` | The JSON differs from the manifest's string; the message names the key path. |
 
-Without throwing: `compareCase(id, bytes, options)`, `compareCaseError(id, thrown)`, `compareOutput(expected, actual, kind)` return a `DiffResult`; `statusLabel(result)` gives `identical`, `ulp`, `mismatch (topology)` or `unverified-needs-pack`; `referenceAvailable(case)` and `hasPack()` say what is at hand.
+Without throwing: `compareCase(id, bytes, options)`, `compareCaseError(id, thrown)`, `compareOutput(expected, actual, kind)` return a `DiffResult`; `statusLabel(result)` gives `identical`, `ulp`, `equivalent`, `mismatch (topology)` or `unverified-needs-pack`; `referenceAvailable(case)` and `hasPack()` say what is at hand.
 
 **On CI without the pack** pass `{ allowUnverified: true }` for Tier B cases. Whatever Tier A and the manifest can check still fails on a mismatch (texts, JSON, SVG, small parts, triangle counts, bounding boxes, the settings header), and what only the pack can settle warns. `deploy.yml` has no pack so far; `compare-full.yml` has.
 
@@ -63,9 +63,23 @@ export REFS_PACK_DIR=/path/to/checkout/references/pack/refs-v1
 | JSON | Byte-identical. Otherwise the first differing key path, with `cause`: `numerically equal (writer bug)` (key order, spelling of a number or string, whitespace) or `different value (port bug)`. | `json` |
 | Text (`.md`, `.txt`, `.svg`, `.xml`, `.rels`) | Byte-identical. Otherwise a unified diff in `notes[1]`. | `text` |
 
-An archive takes the worst status of its entries: `mismatch` over `unverified` over `ulp`. JSON, text and SVG have no `ulp` state, so they are strict by construction; `strict: true` extends that to everything else.
+An archive takes the worst status of its entries: `mismatch` over `unverified` over `equivalent` over `ulp`. JSON, text and SVG have no `ulp` state, so they are strict by construction; `strict: true` extends that to everything else.
 
-`maxUlp` and `ulpCount` count vertex coordinates (Float32 steps in an STL, Float64 steps in a model); `normalDiffs` counts stored normals that differ within tolerance; `nearZeroCorners` counts STL coordinates under the near-zero rule below.
+`maxUlp` and `ulpCount` count vertex coordinates (Float32 steps in an STL, Float64 steps in a model); `normalDiffs` counts stored normals that differ within tolerance; `nearZeroCorners` counts STL coordinates under the near-zero rule below; `differingTriangles` is only set for `equivalent`.
+
+### `equivalent`
+
+Rounding noise can flip a tie in a generator: the same vertices and the same body, but a fan starts one step later, so the bytes and the order of the triangles differ (plan §14). An STL whose only complaint is `topology` gets this check; the first note of the mismatch gives the outcome:
+
+1. Same triangle count, same attribute bytes, header as usual (the check does not run otherwise).
+2. Both meshes welded by exact bits: the unique vertices agree pairwise after a lexicographic sort, under the corner rule (at most 1 Float32 ULP with the same sign, or the near-zero rule).
+3. Both meshes pass `BalloonMesh.validate` (closed, manifold).
+4. Signed volume and surface area agree within 1e-9 relative.
+5. `differingTriangles` counts the triangles that differ at their position in the file.
+
+The sort in rule 2 is taken literally: a 1 ULP shift that changes the order of vertices sharing a coordinate breaks the pairs, and the file stays a mismatch. That errs on the safe side; the two listed kits have no such shift.
+
+It passes as `equivalent` **only for an entry listed in `equivalentCases.ts`**, with its reason; anything else stays `mismatch (topology)`. A listed entry that comes out `identical` or `ulp` produces the warning "allowlist stale" (`warnings` on the result and in the report) and does not fail; a skipped or unverifiable entry says nothing. `strict` fails on `equivalent`, like on `ulp`.
 
 ### Where this differs from the plan
 
@@ -85,7 +99,7 @@ REFS_CASES='clip-*,cloud-classic' VITE_CORE=real npm run test:reference
 REFS_SHARD=2/4 VITE_CORE=real npm run test:reference
 ```
 
-It fails on `mismatch` and `unverified`. It prints `id | status | maxUlp | ulpCount | tsMs | swiftMs | note`; `references/report.json` has the same rows plus a summary. Under `npm test` (stub core) only the structure runs: every case decodes and exports one file.
+It fails on `mismatch` and `unverified`; `ulp` and `equivalent` pass. It prints `id | status | maxUlp | ulpCount | tsMs | swiftMs | note`; `references/report.json` has the same rows plus a summary and the stale warnings. Under `npm test` (stub core) only the structure runs: every case decodes and exports one file.
 
 The relief and text groups are exempt from the byte criterion (plan §1), so the grid leaves `3D/3dmodel.model` and `Metadata/balloon-studio.txt` out of those 31 cases (`skipEntries`). With injected Swift rasters, WP-K3 calls `expectReference` without that option.
 
@@ -93,4 +107,4 @@ The relief and text groups are exempt from the byte criterion (plan §1), so the
 
 ## Files
 
-`index.ts` public API · `compare.ts` entry points and dispatch · `stlDiff.ts`, `zipDiff.ts`, `threeMfDiff.ts`, `jsonDiff.ts`, `textDiff.ts` the comparisons · `manifest.ts` manifest and grid · `refs.ts` reference bodies · `report.ts` table and JSON · `result.ts` `DiffResult` · `exportCase.ts` grid case to `CoreApi` call · `fixtures.ts` test fixtures · `*.test.ts` self-tests (`pack.test.ts` needs the pack and is skipped without it).
+`index.ts` public API · `compare.ts` entry points and dispatch · `stlDiff.ts`, `solidDiff.ts`, `zipDiff.ts`, `threeMfDiff.ts`, `jsonDiff.ts`, `textDiff.ts` the comparisons · `equivalentCases.ts` the allowlist · `manifest.ts` manifest and grid · `refs.ts` reference bodies · `report.ts` table and JSON · `result.ts` `DiffResult` · `exportCase.ts` grid case to `CoreApi` call · `fixtures.ts` test fixtures · `*.test.ts` self-tests (`pack.test.ts` needs the pack and is skipped without it).
