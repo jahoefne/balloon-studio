@@ -85,8 +85,9 @@ type Cubic = readonly [number, number, number, number, number, number, number, n
  * on macOS 26.6.2 with a scan of dash lengths on one cubic (residual ≤ 0.0026 mm with the right number of chords). When
  * CoreGraphics bisects is not known exactly; DASH_FLATNESS is a fit, and dash ends stay within 0.25 mm (about 1 px, pinned
  * against tests/fixtures/swift/cg-dash-trail.txt). CoreGraphics also stops its search for t at ~0.002 mm, not reproduced.
+ * `flatness` is the fit in the path's own units; Summit's trail has its own (summitCableCarArtwork.ts).
  */
-export function cgDashPath(path: Path, on: number, off: number): Path {
+export function cgDashPath(path: Path, on: number, off: number, flatness: number = DASH_FLATNESS): Path {
   const out = new Path();
   let drawing = true;
   let remaining = on;
@@ -112,7 +113,7 @@ export function cgDashPath(path: Path, on: number, off: number): Path {
       let done = 0;
       for (;;) {
         const target = done + remaining;
-        const total = chordLength(curve, base, 1);
+        const total = chordLength(curve, base, 1, flatness);
         if (total <= target) {
           remaining = target - total;
           if (drawing) addPiece(out, curve, base, 1);
@@ -122,7 +123,7 @@ export function cgDashPath(path: Path, on: number, off: number): Path {
         let hi = 1;
         for (let i = 0; i < 40; i++) {
           const m = (lo + hi) / 2;
-          if (chordLength(curve, base, m) < target) lo = m;
+          if (chordLength(curve, base, m, flatness) < target) lo = m;
           else hi = m;
         }
         const t = (lo + hi) / 2;
@@ -151,17 +152,17 @@ export function cgDashPath(path: Path, on: number, off: number): Path {
 }
 
 // CoreGraphics' length of the piece t0…t1, see cgDashPath.
-function chordLength(curve: Cubic, t0: number, t1: number): number {
+function chordLength(curve: Cubic, t0: number, t1: number, flatness: number): number {
   const p = piece(curve, t0, t1);
-  return bisectedChords(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], 0);
+  return bisectedChords(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], 0, flatness);
 }
 
-function bisectedChords(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, depth: number): number {
+function bisectedChords(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, depth: number, flatness: number): number {
   const ax = x0 - 2 * x1 + x2;
   const ay = y0 - 2 * y1 + y2;
   const bx = x1 - 2 * x2 + x3;
   const by = y1 - 2 * y2 + y3;
-  const limit = DASH_FLATNESS * DASH_FLATNESS;
+  const limit = flatness * flatness;
   if (depth === 8 || (ax * ax + ay * ay <= limit && bx * bx + by * by <= limit)) {
     const dx = x3 - x0;
     const dy = y3 - y0;
@@ -179,7 +180,7 @@ function bisectedChords(x0: number, y0: number, x1: number, y1: number, x2: numb
   const y123 = (y12 + y23) / 2;
   const mx = (x012 + x123) / 2;
   const my = (y012 + y123) / 2;
-  return bisectedChords(x0, y0, x01, y01, x012, y012, mx, my, depth + 1) + bisectedChords(mx, my, x123, y123, x23, y23, x3, y3, depth + 1);
+  return bisectedChords(x0, y0, x01, y01, x012, y012, mx, my, depth + 1, flatness) + bisectedChords(mx, my, x123, y123, x23, y23, x3, y3, depth + 1, flatness);
 }
 
 // The control points of the piece t0…t1 (blossoms).
