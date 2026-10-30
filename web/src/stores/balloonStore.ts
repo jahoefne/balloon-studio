@@ -101,7 +101,7 @@ export const createBalloonStore = (deps: StoreDeps): BalloonStore => {
           set({
             parameters,
             pattern,
-            bundle: { parameters, pattern, purge, mesh: { ...imported.editable, faceColors }, estimate },
+            bundle: { parameters, pattern, purge, mesh: { ...imported.editable, faceColors }, estimate, missingGlyphs: [] },
             faceColors,
             estimate,
             updating: false,

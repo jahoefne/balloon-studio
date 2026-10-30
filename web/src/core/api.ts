@@ -69,10 +69,14 @@ export const STL_ERRORS = {
 } as const;
 
 /**
- * Message of a settings JSON that does not decode. The Mac app never shows it (it uses
- * `try?` and falls back to defaults); this is Foundation's DecodingError description.
+ * Messages of a settings JSON that does not decode. The Mac app never shows them (it uses
+ * `try?` and falls back to defaults); they are Foundation's DecodingError descriptions:
+ * `typeMismatch` and `dataCorrupted` (a wrong type, an unknown enum raw value, a syntax error)
+ * give the first, `keyNotFound` and `valueNotFound` (a required key absent or null, a null
+ * document) the second. The first failure in declaration order decides.
  */
 export const INVALID_SETTINGS_MESSAGE = 'The data couldn’t be read because it isn’t in the correct format.';
+export const MISSING_SETTINGS_MESSAGE = 'The data couldn’t be read because it is missing.';
 
 /** Thrown by core implementations; structured-clone it with `toCoreError` before posting. */
 export class CoreFailure extends Error implements CoreError {
@@ -103,17 +107,31 @@ export const toCoreError = (error: unknown): CoreError => {
 
 export type Quality = 'preview' | 'export';
 
-/** K9: polled where Swift checks `Task.isCancelled`; progress never changes results. */
+/**
+ * K9: polled where Swift checks `Task.isCancelled`; progress never changes results. A cancelled
+ * preview comes back with empty meshes, like `BalloonGenerator.generate`; the caller discards it.
+ */
 export interface RunOptions {
   isCancelled?: () => boolean;
   onProgress?: (fraction: number) => void;
 }
 
 /**
+ * What the reference exporter does and the app does not (mac/ReferenceExporter/main.swift). The
+ * app calls `export` without them; the stub core ignores both.
+ */
+export interface ExportOptions extends RunOptions {
+  /** Defaults to `'export'`. 59 grid cases are exported at preview quality. A figure set is always export quality, as in Swift. */
+  quality?: Quality;
+  /** Export a cable clip with a `problem` instead of throwing `export-blocked`; the app disables the button. */
+  ignoreExportProblem?: boolean;
+}
+
+/**
  * JSON as the Mac app reads and writes it.
  * - `decode` = `JSONDecoder` + the struct's `init(from:)`: `decodeIfPresent ?? default`
  *   leniency, migrations, type errors rejected, unknown keys ignored. It does NOT normalize.
- *   Throws `CoreFailure('invalid-settings', INVALID_SETTINGS_MESSAGE)`.
+ *   Throws `CoreFailure('invalid-settings', …)` with `INVALID_SETTINGS_MESSAGE` or `MISSING_SETTINGS_MESSAGE`.
  * - `encode` = `JSONEncoder` with `.sortedKeys` (StableJSON, plan §8): compact, nil omitted,
  *   whole Doubles without `.0`, `/` escaped as `\/`.
  */
@@ -187,7 +205,7 @@ export interface BalloonGeometryApi {
   /** Normalizes, generates at preview quality, paints and estimates purge. */
   preview(snapshot: BalloonSnapshot, options?: RunOptions): BalloonPreview;
   /** `BalloonSTL.export` (STL with the BSTL0002 header) or `PaintedBalloon.threeMF` per `exportFormat`. */
-  export(snapshot: BalloonSnapshot, options?: RunOptions): ExportResult;
+  export(snapshot: BalloonSnapshot, options?: ExportOptions): ExportResult;
 }
 
 // ---------------------------------------------------------------------------
@@ -213,7 +231,7 @@ export interface BasketParameterApi {
 
 export interface BasketGeometryApi {
   preview(p: BasketParameters, options?: RunOptions): BasketPreview;
-  export(p: BasketParameters, options?: RunOptions): ExportResult;
+  export(p: BasketParameters, options?: ExportOptions): ExportResult;
 }
 
 // ---------------------------------------------------------------------------
@@ -266,7 +284,7 @@ export interface RingParameterApi {
 export interface RingGeometryApi {
   preview(p: RingParameters, options?: RunOptions): RingPreview;
   /** Solid ring STL, or the segmented kit ZIP (`SegmentedRingKit.archive`). */
-  export(p: RingParameters, options?: RunOptions): ExportResult;
+  export(p: RingParameters, options?: ExportOptions): ExportResult;
 }
 
 // ---------------------------------------------------------------------------
@@ -348,7 +366,7 @@ export interface CloudGeometryApi {
   /** `CloudKit(p)` at preview quality, for a cloud or a sun. */
   preview(p: CloudParameters, options?: RunOptions): CloudPreview;
   /** `CloudKit(p, quality: .export).archive()`. */
-  export(p: CloudParameters, options?: RunOptions): ExportResult;
+  export(p: CloudParameters, options?: ExportOptions): ExportResult;
 }
 
 // ---------------------------------------------------------------------------
@@ -395,7 +413,7 @@ export interface FigureParameterApi {
 export interface FigureGeometryApi {
   preview(p: FigureParameters, options?: RunOptions): FigurePreview;
   /** One figure STL, or the seven-figure set ZIP (`FigureSet.archive`). */
-  export(p: FigureParameters, variant: 'single' | 'set', options?: RunOptions): ExportResult;
+  export(p: FigureParameters, variant: 'single' | 'set', options?: ExportOptions): ExportResult;
 }
 
 // ---------------------------------------------------------------------------
@@ -432,17 +450,21 @@ export interface ClipParameterApi {
 
 export interface ClipGeometryApi {
   preview(p: CableClipParameters, options?: RunOptions): ClipPreview;
-  /** `printView.binarySTL()`. Throws `export-blocked` with the `problem` text when there is one. */
-  export(p: CableClipParameters, options?: RunOptions): ExportResult;
+  /** `printView.binarySTL()`. Throws `export-blocked` with the `problem` text when there is one, unless `ignoreExportProblem`. */
+  export(p: CableClipParameters, options?: ExportOptions): ExportResult;
 }
 
 // ---------------------------------------------------------------------------
 // Opening files (STLImport.swift, LampSettingsFile.swift)
 // ---------------------------------------------------------------------------
 
-export interface StlApi {
+/** The limits, for a size check on the main thread before the file goes to the worker. */
+export interface StlParameterApi {
   readonly maximumBytes: number;
   readonly maximumTriangles: number;
+}
+
+export interface StlGeometryApi {
   /** `BalloonSTL.open` + the editable preview. Throws `CoreFailure('invalid-stl', STL_ERRORS.…)`. */
   open(bytes: Uint8Array, options?: RunOptions): ImportedBalloon;
 }
@@ -465,6 +487,7 @@ export interface CoreParameterApi {
   readonly cloud: CloudParameterApi;
   readonly figure: FigureParameterApi;
   readonly clip: ClipParameterApi;
+  readonly stl: StlParameterApi;
   readonly lampSettings: LampSettingsApi;
 }
 
@@ -476,5 +499,5 @@ export interface CoreApi extends CoreParameterApi {
   readonly cloud: CloudParameterApi & CloudGeometryApi;
   readonly figure: FigureParameterApi & FigureGeometryApi;
   readonly clip: ClipParameterApi & ClipGeometryApi;
-  readonly stl: StlApi;
+  readonly stl: StlParameterApi & StlGeometryApi;
 }

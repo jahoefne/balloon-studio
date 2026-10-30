@@ -13,6 +13,6 @@ export const core: CoreApi = {
   cloud: { ...parameters.cloud, ...geometry.cloud },
   figure: { ...parameters.figure, ...geometry.figure },
   clip: { ...parameters.clip, ...geometry.clip },
-  stl: geometry.stl,
+  stl: { ...parameters.stl, ...geometry.stl },
   lampSettings: parameters.lampSettings,
 };

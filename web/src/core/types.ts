@@ -390,6 +390,12 @@ export interface BalloonPreview {
   /** Painted mesh; `faceColors` is `PaintedBalloon.colors` (0 base, 1 detail). */
   mesh: MeshBuffers;
   estimate: PurgeEstimate;
+  /**
+   * Characters of the Text pattern that no bundled font can draw, each once, in text order. They leave no ink
+   * (docs/plan.md, Abschnitt 7 and 13; the Mac app has no such case, CoreText falls back to a system font), so the
+   * editor shows a hint. Empty for every other pattern.
+   */
+  missingGlyphs: string[];
 }
 
 export interface BasketPreview {
