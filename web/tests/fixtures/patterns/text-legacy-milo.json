@@ -1,0 +1,49 @@
+{
+  "antialias" : false,
+  "aspect" : 2.9879746835443037,
+  "bounds" : {
+    "height" : 77.1484375,
+    "width" : 230.517578125,
+    "x" : 1.708984375,
+    "y" : -1.5625
+  },
+  "case" : "text-legacy-milo",
+  "font" : "Serif",
+  "fontPostScriptName" : "Georgia-Bold",
+  "fontSource" : "system:Georgia-Bold",
+  "glyphCount" : 4,
+  "height" : 256,
+  "rowOrder" : "row 0 is the bottom of the glyphs",
+  "runs" : [
+    {
+      "font" : "Georgia-Bold",
+      "glyphs" : [
+        48,
+        76,
+        79,
+        82
+      ],
+      "positions" : [
+        [
+          0,
+          0
+        ],
+        [
+          102.34375,
+          0
+        ],
+        [
+          137.6953125,
+          0
+        ],
+        [
+          172.119140625,
+          0
+        ]
+      ]
+    }
+  ],
+  "sha256" : "2065580534db5ee6ba16e938338ce7986efbd5a77aea6bd7c149c18e85ed518d",
+  "text" : "Milo",
+  "width" : 765
+}

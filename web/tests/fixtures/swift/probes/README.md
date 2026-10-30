@@ -11,6 +11,7 @@ These small Swift programs measured the Swift/Foundation behaviour that `web/src
 | `geometry.swift` | `../geometry.txt`, `../../stl/*.stl`, `../../zip/*.zip` | `BalloonMesh.validate` errors, `dimensions`, `binarySTL`, `StoredZIP.archive`, `SurfaceQuery` |
 | `cg-arcs.swift` (WP-R1) | `../cg-arcs.jsonl` | `CGMutablePath.addArc` element lists: the 16 sweeps of docs/plan.md §13 at three centres and radii, with and without a current point |
 | `cg-stroke-dash.swift` (WP-R1) | none, the printed results are written out in `core/raster/stroke.test.ts` and `dash.test.ts` | `copy(strokingWithWidth:)` on degenerate subpaths and joins, `copy(dashingWithPhase:lengths:)` |
+| `libmReplay.swift` (WP-K3) | tables in a directory of your choice, see `tests/patterns.replay.test.ts` | Apple's `sin`, `cos`, `atan`, `atan2`, `hypot` for the arguments a TS run recorded; the sine comes from the merged `__sincos_stret` |
 | `cg-dash-trail.swift` (WP-R4) | `../cg-dash-trail.txt` (one run per shape, each after a `shape <name>` line) | `copy(dashingWithPhase:lengths:)` on a Night Flight trail, and that a context with `setLineDash` draws the same bytes |
 
 Build and run one program (stdout is the fixture):
