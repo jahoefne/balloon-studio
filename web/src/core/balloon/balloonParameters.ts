@@ -2,9 +2,9 @@
 // BalloonParameters, normalized(), init(from:)).
 //
 // Swift's struct with computed properties becomes the frozen `BalloonParameters` type of
-// core/types.ts plus free functions of the same names. `fromJSON` follows JSONDecoder as measured
-// in web/tests/fixtures/swift/balloonDecode.txt, not JSON.parse (see scanJSONObject).
-import { encodeJSONCompact, type JSONObject } from '../swift/json';
+// core/types.ts plus free functions of the same names. `fromJSON` follows JSONDecoder, not
+// JSON.parse (see JSONKeyedContainer in core/swift/json.ts).
+import { encodeJSONCompact, JSONDecodeError, JSONKeyedContainer, type JSONObject } from '../swift/json';
 import { formatFixed } from '../swift/format';
 import { swiftMax, swiftMin } from '../swift/minmax';
 import { intTrunc, rounded } from '../swift/rounding';
@@ -111,245 +111,43 @@ export function normalized(input: BalloonParameters): BalloonParameters {
 // MARK: Decoding (Swift `init(from:)`)
 
 /** A failed `JSONDecoder().decode(BalloonParameters.self, …)`. */
-export class BalloonDecodeError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'BalloonDecodeError';
-  }
-}
+export { JSONDecodeError as BalloonDecodeError };
 
-/** A JSON number still in source form: JSONDecoder converts it per requested type. */
-class RawNumber {
-  constructor(readonly lexeme: string) {}
-}
-
-const INT_LIMIT = 9223372036854775808; // 2^63, Swift Int.max + 1
-
-/** RFC 8259 number: `01`, `1e`, `-`, `.5` and `5.` are type errors once a field reads them. */
-const JSON_NUMBER = /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$/;
-
-function decodeDouble(value: unknown, key: string): number {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (value instanceof RawNumber && JSON_NUMBER.test(value.lexeme)) {
-    const d = Number(value.lexeme);
-    // Out-of-range literals fail in both directions: 1e400, but also 1e-400 and 2e-324. Only a
-    // literal whose digits are all zero may read as zero.
-    // SWIFT-DIFF: Foundation also rejects some zero literals with a positive exponent (0e5, 0e1,
-    // 0.00e5, -0.0e5, but not 0e0, 0e+5, -0e5, 0.0e5). No writer produces them; they read as 0 here.
-    if (Number.isFinite(d) && (d !== 0 || !/[1-9]/.test((value.lexeme.split(/[eE]/)[0] as string)))) return d;
-  }
-  throw new BalloonDecodeError(`${key}: expected Double`);
-}
-
-function decodeInt(value: unknown, key: string): number {
-  let d: number | undefined;
-  if (typeof value === 'number') d = value;
-  else if (value instanceof RawNumber && JSON_NUMBER.test(value.lexeme)) {
-    // Digits alone convert exactly. Anything else goes through Double, so 1.50e1 is 15, 1e-400
-    // is 0 and 1.000…01 is 1 (measured).
-    if (/^-?[0-9]+$/.test(value.lexeme)) {
-      const big = BigInt(value.lexeme);
-      if (big < -9223372036854775808n || big > 9223372036854775807n) throw new BalloonDecodeError(`${key}: expected Int`);
-      return Number(big) + 0;
-    }
-    d = Number(value.lexeme);
-  }
-  if (d !== undefined && Number.isInteger(d) && d >= -INT_LIMIT && d < INT_LIMIT) return d + 0;
-  throw new BalloonDecodeError(`${key}: expected Int`);
-}
-
-function decodeBool(value: unknown, key: string): boolean {
-  if (typeof value === 'boolean') return value;
-  throw new BalloonDecodeError(`${key}: expected Bool`);
-}
-
-/** The `init(from:)` body. `decodeIfPresent`: absent or null is nil, a wrong type throws. */
-function decodeFields(get: (key: string) => unknown): BalloonParameters {
-  const double = (key: string, fallback: number): number => {
-    const v = get(key);
-    return v === undefined || v === null ? fallback : decodeDouble(v, key);
-  };
-  const int = (key: string, fallback: number): number => {
-    const v = get(key);
-    return v === undefined || v === null ? fallback : decodeInt(v, key);
-  };
-  const bool = (key: string, fallback: boolean): boolean => {
-    const v = get(key);
-    return v === undefined || v === null ? fallback : decodeBool(v, key);
-  };
+/** The `init(from:)` body. */
+function decodeFields(c: JSONKeyedContainer): BalloonParameters {
   const d = classic;
   return {
-    height: double('height', d.height),
-    diameter: double('diameter', d.diameter),
-    panels: int('panels', d.panels),
-    panelDepth: double('panelDepth', d.panelDepth),
-    neckDiameter: double('neckDiameter', d.neckDiameter),
-    neckHeight: double('neckHeight', d.neckHeight),
-    shoulder: double('shoulder', d.shoulder),
-    hollow: bool('hollow', false),
-    wallThickness: double('wallThickness', 1.2),
-    stringHoles: bool('stringHoles', false),
-    cordClearance: double('cordClearance', 3),
-    hangingLoop: bool('hangingLoop', false),
-    hangingClearance: double('hangingClearance', 4),
-    hangingThickness: double('hangingThickness', d.hangingThickness),
-    hangingWall: double('hangingWall', d.hangingWall),
-    hangingFillet: double('hangingFillet', d.hangingFillet),
-    hangingCrownThickness: double('hangingCrownThickness', d.hangingCrownThickness),
+    height: c.doubleIfPresent('height') ?? d.height,
+    diameter: c.doubleIfPresent('diameter') ?? d.diameter,
+    panels: c.intIfPresent('panels') ?? d.panels,
+    panelDepth: c.doubleIfPresent('panelDepth') ?? d.panelDepth,
+    neckDiameter: c.doubleIfPresent('neckDiameter') ?? d.neckDiameter,
+    neckHeight: c.doubleIfPresent('neckHeight') ?? d.neckHeight,
+    shoulder: c.doubleIfPresent('shoulder') ?? d.shoulder,
+    hollow: c.boolIfPresent('hollow') ?? false,
+    wallThickness: c.doubleIfPresent('wallThickness') ?? 1.2,
+    stringHoles: c.boolIfPresent('stringHoles') ?? false,
+    cordClearance: c.doubleIfPresent('cordClearance') ?? 3,
+    hangingLoop: c.boolIfPresent('hangingLoop') ?? false,
+    hangingClearance: c.doubleIfPresent('hangingClearance') ?? 4,
+    hangingThickness: c.doubleIfPresent('hangingThickness') ?? d.hangingThickness,
+    hangingWall: c.doubleIfPresent('hangingWall') ?? d.hangingWall,
+    hangingFillet: c.doubleIfPresent('hangingFillet') ?? d.hangingFillet,
+    hangingCrownThickness: c.doubleIfPresent('hangingCrownThickness') ?? d.hangingCrownThickness,
   };
 }
 
 /** The same decoder for a value that JSON.parse (or the app) already produced. */
 export function fromValue(value: unknown): BalloonParameters {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new BalloonDecodeError('Expected a keyed container');
-  const c = value as Readonly<Record<string, unknown>>;
-  return decodeFields((key) => (Object.prototype.hasOwnProperty.call(c, key) ? c[key] : undefined));
+  return decodeFields(JSONKeyedContainer.fromValue(value));
 }
 
 /** Swift `JSONDecoder().decode(BalloonParameters.self, from:)`. */
 export function fromJSON(text: string): BalloonParameters {
-  const fields = scanJSONObject(text);
-  return decodeFields((key) => fields.get(key));
+  return decodeFields(JSONKeyedContainer.fromJSON(text));
 }
 
 /** Swift `JSONEncoder` with `.sortedKeys`, as StableJSON.swift configures it. */
 export function toJSON(p: BalloonParameters): string {
   return encodeJSONCompact(p as unknown as JSONObject);
 }
-
-// Swift's JSON scanner differs from JSON.parse, all measured (balloonDecode.txt): it skips one BOM,
-// takes the FIRST of two equal keys, allows a trailing comma in objects and arrays, and only
-// converts the values a decoder reads, so `{"other":01}` or a raw newline in an unused string pass.
-
-const fail = (at: number): never => {
-  throw new BalloonDecodeError(`Invalid JSON at ${at}`);
-};
-
-function scanJSONObject(text: string): Map<string, unknown> {
-  let i = text.charCodeAt(0) === 0xfeff ? 1 : 0;
-  const whitespace = (): void => {
-    for (;;) {
-      const c = text.charCodeAt(i);
-      if (c !== 0x20 && c !== 0x09 && c !== 0x0a && c !== 0x0d) return;
-      i++;
-    }
-  };
-  /** Moves past a string; returns its source slice with the quotes. */
-  const string = (): string => {
-    const start = i;
-    i++;
-    for (;;) {
-      if (i >= text.length) fail(i);
-      const c = text.charCodeAt(i);
-      if (c === 0x22) {
-        i++;
-        return text.slice(start, i);
-      }
-      if (c === 0x5c) {
-        if (text.charCodeAt(i + 1) === 0x75) {
-          if (!/^[0-9a-fA-F]{4}$/.test(text.slice(i + 2, i + 6))) fail(i);
-          i += 6;
-        } else i += 2;
-      } else i++;
-    }
-  };
-  /** Moves past any value; numbers come back in source form. */
-  const value = (): unknown => {
-    const c = text[i];
-    if (c === '{') {
-      object(() => undefined);
-      return OPAQUE;
-    }
-    if (c === '[') {
-      i++;
-      whitespace();
-      if (text[i] === ']') {
-        i++;
-        return OPAQUE;
-      }
-      for (;;) {
-        whitespace();
-        value();
-        whitespace();
-        if (text[i] === ',') {
-          i++;
-          whitespace();
-          if (text[i] === ']') {
-            i++;
-            return OPAQUE;
-          }
-        } else if (text[i] === ']') {
-          i++;
-          return OPAQUE;
-        } else fail(i);
-      }
-    }
-    if (c === '"') {
-      string();
-      return OPAQUE;
-    }
-    if (c === '-' || (c !== undefined && c >= '0' && c <= '9')) {
-      const start = i;
-      while (i < text.length && '0123456789+-.eE'.includes(text[i] as string)) i++;
-      return new RawNumber(text.slice(start, i));
-    }
-    for (const [literal, v] of [['true', true], ['false', false], ['null', null]] as const) {
-      if (text.startsWith(literal, i)) {
-        i += literal.length;
-        return v;
-      }
-    }
-    return fail(i);
-  };
-  /** The container at `i`, reporting each key and value to `entry`. */
-  const object = (entry: (key: string, v: unknown) => void): void => {
-    i++;
-    whitespace();
-    if (text[i] === '}') {
-      i++;
-      return;
-    }
-    for (;;) {
-      whitespace();
-      if (text[i] !== '"') fail(i);
-      const keyAt = i;
-      const key = string();
-      whitespace();
-      if (text[i] !== ':') fail(i);
-      i++;
-      whitespace();
-      const v = value();
-      let decodedKey: unknown;
-      try {
-        decodedKey = JSON.parse(key);
-      } catch {
-        fail(keyAt);
-      }
-      entry(decodedKey as string, v);
-      whitespace();
-      if (text[i] === ',') {
-        i++;
-        whitespace();
-        if (text[i] === '}') {
-          i++;
-          return;
-        }
-      } else if (text[i] === '}') {
-        i++;
-        return;
-      } else fail(i);
-    }
-  };
-  const fields = new Map<string, unknown>();
-  whitespace();
-  if (text[i] !== '{') throw new BalloonDecodeError('Expected a keyed container');
-  object((key, v) => {
-    if (!fields.has(key)) fields.set(key, v);
-  });
-  whitespace();
-  if (i !== text.length) fail(i);
-  return fields;
-}
-
-/** A string or container: valid JSON that no BalloonParameters field accepts. */
-const OPAQUE = Object.freeze({});
