@@ -6,6 +6,7 @@
 
 import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { ExportDialog } from '../../../io';
 import { useBalloonStore } from '../../../stores';
 import { SegmentedControl } from '../../../ui';
 import BasketEditor from '../../basket';
@@ -33,6 +34,7 @@ function Demo() {
         </span>
       </div>
       <div style={{ flex: '1 1 0', minHeight: 0, display: 'flex' }}>{part === 'basket' ? <BasketEditor /> : <RingEditor />}</div>
+      <ExportDialog />
     </div>
   );
 }

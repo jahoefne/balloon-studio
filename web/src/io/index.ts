@@ -1,28 +1,6 @@
-// Placeholder for WP-U9, which replaces this file's body with the export table, ExportDialog
-// and the writing of files. Export buttons and Mod+E already go through `startExport`.
+// Saving and opening files (WP-U9).
 
-import { useBalloonStore, useBasketStore, useClipStore, useCloudStore, useFigureStore, useRingStore, useSunStore } from '../stores';
-import type { PartKey } from '../worker/protocol';
-
-const stores = {
-  balloon: useBalloonStore,
-  basket: useBasketStore,
-  ring: useRingStore,
-  cloud: useCloudStore,
-  sun: useSunStore,
-  figure: useFigureStore,
-  clip: useClipStore,
-};
-
-// Long enough to see "Preparing …" in the footer.
-const PLACEHOLDER_MS = 400;
-
-/** The start of each Mac `export()`: guard, commit, snapshot; then runs `exporting` without writing a file. */
-export async function startExport(part: PartKey): Promise<void> {
-  const { getState } = stores[part];
-  if (getState().beginExport() === null) return;
-  getState().setExporting(true);
-  // TODO(WP-U9): show ExportDialog with the snapshot, generate in `ioClient`, write the file, set `exported`.
-  await new Promise((resolve) => setTimeout(resolve, PLACEHOLDER_MS));
-  getState().setExporting(false);
-}
+export { ExportDialog } from './ExportDialog';
+export { presentExport, startExport } from './exportFlow';
+export { EXPORT_TABLE, exportedLine, exportPanel, type ExportEntry, type ExportPanel, type ExportVariant } from './exportTable';
+export { chooseFile, openDroppedFile, openFile } from './openFile';
