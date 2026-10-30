@@ -18,7 +18,7 @@ export function ColorPicker({ label, value, onChange, testId }: ColorPickerProps
   return (
     <div className="ui-color-picker">
       <span className="ui-swatch" style={{ backgroundColor: filamentHex(value) }} aria-hidden="true" />
-      <Select<FilamentColorName> label={label} options={options} value={value} onChange={onChange} testId={testId} />
+      <Select<FilamentColorName> hug label={label} options={options} value={value} onChange={onChange} testId={testId} />
     </div>
   );
 }

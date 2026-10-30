@@ -69,9 +69,6 @@
   border-radius: var(--radius-10);
   background: var(--accent-wash);
 }
-.balloon-panel .ui-switch {
-  justify-content: flex-start;
-}
 .balloon-opening {
   display: flex;
   align-items: center;
@@ -97,14 +94,6 @@
   margin: 0;
   font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-}
-.balloon-toggle {
-  font-size: var(--text-12);
-  font-weight: var(--weight-medium);
-}
-/* A Picker in a leading-aligned stack is as wide as its longest option. */
-.balloon-section > .ui-select .ui-select__control {
-  flex: 0 1 auto;
 }
 .balloon-link {
   width: fit-content;
@@ -174,22 +163,7 @@
 .balloon-export__shortcut {
   margin-left: auto;
   font-weight: var(--weight-regular);
-  opacity: 0.65;
-}
-.balloon-spinner {
-  flex: 0 0 auto;
-  box-sizing: border-box;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgb(255 255 255 / 0.35);
-  border-top-color: var(--surface);
-  border-radius: 50%;
-  animation: balloon-spin 0.8s linear infinite;
-}
-@keyframes balloon-spin {
-  to {
-    transform: rotate(360deg);
-  }
+  opacity: 0.75; /* Swift 0.65 is 3.9:1 on accent */
 }
 .balloon-saved {
   display: flex;

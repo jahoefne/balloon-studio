@@ -85,6 +85,7 @@ export function CloudSidebar({ state, onSelectView, onShowLEDPlacement, onShowGu
           </p>
           <p className="cloud-field-title">Front surface</p>
           <SegmentedControl
+            hug
             label="Front surface"
             options={LAMP_SURFACES.map((surface) => ({ value: surface, label: LAMP_SURFACE_TITLE[surface] }))}
             value={p.surface}
@@ -104,7 +105,7 @@ export function CloudSidebar({ state, onSelectView, onShowLEDPlacement, onShowGu
           )}
           {!derived.fitsP2S && (
             <>
-              <p className="cloud-warning">This width exceeds the P2S bed with an 8 mm brim.</p>
+              <p className="cloud-warning" role="alert">This width exceeds the P2S bed with an 8 mm brim.</p>
               <Button
                 className="cloud-small-button"
                 onClick={() => {
@@ -135,7 +136,7 @@ export function CloudSidebar({ state, onSelectView, onShowLEDPlacement, onShowGu
               {`${kit.ledPlan.sections.length} straight sections · ${number(kit.ledPlan.totalLength)} mm of strip. Flat adhesive mounting with room for wire links.`}
             </p>
           )}
-          {kit && kit.ledPlan.sections.length === 0 && <p className="cloud-warning">{`No complete section fits. Enlarge the ${noun} or use a strip with closer cut marks.`}</p>}
+          {kit && kit.ledPlan.sections.length === 0 && <p className="cloud-warning" role="alert">{`No complete section fits. Enlarge the ${noun} or use a strip with closer cut marks.`}</p>}
           <Button className="cloud-small-button" testId={`${noun}LEDLayout`} onClick={onShowLEDPlacement}>
             View LED placement
           </Button>
@@ -155,7 +156,7 @@ export function CloudSidebar({ state, onSelectView, onShowLEDPlacement, onShowGu
           <SectionLabel>WALL MOUNT & CABLE</SectionLabel>
           {parameter('Nail head clearance', 'nailHead', [5, 10], 0.5)}
           {parameter('Nail shaft clearance', 'nailShaft', [2, Math.min(5, p.nailHead - 2)], 0.5)}
-          <Checkbox className="cloud-strong-toggle" checked={p.nailInsert} onChange={state.setNailInsert} testId={`${noun}NailInsert`}>
+          <Checkbox size={12} strong checked={p.nailInsert} onChange={state.setNailInsert} testId={`${noun}NailInsert`}>
             Slot insert for a small nail head
           </Checkbox>
           {p.nailInsert && (
@@ -172,13 +173,14 @@ export function CloudSidebar({ state, onSelectView, onShowLEDPlacement, onShowGu
                   </Button>
                 </>
               ) : (
-                insertProblem !== null && <p className="cloud-warning">{`${insertProblem} The kit comes without it.`}</p>
+                insertProblem !== null && <p className="cloud-warning" role="alert">{`${insertProblem} The kit comes without it.`}</p>
               )}
             </>
           )}
           {parameter('Cable diameter', 'cableDiameter', [2, 6], 0.5)}
           <p className="cloud-field-title">Cable exit</p>
           <SegmentedControl
+            hug
             label="Cable exit"
             options={CABLE_SIDES.map((side) => ({ value: side, label: CABLE_SIDE_TITLE[side] }))}
             value={p.cableSide}
@@ -204,15 +206,15 @@ export function CloudSidebar({ state, onSelectView, onShowLEDPlacement, onShowGu
             );
           })}
           <p className="cloud-text">{cableExitNote(p)}</p>
-          <h4 className="cloud-seal-title">
+          <h3 className="cloud-seal-title">
             <Icon name="circle.lefthalf.filled" size={12} />
             Flexible cable seal
-          </h4>
+          </h3>
           <p className="cloud-text">Each outlet has a seal printed in black TPU. It grips the cable and fills the window in the wall. Measure the cable: every outlet uses the diameter set here.</p>
           <Button className="cloud-small-button" testId={`${noun}CableSeal`} onClick={() => onSelectView('seal')}>
             View cable seal
           </Button>
-          <Checkbox className="cloud-strong-toggle" checked={p.strainRelief} onChange={state.setStrainRelief} testId={`${noun}StrainRelief`}>
+          <Checkbox size={12} strong checked={p.strainRelief} onChange={state.setStrainRelief} testId={`${noun}StrainRelief`}>
             Screwed strain relief
           </Checkbox>
           {p.strainRelief && kit !== null && kit.clampCount > 0 && (
@@ -223,7 +225,7 @@ export function CloudSidebar({ state, onSelectView, onShowLEDPlacement, onShowGu
               </Button>
             </>
           )}
-          {clampNote !== null && <p className="cloud-warning">{clampNote}</p>}
+          {clampNote !== null && <p className="cloud-warning" role="alert">{clampNote}</p>}
         </section>
 
         <Button className="cloud-guide-button" testId={`${noun}AssemblyGuide`} onClick={onShowGuide}>
@@ -270,11 +272,12 @@ interface OutletRowProps {
 function OutletRow({ noun, ordinal, free, enabled, side, onToggle, onSelect }: OutletRowProps) {
   return (
     <>
-      <Checkbox className="cloud-strong-toggle" checked={enabled} onChange={onToggle} testId={`${noun}${ordinal}CableOutlet`}>
+      <Checkbox size={12} strong checked={enabled} onChange={onToggle} testId={`${noun}${ordinal}CableOutlet`}>
         {free.length === 1 ? `${ordinal} cable outlet · ${CABLE_SIDE_TITLE[free[0]!]}` : `${ordinal} cable outlet`}
       </Checkbox>
       {enabled && free.length > 1 && (
         <SegmentedControl
+          hug
           label={`${ordinal} cable exit`}
           options={free.map((value) => ({ value, label: CABLE_SIDE_TITLE[value] }))}
           value={side}

@@ -37,14 +37,16 @@ export function BalloonPreviewColumn() {
     <div className="balloon-preview">
       <div className="balloon-preview__head">
         <h2 className="balloon-preview__title">{openedSTLName === null ? 'Your envelope' : 'Editable balloon'}</h2>
-        {updating ? (
-          <span className="balloon-preview__status">Updating…</span>
-        ) : (
-          <span className="balloon-preview__live">
-            <Icon name="circle.fill" size={8} />
-            Live preview
-          </span>
-        )}
+        <span aria-live="polite">
+          {updating ? (
+            <span className="balloon-preview__status">Updating…</span>
+          ) : (
+            <span className="balloon-preview__live">
+              <Icon name="circle.fill" size={8} />
+              Live preview
+            </span>
+          )}
+        </span>
       </div>
       <div className="balloon-stage">
         <div className="balloon-stage__canvas">

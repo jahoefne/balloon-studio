@@ -1,6 +1,5 @@
 // What BasketEditor.swift and RingEditor.swift both repeat: the 312 pt sidebar with its scrolling
-// body and export footer, the preview column, and the overlays on the stage. The ring imports it
-// from here because WP-U6 owns only these two folders.
+// body and export footer, the preview column, and the overlays on the stage.
 
 import { useEffect, useRef, type ReactNode } from 'react';
 import type { ExportedFile } from '../../stores';
@@ -54,7 +53,7 @@ export function ExportFooter({ testId, label, preparingLabel, savedPrefix, capti
   return (
     <>
       <button type="button" className="part-export" data-testid={testId} disabled={exporting} onClick={onExport}>
-        {exporting ? <span className="part-export__spinner" aria-hidden /> : <Icon name="square.and.arrow.up" size={14} />}
+        <Icon name={exporting ? 'progress.view' : 'square.and.arrow.up'} size={14} />
         <span className="part-export__label">{exporting ? preparingLabel : label}</span>
         <span className="part-export__shortcut">{modKeyLabel()}E</span>
       </button>

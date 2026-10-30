@@ -29,6 +29,8 @@ export interface SelectProps<T extends string | number> {
   disabled?: boolean | undefined;
   rich?: boolean | undefined;
   className?: string | undefined;
+  /** As wide as its longest option, like a Mac picker in a leading stack; otherwise it fills the row. */
+  hug?: boolean | undefined;
 }
 
 export function Select<T extends string | number>({
@@ -42,12 +44,13 @@ export function Select<T extends string | number>({
   disabled,
   rich = false,
   className,
+  hug = false,
 }: SelectProps<T>) {
   const id = useId();
   const helpInfo = useHelp(help);
   const selectedIndex = options.findIndex((option) => option.value === value);
   const selected = options[selectedIndex];
-  const classes = ['ui-select', rich && 'ui-select--rich', className].filter(Boolean).join(' ');
+  const classes = ['ui-select', rich && 'ui-select--rich', hug && 'ui-select--hug', className].filter(Boolean).join(' ');
 
   return (
     <div className={classes} title={helpInfo.title}>

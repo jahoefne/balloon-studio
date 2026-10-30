@@ -78,10 +78,6 @@
 .fc-note[data-tone='accent'] {
   color: var(--accent);
 }
-.fc-toggle {
-  font-size: var(--text-12);
-  font-weight: var(--weight-medium);
-}
 
 /* Figure cards */
 .fc-card {
@@ -172,21 +168,7 @@
   text-align: left;
 }
 .fc-export__shortcut {
-  opacity: 0.65;
-}
-.fc-spinner {
-  flex: 0 0 auto;
-  width: 13px;
-  height: 13px;
-  border: 2px solid rgb(255 255 255 / 0.35);
-  border-top-color: var(--surface);
-  border-radius: 50%;
-  animation: fc-spin 0.8s linear infinite;
-}
-@keyframes fc-spin {
-  to {
-    transform: rotate(360deg);
-  }
+  opacity: 0.75; /* Swift 0.65 is 3.9:1 on accent */
 }
 .fc-set-export.ui-button {
   width: 100%;
@@ -195,6 +177,9 @@
   background: rgb(31 102 89 / 0.08);
   color: var(--accent);
   font-size: var(--text-11);
+}
+.fc-footer__status {
+  max-width: 100%;
 }
 .fc-footer__idle {
   margin: 0;
@@ -238,10 +223,6 @@
   font-size: var(--text-12);
   font-weight: var(--weight-semibold);
 }
-.fc-preview__picker {
-  flex: 0 1 220px;
-  min-width: 0;
-}
 .fc-preview__status {
   margin-left: auto;
   color: var(--accent);
@@ -256,7 +237,7 @@
   min-height: 310px;
   border-radius: var(--radius-16);
   overflow: hidden;
-  background: rgb(24 31 41);
+  background: var(--stage);
 }
 .fc-stage__host {
   position: absolute;
@@ -365,21 +346,4 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
-}
-
-/* Metrics: the Swift metric() here has 16 pt leading, 21 pt values on Figures, 15 pt on the clip. */
-.fc-metrics .ui-metric {
-  padding-left: var(--space-16);
-}
-.fc-metrics .ui-metric__title {
-  letter-spacing: 0.7px;
-}
-.fc-metrics .ui-metric__unit {
-  font-size: var(--text-10);
-}
-.fc-metrics--figure .ui-metric__number {
-  font-size: var(--text-21);
-}
-.fc-metrics--clip .ui-metric__number {
-  font-size: 15px;
 }

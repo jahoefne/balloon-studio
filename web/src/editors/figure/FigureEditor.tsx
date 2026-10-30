@@ -1,6 +1,6 @@
 // `FigureEditor` (mac/Sources/BalloonStudio/FigureEditor.swift:79-264).
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { core } from '#core/parameters';
 import {
   FIGURE_STYLE_INFO,
@@ -26,7 +26,7 @@ import {
   SegmentedControl,
 } from '../../ui';
 import type { ExportInputs } from '../../worker/protocol';
-import { Caption, ExportButton, FooterStatus, NoteLabel, rangeOf, StageFrame, swatchColor, Swatches, type SwatchOption } from './editorParts';
+import { Caption, ExportButton, FooterStatus, NoteLabel, rangeOf, StageFrame, swatchColor, Swatches, type SwatchOption } from '../shared/editorParts';
 import { FigureSilhouette } from './FigureSilhouette';
 
 const COLORS: readonly SwatchOption[] = [
@@ -57,6 +57,7 @@ export function FigureEditor({ store = useFigureStore, onExport }: FigureEditorP
   const [hanging, setHanging] = useState(true);
   const [resetCamera, setResetCamera] = useState(0);
   const [colorIndex, setColorIndex] = useState(0);
+  const cardIds = useId();
 
   useEffect(() => store.getState().ensurePreview(), [store]);
 
@@ -80,12 +81,14 @@ export function FigureEditor({ store = useFigureStore, onExport }: FigureEditorP
             {FIGURE_STYLES.map((style) => {
               const selected = p.style === style;
               const info = FIGURE_STYLE_INFO[style];
+              const subtitleId = `${cardIds}-${style}`;
               return (
                 <button
                   key={style}
                   type="button"
                   className="fc-card"
                   aria-label={`${info.title} figure`}
+                  aria-describedby={subtitleId}
                   aria-pressed={selected}
                   data-testid={`figureStyle-${style}`}
                   onClick={() => state.selectStyle(style)}
@@ -93,7 +96,7 @@ export function FigureEditor({ store = useFigureStore, onExport }: FigureEditorP
                   <FigureSilhouette style={style} className="fc-card__silhouette" />
                   <span className="fc-card__text">
                     <span className="fc-card__title">{info.title}</span>
-                    <span className="fc-card__subtitle">{info.subtitle}</span>
+                    <span id={subtitleId} className="fc-card__subtitle">{info.subtitle}</span>
                   </span>
                   {selected && <Icon name="checkmark" size={10} />}
                 </button>
@@ -105,6 +108,7 @@ export function FigureEditor({ store = useFigureStore, onExport }: FigureEditorP
             <SectionLabel>{'SIZE & BODY'}</SectionLabel>
             {parameter('Height', 'height', ranges.height)}
             <SegmentedControl
+              hug
               label="Figure surface"
               options={FIGURE_SURFACES.map((surface) => ({ value: surface, label: FIGURE_SURFACE_INFO[surface].title }))}
               value={p.surface}
@@ -115,7 +119,7 @@ export function FigureEditor({ store = useFigureStore, onExport }: FigureEditorP
             {derived.domed && (
               <>
                 {parameter('Dome height', 'dome', ranges.dome, 0.2)}
-                <Checkbox className="fc-toggle" checked={p.doubleSided} onChange={state.setDoubleSided}>
+                <Checkbox size={12} checked={p.doubleSided} onChange={state.setDoubleSided}>
                   Domed on both sides
                 </Checkbox>
                 <Caption>
@@ -133,7 +137,7 @@ export function FigureEditor({ store = useFigureStore, onExport }: FigureEditorP
             <SectionLabel>HANGING</SectionLabel>
             {parameter('Thread hole', 'holeDiameter', ranges.hole, 0.5)}
             {parameter('Material around hole', 'holeMargin', ranges.margin, 0.5)}
-            <Checkbox className="fc-toggle" checked={p.chainHole} onChange={state.setChainHole}>
+            <Checkbox size={12} checked={p.chainHole} onChange={state.setChainHole}>
               Second hole at the bottom
             </Checkbox>
             <Caption>
@@ -142,7 +146,7 @@ export function FigureEditor({ store = useFigureStore, onExport }: FigureEditorP
                 : 'The hole sits as high as the figure allows, right above its centre of gravity, so it hangs straight.'}
             </Caption>
             {body && body.holes < body.holesWanted && (
-              <NoteLabel icon="exclamationmark.triangle" tone="warning" testId="figureHoleWarning">
+              <NoteLabel alert icon="exclamationmark.triangle" tone="warning" testId="figureHoleWarning">
                 {body.hangingHole === null
                   ? 'No room for the thread hole: make the figure taller or the hole smaller.'
                   : 'No room for the second hole: make the figure taller or the hole smaller.'}
@@ -170,7 +174,7 @@ export function FigureEditor({ store = useFigureStore, onExport }: FigureEditorP
       <div className="fc-preview">
         <div className="fc-preview__head">
           <h2 className="fc-preview__title">{FIGURE_STYLE_INFO[p.style].title} figure</h2>
-          <span className="fc-preview__status">{updating ? 'Updating…' : 'Live preview'}</span>
+          <span className="fc-preview__status" aria-live="polite">{updating ? 'Updating…' : 'Live preview'}</span>
         </div>
 
         <StageFrame
@@ -223,13 +227,11 @@ export function FigureEditor({ store = useFigureStore, onExport }: FigureEditorP
           </Checkbox>
         </div>
 
-        <div className="fc-metrics fc-metrics--figure">
-          <MetricRow>
-            <Metric title="SIZE" value={`${number01(body?.width ?? derived.width)} × ${number01(p.height)}`} unit="mm" />
-            <Metric title="THICKNESS" value={number01(derived.thickness)} unit="mm" />
-            <Metric title="THREAD HOLE" value={`Ø ${number01(p.holeDiameter)}${body?.holes === 2 ? ' · 2' : ''}`} unit="mm" />
-          </MetricRow>
-        </div>
+        <MetricRow size={21}>
+          <Metric title="SIZE" value={`${number01(body?.width ?? derived.width)} × ${number01(p.height)}`} unit="mm" />
+          <Metric title="THICKNESS" value={number01(derived.thickness)} unit="mm" />
+          <Metric title="THREAD HOLE" value={`Ø ${number01(p.holeDiameter)}${body?.holes === 2 ? ' · 2' : ''}`} unit="mm" />
+        </MetricRow>
 
         <AdviceRow icon="link" title="Print flat back down, then thread and hang">
           {"No supports needed. Tie a loop through the hole and hang the figures from the mobile ring at different heights, out of the baby's reach."}

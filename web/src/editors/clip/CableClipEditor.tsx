@@ -20,7 +20,7 @@ import {
   SectionLabel,
   SegmentedControl,
 } from '../../ui';
-import { Caption, ExportButton, FooterStatus, NoteLabel, rangeOf, StageFrame, swatchColor, Swatches, type SwatchOption } from '../figure/editorParts';
+import { Caption, ExportButton, FooterStatus, NoteLabel, rangeOf, StageFrame, swatchColor, Swatches, type SwatchOption } from '../shared/editorParts';
 
 type ClipView = 'assembled' | 'print';
 
@@ -92,6 +92,7 @@ export function CableClipEditor({ store = useClipStore, onExport }: CableClipEdi
           <section className="fc-group fc-group--12">
             <SectionLabel>WALL FIXING</SectionLabel>
             <SegmentedControl
+              hug
               label="Wall fixing"
               options={CABLE_CLIP_MOUNTS.map((mount) => ({ value: mount, label: CABLE_CLIP_MOUNT_INFO[mount].title }))}
               value={p.mount}
@@ -118,7 +119,7 @@ export function CableClipEditor({ store = useClipStore, onExport }: CableClipEdi
               </Caption>
             )}
             {c.problem !== null ? (
-              <NoteLabel icon="exclamationmark.triangle" tone="warning" testId="clipProblem">
+              <NoteLabel alert icon="exclamationmark.triangle" tone="warning" testId="clipProblem">
                 {c.problem}
               </NoteLabel>
             ) : (
@@ -149,7 +150,7 @@ export function CableClipEditor({ store = useClipStore, onExport }: CableClipEdi
 
           <section className="fc-group fc-group--12">
             <SectionLabel>PRINT</SectionLabel>
-            <Checkbox className="fc-toggle" checked={p.flat} onChange={state.setFlat}>
+            <Checkbox size={12} checked={p.flat} onChange={state.setFlat}>
               Print lying on the plate
             </Checkbox>
             <Caption>
@@ -176,8 +177,8 @@ export function CableClipEditor({ store = useClipStore, onExport }: CableClipEdi
       <div className="fc-preview">
         <div className="fc-preview__head">
           <SegmentedControl<ClipView>
+            hug
             label="Clip view"
-            className="fc-preview__picker"
             testId="cableClipPreviewPart"
             options={[
               { value: 'assembled', label: 'On the wall' },
@@ -187,7 +188,7 @@ export function CableClipEditor({ store = useClipStore, onExport }: CableClipEdi
             onChange={setSelection}
           />
           <span className="fc-preview__name">{core.clip.names(shownParameters).displayName}</span>
-          <span className="fc-preview__status">{updating ? 'Updating…' : 'Live preview'}</span>
+          <span className="fc-preview__status" aria-live="polite">{updating ? 'Updating…' : 'Live preview'}</span>
         </div>
 
         <StageFrame
@@ -242,17 +243,15 @@ export function CableClipEditor({ store = useClipStore, onExport }: CableClipEdi
           </Checkbox>
         </div>
 
-        <div className="fc-metrics fc-metrics--clip">
-          <MetricRow>
-            <Metric title="SIZE" value={`${number(shownClip.width)} × ${number(shownClip.length)} × ${number(shownClip.height)}`} unit="mm" />
-            <Metric title="OPENING" value={`${number(shownClip.opening)} · lifts ${number(shownClip.insertion)}`} unit="mm" />
-            <Metric
-              title="BEYOND THE CABLE"
-              value={`+${number(shownClip.width - shownParameters.cableDiameter)} wide · +${number(shownClip.height - shownParameters.cableDiameter)} tall`}
-              unit="mm"
-            />
-          </MetricRow>
-        </div>
+        <MetricRow size={15}>
+          <Metric title="SIZE" value={`${number(shownClip.width)} × ${number(shownClip.length)} × ${number(shownClip.height)}`} unit="mm" />
+          <Metric title="OPENING" value={`${number(shownClip.opening)} · lifts ${number(shownClip.insertion)}`} unit="mm" />
+          <Metric
+            title="BEYOND THE CABLE"
+            value={`+${number(shownClip.width - shownParameters.cableDiameter)} wide · +${number(shownClip.height - shownParameters.cableDiameter)} tall`}
+            unit="mm"
+          />
+        </MetricRow>
 
         <AdviceRow icon="hand.tap" title="Nail the plate, then press the cable in from the open side">
           The nail sits past the strap, so the hammer never touches it; finish with a nail punch. The strap springs open for the cable and closes over it. A clip every 30 to 40 cm, two near a turn. The spring is not yet confirmed in print.

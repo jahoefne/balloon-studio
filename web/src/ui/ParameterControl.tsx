@@ -1,10 +1,11 @@
-import { useId, useState, type KeyboardEvent } from 'react';
+import { useId, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { clampToRange, formatNumber, fractionDigitsForStep, parseDecimal, roundHalfAwayFromZero } from './format';
 import { useHelp } from './help';
 import './primitives.css';
 
 // Port of `ParameterControl` in mac/Sources/BalloonStudio/BalloonStudioApp.swift:635-684:
-// title left, a 44 px monospaced field right with an optional 19 px unit, a slider below.
+// title left, a 44 px monospaced field right with an optional 19 px unit, a slider with its step
+// ticks below.
 // The field follows `value` only while it is not focused; Enter or blur commits the text
 // (parse → round to the step, halves away from zero → clamp → onChange), and anything
 // unparsable reverts to the current value.
@@ -32,6 +33,7 @@ export function ParameterControl({
   testId,
 }: ParameterControlProps) {
   const [lower, upper] = range;
+  const sliderUpper = Math.max(upper, lower + step);
   const digits = fractionDigitsForStep(step);
   // The text being edited; null while the field is not focused, so the field shows `value`.
   const [draft, setDraft] = useState<string | null>(null);
@@ -79,18 +81,22 @@ export function ParameterControl({
         />
         {unit && <span className="ui-parameter__unit">{unit}</span>}
       </div>
-      <input
-        className="ui-parameter__slider"
-        type="range"
-        min={lower}
-        max={Math.max(upper, lower + step)}
-        step={step}
-        value={value}
-        disabled={lower === upper}
-        aria-label={`${title} slider`}
-        aria-describedby={helpInfo.describedBy}
-        onChange={(event) => onChange(Number(event.currentTarget.value))}
-      />
+      <div className="ui-parameter__track">
+        <input
+          className="ui-parameter__slider"
+          type="range"
+          min={lower}
+          max={sliderUpper}
+          step={step}
+          value={value}
+          disabled={lower === upper}
+          aria-label={`${title} slider`}
+          aria-valuetext={unit ? `${formatNumber(value, digits)} ${unit}` : undefined}
+          aria-describedby={helpInfo.describedBy}
+          onChange={(event) => onChange(Number(event.currentTarget.value))}
+        />
+        <span className="ui-parameter__ticks" style={{ '--tick-spacing': step / (sliderUpper - lower) } as CSSProperties} aria-hidden="true" />
+      </div>
       {helpInfo.node}
     </div>
   );

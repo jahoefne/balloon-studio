@@ -15,7 +15,8 @@
   margin: 0;
 }
 .cloud-editor .ui-section-label {
-  font-size: var(--text-10); /* label(_:) here: 10 pt, tracking 1.1 */
+  font-size: var(--text-10); /* label(_:) here: 10 pt semibold, tracking 1.1 */
+  font-weight: var(--weight-semibold);
   letter-spacing: 1.1px;
 }
 .cloud-editor .ui-checkbox {
@@ -103,10 +104,6 @@
   font-weight: var(--weight-semibold);
   color: var(--accent);
 }
-.cloud-editor .cloud-strong-toggle {
-  font-size: var(--text-12);
-  font-weight: var(--weight-semibold);
-}
 .cloud-small-button {
   align-self: flex-start;
   font-size: var(--text-11);
@@ -176,12 +173,8 @@
   font-size: var(--text-12);
   font-weight: var(--weight-semibold);
 }
-/* checkmark.circle.fill */
-.cloud-card__title svg,
-.cloud-saved svg {
-  flex: none;
-  fill: var(--accent);
-  stroke: var(--surface);
+.cloud-card__title svg {
+  color: var(--accent);
 }
 .cloud-card__caption {
   font-size: var(--text-10);
@@ -208,7 +201,7 @@
   text-align: left;
 }
 .cloud-export__shortcut {
-  opacity: 0.65;
+  opacity: 0.75; /* Swift 0.65 is 3.9:1 on accent */
 }
 .cloud-saved {
   display: flex;
@@ -306,6 +299,10 @@
   font-size: var(--text-10);
   font-weight: var(--weight-medium);
   pointer-events: auto;
+}
+.cloud-editor .cloud-stage-button:focus-visible {
+  outline-color: var(--surface);
+  outline-offset: 1px;
 }
 .cloud-editor .cloud-stage-button--icon {
   width: 29px;

@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react';
+import { useId, useMemo, type ReactNode } from 'react';
 import { CLOUD_STYLE_INFO, CLOUD_STYLES, SUN_STYLE_INFO, SUN_STYLES, type CloudParameters, type CloudStyle, type SunStyle } from '../../core/types';
 import { Checkbox, Icon, SectionLabel } from '../../ui';
 import { CLOUD_BOX, cloudSilhouettePath, sunSilhouettePath, SUN_BOX, type SilhouetteBox } from './silhouette';
@@ -24,14 +24,23 @@ interface ShapeCardProps {
 }
 
 function ShapeCard({ selected, title, caption, label, testId, onSelect, children }: ShapeCardProps) {
+  const captionId = useId();
   return (
-    <button type="button" className="cloud-card" aria-pressed={selected} aria-label={label} data-testid={testId} onClick={onSelect}>
+    <button
+      type="button"
+      className="cloud-card"
+      aria-pressed={selected}
+      aria-label={label}
+      aria-describedby={label.includes(caption) ? undefined : captionId}
+      data-testid={testId}
+      onClick={onSelect}
+    >
       {children}
       <span className="cloud-card__title">
         <span>{title}</span>
         {selected && <Icon name="checkmark.circle.fill" size={11} />}
       </span>
-      <span className="cloud-card__caption">{caption}</span>
+      <span id={captionId} className="cloud-card__caption">{caption}</span>
     </button>
   );
 }

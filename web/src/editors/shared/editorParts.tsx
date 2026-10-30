@@ -1,6 +1,5 @@
 // The pieces FigureEditor.swift and CableClipEditor.swift write out twice: the sidebar's small
-// texts, the export footer, the stage with its badge and buttons, the color swatches. The clip
-// editor imports them from here.
+// texts, the export footer, the stage with its badge and buttons, the color swatches.
 
 import type { ReactNode } from 'react';
 import { calibrated } from '../../preview/colors';
@@ -19,13 +18,15 @@ export interface NoteLabelProps {
   /** `.font(.system(size:10, weight:.medium))` */
   medium?: boolean | undefined;
   testId?: string | undefined;
+  /** Announce it when it appears: a warning that blocks or changes what gets exported. */
+  alert?: boolean | undefined;
   children: ReactNode;
 }
 
 /** `Label(text, systemImage:icon).font(.system(size:10)).foregroundStyle(tone)` */
-export function NoteLabel({ icon, tone, medium, testId, children }: NoteLabelProps) {
+export function NoteLabel({ icon, tone, medium, testId, alert, children }: NoteLabelProps) {
   return (
-    <p className={`fc-note${medium ? ' fc-note--medium' : ''}`} data-tone={tone} data-testid={testId}>
+    <p className={`fc-note${medium ? ' fc-note--medium' : ''}`} data-tone={tone} data-testid={testId} role={alert ? 'alert' : undefined}>
       <Icon name={icon} size={11} className="fc-note__icon" />
       <span>{children}</span>
     </p>
@@ -51,7 +52,7 @@ export function ExportButton({ label, preparingLabel, exporting, blocked = false
       testId={testId}
       onClick={onClick}
     >
-      {exporting ? <span className="fc-spinner" aria-hidden /> : <Icon name="square.and.arrow.up" />}
+      <Icon name={exporting ? 'progress.view' : 'square.and.arrow.up'} />
       <span className="fc-export__label">{exporting ? preparingLabel : label}</span>
       <span className="fc-export__shortcut">{modKeyLabel()}E</span>
     </Button>
@@ -63,14 +64,20 @@ export function ExportButton({ label, preparingLabel, exporting, blocked = false
  * so it names the file (docs/plan.md, Abschnitt 6: prefix `Saved`).
  */
 export function FooterStatus({ exported, idle }: { exported: ExportedFile | null; idle: string }) {
-  if (!exported) return <p className="fc-footer__idle">{idle}</p>;
+  // The region stays mounted: a screen reader only announces changes inside a live region it knows.
   return (
-    <p className="fc-footer__saved" role="status">
-      <Icon name="checkmark.circle.fill" size={12} />
-      <span>
-        {exported.mode === 'saved' ? 'Saved' : 'Downloaded'} · {exported.filename}
-      </span>
-    </p>
+    <div className="fc-footer__status" role="status">
+      {exported ? (
+        <p className="fc-footer__saved">
+          <Icon name="checkmark.circle.fill" size={12} />
+          <span>
+            {exported.mode === 'saved' ? 'Saved' : 'Downloaded'} · {exported.filename}
+          </span>
+        </p>
+      ) : (
+        <p className="fc-footer__idle">{idle}</p>
+      )}
+    </div>
   );
 }
 

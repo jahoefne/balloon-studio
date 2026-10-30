@@ -13,14 +13,19 @@ export interface CheckboxProps {
   testId?: string | undefined;
   disabled?: boolean | undefined;
   className?: string | undefined;
+  /** 11: the preview toggles. 12 medium: the attachment and option toggles in the sidebars. */
+  size?: 11 | 12 | undefined;
+  /** `.font(.system(size:12,weight:.semibold))` on the lamp sidebars. */
+  strong?: boolean | undefined;
 }
 
-export function Checkbox({ checked, onChange, children, help, testId, disabled, className }: CheckboxProps) {
+export function Checkbox({ checked, onChange, children, help, testId, disabled, className, size = 11, strong = false }: CheckboxProps) {
   const helpInfo = useHelp(help);
+  const classes = ['ui-checkbox', size === 12 && 'ui-checkbox--12', strong && 'ui-checkbox--strong', className].filter(Boolean).join(' ');
   // The description sits outside the label so it does not join the accessible name.
   return (
     <>
-      <label className={className ? `ui-checkbox ${className}` : 'ui-checkbox'} title={helpInfo.title}>
+      <label className={classes} title={helpInfo.title}>
         <input
           type="checkbox"
           className="ui-checkbox__input"

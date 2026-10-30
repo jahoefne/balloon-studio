@@ -15,3 +15,6 @@ references/build/
 
 # Claude desktop app: session worktrees and launch config
 .claude/
+web/e2e/.results/
+web/test-results/
+web/playwright-report/

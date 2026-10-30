@@ -29,7 +29,9 @@
     "size": "node scripts/check-bundle-size.mjs",
     "lint": "eslint src/core",
     "test:browser": "vitest run --config vitest.browser.config.ts",
-    "bench": "vite build --config bench/vite.config.ts --logLevel warn && node node_modules/.bench/budgets.js"
+    "bench": "vite build --config bench/vite.config.ts --logLevel warn && node node_modules/.bench/budgets.js",
+    "e2e": "playwright test smoke",
+    "e2e:parity": "E2E_CORE=stub playwright test parity --project=chromium; E2E_CORE=real playwright test parity --project=chromium; node e2e/parity/report.mjs"
   },
   "dependencies": {
     "@noble/hashes": "^2.4.0",
@@ -52,6 +54,7 @@
     "zustand": "^5.0.16"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.8",

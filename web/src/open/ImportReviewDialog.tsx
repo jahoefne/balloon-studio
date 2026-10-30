@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { printfFixed } from '../core/swift/format';
 import type { MeshBuffers } from '../core/types';
 import { calibrated, Stage } from '../preview';
@@ -13,6 +13,19 @@ const PREVIEW_COLOR = calibrated(0.86, 0.43, 0.18);
 export function ImportReviewDialog() {
   const review = useImportStore((state) => state.review);
   const titleId = useId();
+  // Open… is disabled during the review, so the dialog has no element to give focus back to.
+  const reviewing = review !== null;
+  const wasReviewing = useRef(reviewing);
+  useEffect(() => {
+    const closed = wasReviewing.current && !reviewing;
+    wasReviewing.current = reviewing;
+    if (!closed) return;
+    // WebKit settles focus after close(), so look once the frame is through.
+    const frame = requestAnimationFrame(() => {
+      if (document.activeElement === document.body) document.querySelector<HTMLElement>('[data-testid="openFile"]')?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [reviewing]);
   const cancel = () => useImportStore.getState().setReview(null);
   return (
     <Dialog open={review !== null} onCancel={cancel} onDefault={() => useAppStore.getState().acceptReview()} labelledBy={titleId} className="open-review" testId="importReview">

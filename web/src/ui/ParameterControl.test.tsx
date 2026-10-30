@@ -32,6 +32,14 @@ function slider(title: string) {
 }
 
 describe('ParameterControl', () => {
+  it('draws one tick per step under the slider and names the value with its unit', () => {
+    const { container } = render(<ParameterControl title="Panel depth" value={4} onChange={() => {}} range={[0, 8]} step={0.5} unit="%" />);
+    const ticks = container.querySelector<HTMLElement>('.ui-parameter__ticks');
+    expect(ticks?.getAttribute('aria-hidden')).toBe('true');
+    expect(ticks?.style.getPropertyValue('--tick-spacing')).toBe(String(0.5 / 8));
+    expect(slider('Panel depth').getAttribute('aria-valuetext')).toBe('4 %');
+  });
+
   it('shows title, formatted value, unit, and labels field and slider', () => {
     render(
       <ParameterControl title="Relief depth" value={2.4} onChange={() => {}} range={[1.2, 4]} step={0.1} unit="mm" />,

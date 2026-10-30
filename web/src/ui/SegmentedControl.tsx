@@ -19,6 +19,8 @@ export interface SegmentedControlProps<T extends string | number> {
   onChange: (value: T) => void;
   testId?: string | undefined;
   className?: string | undefined;
+  /** As wide as its labels, like a Mac picker in a leading stack; otherwise it fills the row. */
+  hug?: boolean | undefined;
 }
 
 export function SegmentedControl<T extends string | number>({
@@ -28,6 +30,7 @@ export function SegmentedControl<T extends string | number>({
   onChange,
   testId,
   className,
+  hug = false,
 }: SegmentedControlProps<T>) {
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   const selectedIndex = options.findIndex((option) => option.value === value);
@@ -78,7 +81,7 @@ export function SegmentedControl<T extends string | number>({
     <div
       role="radiogroup"
       aria-label={label}
-      className={className ? `ui-segmented ${className}` : 'ui-segmented'}
+      className={['ui-segmented', hug && 'ui-segmented--hug', className].filter(Boolean).join(' ')}
       data-testid={testId}
     >
       {options.map((option, index) => {

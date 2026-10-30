@@ -12,14 +12,16 @@ export interface SwitchProps {
   help?: string | undefined;
   testId?: string | undefined;
   disabled?: boolean | undefined;
+  /** Next to its label, like the Mac's switch in a leading stack; otherwise at the row's end. */
+  hug?: boolean | undefined;
 }
 
-export function Switch({ checked, onChange, children, help, testId, disabled }: SwitchProps) {
+export function Switch({ checked, onChange, children, help, testId, disabled, hug = false }: SwitchProps) {
   const helpInfo = useHelp(help);
   // The description sits outside the label so it does not join the accessible name.
   return (
     <>
-      <label className="ui-switch" title={helpInfo.title}>
+      <label className={hug ? 'ui-switch ui-switch--hug' : 'ui-switch'} title={helpInfo.title}>
         <span className="ui-switch__label">{children}</span>
         <input
           type="checkbox"

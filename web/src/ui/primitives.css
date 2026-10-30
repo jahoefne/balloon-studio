@@ -5,8 +5,11 @@
  */
 @import './tokens.css';
 
+/* Fixed, not absolute: without a positioned ancestor an absolute copy would extend the page by its offset. */
 .ui-sr-only {
-  position: absolute;
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 1px;
   height: 1px;
   padding: 0;
@@ -61,7 +64,25 @@
   color: var(--ink-secondary);
   white-space: nowrap;
 }
+/* The Mac's stepped Slider draws a tick per step under the track; dense ones merge into a line. */
+.ui-parameter__track {
+  position: relative;
+  height: 16px;
+}
+.ui-parameter__ticks {
+  position: absolute;
+  right: 7px;
+  bottom: -2px;
+  left: 8px; /* half a thumb, so the ticks span the thumb's travel */
+  height: 2px;
+  background: linear-gradient(to right, rgb(0 0 0 / 0.3) 1px, transparent 1px) 0 0 / calc((100% - 1px) * var(--tick-spacing)) 100% repeat-x;
+  pointer-events: none;
+}
+.ui-parameter__slider:disabled + .ui-parameter__ticks {
+  opacity: 0.45;
+}
 .ui-parameter__slider {
+  display: block;
   width: 100%;
   height: 16px;
   margin: 0;
@@ -99,6 +120,13 @@
   text-overflow: ellipsis;
   cursor: pointer;
 }
+.ui-segmented--hug {
+  align-self: flex-start;
+  width: fit-content;
+}
+.ui-segmented--hug .ui-segmented__segment {
+  flex: 0 0 auto;
+}
 .ui-segmented__segment:hover:not(:disabled, [aria-checked='true']) {
   background: rgb(255 255 255 / 0.5);
 }
@@ -125,6 +153,9 @@
   justify-content: space-between;
   gap: var(--space-12);
   cursor: pointer;
+}
+.ui-switch--hug {
+  justify-content: flex-start;
 }
 .ui-switch__label {
   display: inline-flex;
@@ -183,6 +214,13 @@
   font-size: var(--text-11);
   cursor: pointer;
 }
+.ui-checkbox--12 {
+  font-size: var(--text-12);
+  font-weight: var(--weight-medium);
+}
+.ui-checkbox--strong {
+  font-weight: var(--weight-semibold);
+}
 .ui-checkbox__input {
   width: 14px;
   height: 14px;
@@ -224,6 +262,9 @@
   appearance: none;
   box-shadow: 0 0.5px 1px rgb(0 0 0 / 0.06);
   cursor: pointer;
+}
+.ui-select--hug .ui-select__control {
+  flex: 0 1 auto;
 }
 .ui-select__control:focus-visible {
   outline: 2px solid var(--accent);
@@ -389,6 +430,47 @@
   color: var(--ink-secondary);
 }
 
+/* The editors' own metric(): 8 pt title with tracking 0.7, 16 pt leading, unit 10 */
+.ui-metric-row--21 .ui-metric,
+.ui-metric-row--20 .ui-metric,
+.ui-metric-row--15 .ui-metric {
+  padding-left: var(--space-16);
+}
+.ui-metric-row--21 .ui-metric__title,
+.ui-metric-row--20 .ui-metric__title,
+.ui-metric-row--15 .ui-metric__title {
+  letter-spacing: 0.7px;
+}
+.ui-metric-row--21 .ui-metric__unit,
+.ui-metric-row--20 .ui-metric__unit,
+.ui-metric-row--18 .ui-metric__unit,
+.ui-metric-row--15 .ui-metric__unit {
+  font-size: var(--text-10);
+}
+.ui-metric-row--21 .ui-metric__number {
+  font-size: var(--text-21);
+}
+.ui-metric-row--20 .ui-metric__number {
+  font-size: 20px;
+}
+.ui-metric-row--15 .ui-metric__number {
+  font-size: 15px;
+}
+/* CloudEditor.swift:495-500: 9 pt semibold title, 18 pt semibold value, 15 pt on both sides */
+.ui-metric-row--18 .ui-metric {
+  padding-inline: var(--space-15);
+}
+.ui-metric-row--18 .ui-metric__title {
+  font-size: var(--text-9);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0;
+}
+.ui-metric-row--18 .ui-metric__number {
+  font-size: var(--text-18);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: normal;
+}
+
 /* AdviceRow: HStack(alignment:.top, spacing:9) { icon · title 11 semibold · text 11 } */
 .ui-advice {
   display: flex;
@@ -430,6 +512,20 @@
   display: inline-block;
   flex: 0 0 auto;
   vertical-align: -0.15em;
+}
+
+.ui-spinner {
+  animation: ui-spin 0.8s linear infinite;
+}
+@keyframes ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-spinner {
+    animation-duration: 2.4s;
+  }
 }
 
 /* Buttons */
