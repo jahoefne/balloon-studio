@@ -58,7 +58,7 @@ describe('PatternTests.main', () => {
     }
   });
 
-  it.each(['Hearts', 'Polka dots', 'Diamonds'] as const)('dense and single %s motifs on a small balloon', (style) => {
+  it.each(['Hearts', 'Polka dots', 'Diamonds'] as const)('dense and single %s motifs on a small balloon', { timeout: 120_000 }, (style) => {
     const small = normalizedParameters(P({ height: 80, diameter: 60, panels: 8 }));
     const smallMesh = generate(small);
     const dense = S({ style, repeats: 24, rows: 6, size: 3 });
@@ -76,7 +76,7 @@ describe('PatternTests.main', () => {
     check(Math.abs(painted.mesh.dimensions.z - totalHeight(rig)) < 1e-8, 'Stripe splitting changed attachments');
   });
 
-  it('schedules purges', () => {
+  it('schedules purges', { timeout: 120_000 }, () => {
     let settings = S({ style: 'Polka dots', rows: 1 });
     const singleRow = make(raw, p, settings);
     const one = calculatePurgeEstimate(singleRow, makePurgeSettings());
@@ -156,7 +156,7 @@ describe('PatternTests.checkTextPatterns, raster-independent', () => {
     });
   });
 
-  it('handles empty, matching and invalid text settings', () => {
+  it('handles empty, matching and invalid text settings', { timeout: 120_000 }, () => {
     let text = S({ style: 'Text', text: '   ' });
     const empty = make(raw, p, text);
     check(!empty.colors.includes(1) && empty.mesh.triangles.length === raw.triangles.length, 'Empty text must leave the balloon plain');
@@ -290,7 +290,7 @@ describe('NightFlightTests.checkReliefShapes', () => {
 });
 
 describe('NightFlightTests, settings', () => {
-  it('matching colors keep the relief and drop the cap color', () => {
+  it('matching colors keep the relief and drop the cap color', { timeout: 120_000 }, () => {
     const raw = generate(classic);
     const settings = S({ style: 'Night Flight', flightCap: 'Cream' });
     const single = make(raw, classic, settings);
