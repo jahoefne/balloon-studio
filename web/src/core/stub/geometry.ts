@@ -109,7 +109,7 @@ const balloon: BalloonGeometryApi = {
     paint(m, parameters, pattern);
     const multicolor = balloonParameters.pattern.derived(pattern, parameters).multicolor;
     const layers = Math.ceil(parameters.height / purge.layerHeight);
-    return { parameters, pattern, purge, mesh: toBuffers(m), estimate: stubEstimate(multicolor, pattern.bands, layers) };
+    return { parameters, pattern, purge, mesh: toBuffers(m), estimate: stubEstimate(multicolor, pattern.bands, layers), missingGlyphs: [] };
   },
   export(snapshot) {
     const parameters = normalizeBalloon(snapshot.parameters);
