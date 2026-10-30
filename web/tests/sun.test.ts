@@ -1,5 +1,5 @@
 // Ported from mac/Tests/SunTests.swift @ cbda68d, without the files written to .build/test-output
-// (:161-166, plan §8). The sculpted fronts of :55-57 wait for WP-K4c.
+// (:161-166, plan §8).
 // Without FULL the kits run at preview quality, with the default and the next two only.
 import { describe, it } from 'vitest';
 import { binarySTL } from '../src/core/io/binaryStl';
@@ -12,7 +12,7 @@ import { strideThrough } from '../src/core/swift/rounding';
 import { check } from '../src/core/testing/check';
 import { parseSTL } from '../src/core/testing/stl';
 import { CABLE_SIDES, SUN_STYLE_INFO, SUN_STYLES, WALL_LAMP_KIND_INFO, type CloudParameters, type SunStyle } from '../src/core/types';
-import { decoded, roundTripped, sameParameters, waitsFor } from './support/lamp';
+import { decoded, roundTripped, sameParameters } from './support/lamp';
 import { checkCloudFeatures, checkLEDLayout } from './support/lampFeatures';
 import { FULL, shardOf } from './support/tier';
 
@@ -193,7 +193,7 @@ describe('sun kits', () => {
     check(bytesEqual(backs[0]!, backs[1]!), 'Soft star and Cones no longer share their back');
   });
 
-  it.skipIf(waitsFor.k4c)('Soft star and Cones have their own fronts', () => {
+  it('Soft star and Cones have their own fronts', () => {
     const fronts = (['soft-star', 'cones'] as const).map((sunStyle) => binarySTL(new CloudKit({ ...defaults, sunStyle, surface: 'sculpted' }).front));
     check(!bytesEqual(fronts[0]!, fronts[1]!), 'Soft star and Cones have the same front');
   }, 300_000);
