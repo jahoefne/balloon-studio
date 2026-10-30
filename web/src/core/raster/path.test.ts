@@ -1,8 +1,10 @@
 // Tests for path.ts against CGPath. Element lists and bounding boxes marked "CoreGraphics" were
 // printed by CoreGraphics on macOS 26.6.2 (Swift 6.3.3) for the same calls.
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { affine, apply, rotation } from './affine';
-import { Path, type PathElement, type Rect, Verb } from './path';
+import { acos, atan2, cos, hypot, PI, sin } from '../swift/dmath';
+import { affine, apply, type Point, rotation } from './affine';
+import { fused, Path, type PathElement, type Rect, Verb } from './path';
 
 type Pt = [number, number];
 type Element = ['M' | 'L', Pt] | ['Q', Pt, Pt] | ['C', Pt, Pt, Pt] | ['Z'];
@@ -228,12 +230,263 @@ describe('Path transform and iteration', () => {
   });
 });
 
-describe('WP-R1 placeholders', () => {
-  it('throw until R1 implements them', () => {
+// CoreGraphics' own output for the 16 addArc probes of docs/plan.md §13 at three centres and radii, with and
+// without a current point before the arc (tests/fixtures/swift/probes/cg-arcs.swift).
+interface ArcProbe {
+  s: number;
+  e: number;
+  cw: boolean;
+  cx: number;
+  cy: number;
+  r: number;
+  prefix: boolean;
+  elements: number[][];
+  current: [number, number];
+}
+const ARC_PROBES: ArcProbe[] = readFileSync(new URL('../../../tests/fixtures/swift/cg-arcs.jsonl', import.meta.url), 'utf8')
+  .trim()
+  .split('\n')
+  .map((line) => JSON.parse(line) as ArcProbe);
+
+function flatElements(p: Path): number[][] {
+  const out: number[][] = [];
+  p.forEach((e) => out.push([e.type, ...e.points.flatMap((q) => [q.x, q.y])]));
+  return out;
+}
+
+function probePath(probe: ArcProbe): Path {
+  const p = new Path();
+  if (probe.prefix) p.moveTo(9, 9);
+  p.addArc({ x: probe.cx, y: probe.cy }, probe.r, probe.s, probe.e, probe.cw);
+  return p;
+}
+
+const ulpOf = (x: number): number => {
+  const bytes = new DataView(new ArrayBuffer(8));
+  bytes.setFloat64(0, Math.abs(x));
+  bytes.setBigUint64(0, bytes.getBigUint64(0) + 1n);
+  return bytes.getFloat64(0) - Math.abs(x);
+};
+
+describe('addArc (CGMutablePath.addArc)', () => {
+  function moon(): Path {
+    // NightFlight.swift:84-93 with center (0,0) and moonRadius 1.
+    const dx = 0.48;
+    const dy = 0.28;
+    const innerRadius = 0.89;
+    const d = hypot(dx, dy);
+    const direction = atan2(dy, dx);
+    const halfAngle = acos((1 - innerRadius * innerRadius + d * d) / (2 * d));
+    const upper = direction + halfAngle;
+    const lower = direction - halfAngle;
     const p = new Path();
-    expect(() => p.addArc({ x: 0, y: 0 }, 1, 0, 1, false)).toThrow('WP-R1');
-    expect(() => p.addEllipse({ x: 0, y: 0, width: 2, height: 1 })).toThrow('WP-R1');
-    expect(() => p.addRoundedRect({ x: 0, y: 0, width: 2, height: 1 }, 0.2, 0.2)).toThrow('WP-R1');
-    expect(() => Path.ellipse({ x: 0, y: 0, width: 2, height: 1 })).toThrow('WP-R1');
+    p.addArc({ x: 0, y: 0 }, 1, upper, lower + 2 * PI, false);
+    p.addArc({ x: dx, y: dy }, innerRadius, atan2(sin(lower) - dy, cos(lower) - dx), atan2(sin(upper) - dy, cos(upper) - dx), true);
+    p.close();
+    return p;
+  }
+
+  it('reproduces the moon element list of CoreGraphics bit for bit', () => {
+    expect(elements(moon())).toEqual(elements(build(MOON)));
+  });
+
+  it('has the same element structure as CoreGraphics in all 96 probes', () => {
+    const mismatched = ARC_PROBES.filter((probe) => flatElements(probePath(probe)).map((e) => e[0]).join() !== probe.elements.map((e) => e[0]).join());
+    expect(mismatched).toEqual([]);
+  });
+
+  it('stays within a few ULP of CoreGraphics in all 96 probes', () => {
+    let worst = 0;
+    for (const probe of ARC_PROBES) {
+      const scale = Math.abs(probe.cx) + Math.abs(probe.cy) + probe.r;
+      flatElements(probePath(probe)).forEach((element, i) => {
+        element.forEach((value, j) => {
+          const distance = Math.abs(value - (probe.elements[i]![j] as number)) / ulpOf(scale);
+          if (distance > worst) worst = distance;
+        });
+      });
+    }
+    expect(worst).toBeLessThanOrEqual(4);
+  });
+
+  it('normalises the sweep like CoreGraphics', () => {
+    const endOf = (s: number, e: number, cw: boolean): Point => {
+      const p = new Path();
+      p.addArc({ x: 0, y: 0 }, 1, s, e, cw);
+      return p.currentPoint!;
+    };
+    // 0→−0.5 ccw sweeps 5.783…, three quarters and a remainder, and ends at angle −0.5.
+    const short = new Path();
+    short.addArc({ x: 0, y: 0 }, 1, 0, -0.5, false);
+    expect(short.verbs).toEqual([Verb.Move, Verb.Cubic, Verb.Cubic, Verb.Cubic, Verb.Cubic]);
+    expect(endOf(0, -0.5, false).x).toBeCloseTo(Math.cos(0.5), 14);
+    expect(endOf(0, -0.5, false).y).toBeCloseTo(-Math.sin(0.5), 14);
+    // No clamp above 2π: 0→4π draws two turns.
+    const twice = new Path();
+    twice.addArc({ x: 0, y: 0 }, 1, 0, 4 * PI, false);
+    expect(twice.verbs.filter((v) => v === Verb.Cubic)).toHaveLength(8);
+  });
+
+  it('adds only the Move or Line for an empty sweep', () => {
+    const alone = new Path();
+    alone.addArc({ x: 0, y: 0 }, 1, 0, 0, false);
+    expect(elements(alone)).toEqual(['M(1,0)']);
+    const after = build([['M', [5, 5]]]);
+    after.addArc({ x: 0, y: 0 }, 1, 0, 0, true);
+    expect(elements(after)).toEqual(['M(5,5)', 'L(1,0)']);
+  });
+
+  it('draws a line to the arc start after a lone Move and after a Close (CoreGraphics: M+arc, MLZ+arc)', () => {
+    const lone = build([['M', [5, 5]]]);
+    lone.addArc({ x: 0, y: 0 }, 1, 0, PI / 2, false);
+    expect(lone.verbs).toEqual([Verb.Move, Verb.Line, Verb.Cubic]);
+    const closed = build([['M', [5, 5]], ['L', [6, 5]], ['Z']]);
+    closed.addArc({ x: 0, y: 0 }, 1, 0, PI / 2, false);
+    expect(closed.verbs).toEqual([Verb.Move, Verb.Line, Verb.Close, Verb.Line, Verb.Cubic]);
+  });
+
+  it('is empty for a whole cw turn after a current point, and a full circle without one (CoreGraphics)', () => {
+    const after = build([['M', [9, 9]]]);
+    after.addArc({ x: 0, y: 0 }, 1, 0, 2 * PI, true);
+    expect(after.verbs).toEqual([Verb.Move, Verb.Line]);
+    const alone = new Path();
+    alone.addArc({ x: 0, y: 0 }, 1, 0, 2 * PI, true);
+    expect(alone.verbs).toEqual([Verb.Move, Verb.Cubic, Verb.Cubic, Verb.Cubic, Verb.Cubic]);
+  });
+
+  it('maps every point by the transform (CoreGraphics: scale 2,1 → M(2,0) … (1.0806046117362795, 0.84…))', () => {
+    const p = new Path();
+    p.addArc({ x: 0, y: 0 }, 1, 0, 1, false, affine(2, 0, 0, 1, 0, 0));
+    expect(p.currentPoint!.x).toBeCloseTo(1.0806046117362795, 14);
+    expect(p.currentPoint!.y).toBeCloseTo(0.8414709848078965, 14);
+  });
+
+  it('fused agrees with an exact fused multiply-add', () => {
+    const exact = (a: number, b: number, c: number): number => {
+      const parts = (x: number): [bigint, number] => {
+        if (x === 0) return [0n, 0];
+        const bytes = new DataView(new ArrayBuffer(8));
+        bytes.setFloat64(0, x);
+        const bits = bytes.getBigUint64(0);
+        const exponent = Number((bits >> 52n) & 0x7ffn);
+        const fraction = bits & ((1n << 52n) - 1n);
+        const mantissa = exponent === 0 ? fraction : fraction | (1n << 52n);
+        return [bits >> 63n === 1n ? -mantissa : mantissa, (exponent === 0 ? 1 : exponent) - 1075];
+      };
+      const [ma, ea] = parts(a);
+      const [mb, eb] = parts(b);
+      const [mc, ec] = parts(c);
+      const e = Math.min(ea + eb, ec);
+      let m = ((ma * mb) << BigInt(ea + eb - e)) + (mc << BigInt(ec - e));
+      if (m === 0n) return 0;
+      const negative = m < 0n;
+      if (negative) m = -m;
+      const shift = m.toString(2).length - 53;
+      let exponent = e;
+      if (shift > 0) {
+        const rest = m & ((1n << BigInt(shift)) - 1n);
+        const half = 1n << BigInt(shift - 1);
+        m >>= BigInt(shift);
+        if (rest > half || (rest === half && (m & 1n) === 1n)) m += 1n;
+        exponent += shift;
+      }
+      const value = Number(m) * Math.pow(2, exponent);
+      return negative ? -value : value;
+    };
+    let seed = 12345;
+    const next = (): number => {
+      seed = (seed * 1103515245 + 12345) % 2147483648;
+      return (seed / 2147483648 - 0.5) * 16;
+    };
+    for (let i = 0; i < 20000; i++) {
+      const a = next();
+      const b = next();
+      const c = a * b * (1 + next() * 1e-3);
+      expect(Math.abs(fused(a, b, c) - exact(a, b, c))).toBeLessThanOrEqual(ulpOf(exact(a, b, c)));
+    }
+    expect(fused(0.1, 10, -1)).toBe(exact(0.1, 10, -1));
+  });
+});
+
+describe('addEllipse (CGPath(ellipseIn:))', () => {
+  it('reproduces the 20×10 element list of CoreGraphics exactly', () => {
+    const p = Path.ellipse({ x: 0, y: 0, width: 20, height: 10 });
+    expect(p.coords[3]).toBe(7.761423749);
+    expect(elements(p)).toEqual(elements(build(ELLIPSE_20x10)));
+  });
+
+  it('standardises negative rects and replaces a lone Move (CoreGraphics: ellipse-neg, M+ellipse)', () => {
+    expect(elements(Path.ellipse({ x: 20, y: 10, width: -20, height: -10 }))).toEqual(elements(build(ELLIPSE_20x10)));
+    const p = build([['M', [5, 5]]]);
+    p.addEllipse({ x: 0, y: 0, width: 2, height: 2 });
+    expect(p.verbs).toEqual([Verb.Move, Verb.Cubic, Verb.Cubic, Verb.Cubic, Verb.Cubic, Verb.Close]);
+    expect(p.coords.slice(0, 2)).toEqual([2, 1]);
+    expect(p.currentPoint).toEqual({ x: 2, y: 1 });
+  });
+
+  it('passes through the 4 extreme points', () => {
+    const rect = { x: -3.5, y: 12.25, width: 7.75, height: 2.5 };
+    const p = Path.ellipse(rect);
+    const ends: Point[] = [];
+    p.forEach((e) => {
+      if (e.type === Verb.Move) ends.push(e.points[0]!);
+      if (e.type === Verb.Cubic) ends.push(e.points[2]!);
+    });
+    const midX = rect.x + rect.width / 2;
+    const midY = rect.y + rect.height / 2;
+    const expected = [
+      [rect.x + rect.width, midY],
+      [midX, rect.y + rect.height],
+      [rect.x, midY],
+      [midX, rect.y],
+      [rect.x + rect.width, midY],
+    ];
+    ends.forEach((q, i) => {
+      expect(Math.abs(q.x - expected[i]![0]!)).toBeLessThanOrEqual(1e-9);
+      expect(Math.abs(q.y - expected[i]![1]!)).toBeLessThanOrEqual(1e-9);
+    });
+    const bounds = p.pathBounds()!;
+    expect(Math.abs(bounds.x - rect.x)).toBeLessThanOrEqual(1e-9);
+    expect(Math.abs(bounds.y - rect.y)).toBeLessThanOrEqual(1e-9);
+    expect(Math.abs(bounds.width - rect.width)).toBeLessThanOrEqual(1e-9);
+    expect(Math.abs(bounds.height - rect.height)).toBeLessThanOrEqual(1e-9);
+  });
+
+  it('maps every point by the transform', () => {
+    const m = affine(2, 0, 0, 3, 1, -1);
+    const p = Path.ellipse({ x: 0, y: 0, width: 20, height: 10 }, m);
+    const q = Path.ellipse({ x: 0, y: 0, width: 20, height: 10 }).transformed(m);
+    expect(p.coords).toEqual(q.coords);
+  });
+});
+
+describe('addRoundedRect (CGPath(roundedRect:))', () => {
+  // CoreGraphics: CGPath(roundedRect: (0,0,20,10), cornerWidth: 3, cornerHeight: 2), including its 1e-15 noise.
+  const ROUNDED: number[][] = [
+    [Verb.Move, 20, 5],
+    [Verb.Line, 20, 8],
+    [Verb.Cubic, 20, 9.1045694996, 18.656854249400002, 10, 17, 10],
+    [Verb.Line, 3, 10.000000000000002],
+    [Verb.Cubic, 1.3431457506000002, 10.000000000000002, 1.0145306265907002e-16, 9.104569499600002, 0, 8.000000000000002],
+    [Verb.Line, 6.661338147750939e-16, 1.9999999999999998],
+    [Verb.Cubic, 8.690399400932339e-16, 0.8954305003999998, 1.3431457506000015, -1.3527075021209336e-16, 3.0000000000000013, 0],
+    [Verb.Line, 17, 0],
+    [Verb.Cubic, 18.6568542494, 6.763537510604668e-17, 20, 0.8954305004, 20, 2],
+    [Verb.Close],
+  ];
+
+  it('has the element order of CoreGraphics and its values up to its rotation noise', () => {
+    const got = flatElements(Path.roundedRect({ x: 0, y: 0, width: 20, height: 10 }, 3, 2));
+    expect(got.map((e) => e[0])).toEqual(ROUNDED.map((e) => e[0]));
+    got.forEach((element, i) => element.forEach((value, j) => expect(Math.abs(value - ROUNDED[i]![j]!)).toBeLessThanOrEqual(4e-15)));
+  });
+
+  it('degrades to CGPath(rect:) for zero corners (CoreGraphics: M(0,0) L(20,0) L(20,10) L(0,10) Z)', () => {
+    expect(elements(Path.roundedRect({ x: 0, y: 0, width: 20, height: 10 }, 0, 0))).toEqual(['M(0,0)', 'L(20,0)', 'L(20,10)', 'L(0,10)', 'Z']);
+    expect(elements(Path.roundedRect({ x: 20, y: 10, width: -20, height: -10 }, 0, 0))).toEqual(['M(0,0)', 'L(20,0)', 'L(20,10)', 'L(0,10)', 'Z']);
+  });
+
+  it('ends at the start point (CoreGraphics: current (20,5))', () => {
+    expect(Path.roundedRect({ x: 0, y: 0, width: 20, height: 10 }, 3, 2).currentPoint).toEqual({ x: 20, y: 5 });
   });
 });
