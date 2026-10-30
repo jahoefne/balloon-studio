@@ -13,6 +13,7 @@
     "useUnknownInCatchVariables": true,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "noEmit": true,
     "types": ["vite/client", "vitest/globals", "node"]

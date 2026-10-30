@@ -1,0 +1,34 @@
+{
+  "antialias" : false,
+  "aspect" : 0.84918957011980267,
+  "bounds" : {
+    "height" : 69.287109375,
+    "width" : 58.837890625,
+    "x" : 4.931640625,
+    "y" : 0
+  },
+  "case" : "text-serif-f",
+  "font" : "Serif",
+  "fontPostScriptName" : "Gelasio-Bold",
+  "fontSource" : "file:Gelasio-Bold.ttf",
+  "glyphCount" : 1,
+  "height" : 256,
+  "rowOrder" : "row 0 is the bottom of the glyphs",
+  "runs" : [
+    {
+      "font" : "Gelasio-Bold",
+      "glyphs" : [
+        96
+      ],
+      "positions" : [
+        [
+          0,
+          0
+        ]
+      ]
+    }
+  ],
+  "sha256" : "5b0120707d49bea355a98426151c420541e0561909a1231c365b8d0d347f38d3",
+  "text" : "F",
+  "width" : 218
+}

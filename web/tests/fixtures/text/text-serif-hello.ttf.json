@@ -1,0 +1,54 @@
+{
+  "antialias" : false,
+  "aspect" : 3.5335868187579216,
+  "bounds" : {
+    "height" : 77.05078125,
+    "width" : 272.265625,
+    "x" : 4.931640625,
+    "y" : -1.416015625
+  },
+  "case" : "text-serif-hello",
+  "font" : "Serif",
+  "fontPostScriptName" : "Gelasio-Bold",
+  "fontSource" : "file:Gelasio-Bold.ttf",
+  "glyphCount" : 5,
+  "height" : 256,
+  "rowOrder" : "row 0 is the bottom of the glyphs",
+  "runs" : [
+    {
+      "font" : "Gelasio-Bold",
+      "glyphs" : [
+        108,
+        386,
+        476,
+        476,
+        505
+      ],
+      "positions" : [
+        [
+          0,
+          0
+        ],
+        [
+          91.30859375,
+          0
+        ],
+        [
+          148.486328125,
+          0
+        ],
+        [
+          182.91015625,
+          0
+        ],
+        [
+          217.333984375,
+          0
+        ]
+      ]
+    }
+  ],
+  "sha256" : "9533e42368c908950e1a212b8ed1a8def026a5c6c4ce053ecc6ce34abfb3be38",
+  "text" : "Hello",
+  "width" : 905
+}

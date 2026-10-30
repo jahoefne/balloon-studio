@@ -1,0 +1,54 @@
+{
+  "antialias" : false,
+  "aspect" : 3.3319502074688803,
+  "bounds" : {
+    "height" : 72.299999999999997,
+    "width" : 240.90000000000003,
+    "x" : 7.7000000000000002,
+    "y" : -1
+  },
+  "case" : "text-rounded-hello",
+  "font" : "Rounded",
+  "fontPostScriptName" : "Nunito-Bold",
+  "fontSource" : "file:Nunito-Bold.ttf",
+  "glyphCount" : 5,
+  "height" : 256,
+  "rowOrder" : "row 0 is the bottom of the glyphs",
+  "runs" : [
+    {
+      "font" : "Nunito-Bold",
+      "glyphs" : [
+        80,
+        287,
+        351,
+        351,
+        373
+      ],
+      "positions" : [
+        [
+          0,
+          0
+        ],
+        [
+          77.300000000000011,
+          0
+        ],
+        [
+          131.5,
+          0
+        ],
+        [
+          163.40000000000001,
+          0
+        ],
+        [
+          194.80000000000001,
+          0
+        ]
+      ]
+    }
+  ],
+  "sha256" : "bc80e4e1aa00904cdea9808215c04e8ff663230faa77b73c0bef21b74f8fbb0e",
+  "text" : "Hello",
+  "width" : 853
+}

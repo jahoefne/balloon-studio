@@ -2,8 +2,10 @@
 
 import type { BasketDerived, BasketParameterApi } from '../api';
 import { BASKET_STYLES, type BalloonParameters, type BasketParameters } from '../types';
-import { container, makeCodec, required } from './json';
-import { intTrunc, rounded, swiftMax, swiftMin } from './swiftCompat';
+import { keyedCodec } from '../codec';
+import type { JSONKeyedContainer } from '../swift/json';
+import { swiftMax, swiftMin } from '../swift/minmax';
+import { intTrunc, rounded } from '../swift/rounding';
 
 const defaults: BasketParameters = Object.freeze({
   style: 'wicker',
@@ -42,23 +44,22 @@ export const normalizeBasket = (input: BasketParameters): BasketParameters => {
 };
 
 /** Synthesized Codable: every key is required. */
-const decode = (value: unknown): BasketParameters => {
-  const c = container(value);
+const decode = (c: JSONKeyedContainer): BasketParameters => {
   return {
-    style: required.enum(c, 'style', BASKET_STYLES),
-    width: required.double(c, 'width'),
-    depth: required.double(c, 'depth'),
-    height: required.double(c, 'height'),
-    wallThickness: required.double(c, 'wallThickness'),
-    cordClearance: required.double(c, 'cordClearance'),
-    texture: required.double(c, 'texture'),
+    style: c.enumeration('style', BASKET_STYLES),
+    width: c.double('width'),
+    depth: c.double('depth'),
+    height: c.double('height'),
+    wallThickness: c.double('wallThickness'),
+    cordClearance: c.double('cordClearance'),
+    texture: c.double('texture'),
   };
 };
 
 export const basketParameters: BasketParameterApi = {
   defaults,
   normalize: normalizeBasket,
-  codec: makeCodec(decode),
+  codec: keyedCodec(decode),
   filename: basketFilename,
   derived,
   match: (p: BasketParameters, balloon: BalloonParameters): BasketParameters => ({

@@ -6,8 +6,10 @@ import type { FigureDerived, FigureOutlineInfo, FigureParameterApi } from '../ap
 import { FIGURE_STYLE_INFO, FIGURE_STYLES, FIGURE_SURFACES, type FigureParameters, type FigureStyle, type Range, type Vec2 } from '../types';
 import { acos, atan2, cos, PI, pow, sin } from '../swift/dmath';
 import { lampProfile, lampRadius } from './cloud';
-import { container, ifPresent, lenientEnum, makeCodec } from './json';
-import { intTrunc, rounded, swiftMax, swiftMin } from './swiftCompat';
+import { keyedCodec, lenientEnumeration } from '../codec';
+import type { JSONKeyedContainer } from '../swift/json';
+import { swiftMax, swiftMin } from '../swift/minmax';
+import { intTrunc, rounded } from '../swift/rounding';
 
 const v = (x: number, y: number): Vec2 => ({ x, y });
 
@@ -231,19 +233,18 @@ export const normalizeFigure = (input: FigureParameters): FigureParameters => {
 };
 
 /** FigureGeometry.swift:192-204: unknown style or surface names fall back. */
-const decode = (value: unknown): FigureParameters => {
-  const c = container(value);
+const decode = (c: JSONKeyedContainer): FigureParameters => {
   const d = defaults;
   return {
-    style: lenientEnum(c, 'style', FIGURE_STYLES) ?? d.style,
-    height: ifPresent.double(c, 'height') ?? d.height,
-    surface: lenientEnum(c, 'surface', FIGURE_SURFACES) ?? d.surface,
-    edge: ifPresent.double(c, 'edge') ?? d.edge,
-    dome: ifPresent.double(c, 'dome') ?? d.dome,
-    doubleSided: ifPresent.bool(c, 'doubleSided') ?? d.doubleSided,
-    holeDiameter: ifPresent.double(c, 'holeDiameter') ?? d.holeDiameter,
-    holeMargin: ifPresent.double(c, 'holeMargin') ?? d.holeMargin,
-    chainHole: ifPresent.bool(c, 'chainHole') ?? d.chainHole,
+    style: lenientEnumeration(c, 'style', FIGURE_STYLES) ?? d.style,
+    height: c.doubleIfPresent('height') ?? d.height,
+    surface: lenientEnumeration(c, 'surface', FIGURE_SURFACES) ?? d.surface,
+    edge: c.doubleIfPresent('edge') ?? d.edge,
+    dome: c.doubleIfPresent('dome') ?? d.dome,
+    doubleSided: c.boolIfPresent('doubleSided') ?? d.doubleSided,
+    holeDiameter: c.doubleIfPresent('holeDiameter') ?? d.holeDiameter,
+    holeMargin: c.doubleIfPresent('holeMargin') ?? d.holeMargin,
+    chainHole: c.boolIfPresent('chainHole') ?? d.chainHole,
   };
 };
 
@@ -251,7 +252,7 @@ export const figureParameters: FigureParameterApi = {
   defaults,
   ranges,
   normalize: normalizeFigure,
-  codec: makeCodec(decode),
+  codec: keyedCodec(decode),
   filename: figureFilename,
   setFilename: figureSetFilename,
   derived,

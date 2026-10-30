@@ -103,8 +103,10 @@ It fails on `mismatch` and `unverified`; `ulp` and `equivalent` pass. It prints 
 
 The relief and text groups are exempt from the byte criterion (plan §1), so the grid leaves `3D/3dmodel.model` and `Metadata/balloon-studio.txt` out of those 31 cases (`skipEntries`). With injected Swift rasters, WP-K3 calls `expectReference` without that option.
 
-**`core/real` (WP-K9) has to honor two options the `CoreApi` does not declare yet** (`GridRunOptions` in `exportCase.ts`): `quality` for the 59 preview-quality cases, and `ignoreExportProblem` for `clip-small-head`, which the app refuses to export but the reference keeps.
+`core/real` honors two `ExportOptions` the app does not use (`GridRunOptions` in `exportCase.ts`): `quality` for the 59 preview-quality cases, and `ignoreExportProblem` for `clip-small-head`, which the app refuses to export but the reference keeps.
+
+**Skip list** (`skipList.ts`): the parts `core/real` still takes from the stub (`cloud`, `sun`, `pattern`, the groups `relief`, `text`) are left out and count as `skipped (WP-K3)` / `skipped (WP-K4)` in the table and in `summary.skipped`. WP-K3 and WP-K4 delete their lines when they hook into `core/real`.
 
 ## Files
 
-`index.ts` public API · `compare.ts` entry points and dispatch · `stlDiff.ts`, `solidDiff.ts`, `zipDiff.ts`, `threeMfDiff.ts`, `jsonDiff.ts`, `textDiff.ts` the comparisons · `equivalentCases.ts` the allowlist · `manifest.ts` manifest and grid · `refs.ts` reference bodies · `report.ts` table and JSON · `result.ts` `DiffResult` · `exportCase.ts` grid case to `CoreApi` call · `fixtures.ts` test fixtures · `*.test.ts` self-tests (`pack.test.ts` needs the pack and is skipped without it).
+`index.ts` public API · `skipList.ts` the parts not compared yet · `compare.ts` entry points and dispatch · `stlDiff.ts`, `solidDiff.ts`, `zipDiff.ts`, `threeMfDiff.ts`, `jsonDiff.ts`, `textDiff.ts` the comparisons · `equivalentCases.ts` the allowlist · `manifest.ts` manifest and grid · `refs.ts` reference bodies · `report.ts` table and JSON · `result.ts` `DiffResult` · `exportCase.ts` grid case to `CoreApi` call · `fixtures.ts` test fixtures · `*.test.ts` self-tests (`pack.test.ts` needs the pack and is skipped without it).

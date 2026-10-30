@@ -3,8 +3,11 @@
 import type { RingDerived, RingParameterApi } from '../api';
 import type { Range, RingParameters } from '../types';
 import { PI } from '../swift/dmath';
-import { container, ifPresent, makeCodec } from './json';
-import { intTrunc, printfG, swiftMax, swiftMin } from './swiftCompat';
+import { keyedCodec } from '../codec';
+import type { JSONKeyedContainer } from '../swift/json';
+import { formatG } from '../swift/format';
+import { swiftMax, swiftMin } from '../swift/minmax';
+import { intTrunc } from '../swift/rounding';
 
 const defaults: RingParameters = Object.freeze({
   diameter: 240,
@@ -82,7 +85,7 @@ const outerProfile = (p: RingParameters): { radius: number; z: number }[] => {
 };
 
 export const ringFilename = (p: RingParameters): string => {
-  if (p.reflectedLED) return `Mobile-Ring-${intTrunc(p.diameter)}mm-${printfG(p.stripWidth)}mm-uplight-${p.segmented ? 'kit.zip' : 'solid.stl'}`;
+  if (p.reflectedLED) return `Mobile-Ring-${intTrunc(p.diameter)}mm-${formatG(p.stripWidth)}mm-uplight-${p.segmented ? 'kit.zip' : 'solid.stl'}`;
   return p.segmented ? `Mobile-Ring-${intTrunc(p.diameter)}mm-6-section-kit.zip` : `Mobile-Ring-${intTrunc(p.diameter)}mm-3-balloons.stl`;
 };
 
@@ -134,21 +137,20 @@ export const normalizeRing = (input: RingParameters): RingParameters => {
 };
 
 /** RingGeometry.swift:97-110 */
-const decode = (value: unknown): RingParameters => {
-  const c = container(value);
+const decode = (c: JSONKeyedContainer): RingParameters => {
   const d = defaults;
   return {
-    diameter: ifPresent.double(c, 'diameter') ?? d.diameter,
-    bandWidth: ifPresent.double(c, 'bandWidth') ?? d.bandWidth,
-    height: ifPresent.double(c, 'height') ?? d.height,
-    cordClearance: ifPresent.double(c, 'cordClearance') ?? d.cordClearance,
-    ledClearance: ifPresent.double(c, 'ledClearance') ?? d.ledClearance,
-    channelDepth: ifPresent.double(c, 'channelDepth') ?? d.channelDepth,
-    segmented: ifPresent.bool(c, 'segmented') ?? false,
-    jointFit: ifPresent.double(c, 'jointFit') ?? 0.3,
-    reflectedLED: ifPresent.bool(c, 'reflectedLED') ?? false,
-    stripWidth: ifPresent.double(c, 'stripWidth') ?? 3.5,
-    stripThickness: ifPresent.double(c, 'stripThickness') ?? 3,
+    diameter: c.doubleIfPresent('diameter') ?? d.diameter,
+    bandWidth: c.doubleIfPresent('bandWidth') ?? d.bandWidth,
+    height: c.doubleIfPresent('height') ?? d.height,
+    cordClearance: c.doubleIfPresent('cordClearance') ?? d.cordClearance,
+    ledClearance: c.doubleIfPresent('ledClearance') ?? d.ledClearance,
+    channelDepth: c.doubleIfPresent('channelDepth') ?? d.channelDepth,
+    segmented: c.boolIfPresent('segmented') ?? false,
+    jointFit: c.doubleIfPresent('jointFit') ?? 0.3,
+    reflectedLED: c.boolIfPresent('reflectedLED') ?? false,
+    stripWidth: c.doubleIfPresent('stripWidth') ?? 3.5,
+    stripThickness: c.doubleIfPresent('stripThickness') ?? 3,
   };
 };
 
@@ -157,7 +159,7 @@ export const ringParameters: RingParameterApi = {
   presets: Object.freeze({ large, solid }),
   outerLip,
   normalize: normalizeRing,
-  codec: makeCodec(decode),
+  codec: keyedCodec(decode),
   filename: ringFilename,
   derived,
 };

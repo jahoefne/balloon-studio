@@ -424,34 +424,36 @@ func dumpRasters(_ c: GridCase, _ writer: Writer) throws -> [[String: Any]] {
         ] as [String: Any])))
     } else {
         guard s.style == .text else { throw MeshError.invalid("text case without the Text style") }
-        let source = writer.options.fontFiles[s.textFont.rawValue] ?? writer.options.fontFiles["*"]
-        let typeface: CTFont
-        if let source {
+        // The 3MF exports always use the Apple fonts, so WP-K3's mesh proof needs these masks: <id>.pgm stays the app's own.
+        let system = CTFontCreateWithName(s.textFont.postScriptName as CFString, 100, nil)
+        guard let dump = renderText(s.text, typeface: system) else { throw MeshError.invalid("text renders no mask") }
+        // Same font, same code: the dump must be the mask the 3MF export used.
+        guard let mask = BalloonTextMask(text: s.text, font: s.textFont), mask.width == dump.width, mask.height == dump.height,
+              mask.pixels == dump.pixels, mask.aspect == dump.aspect
+        else { throw MeshError.invalid("text dump differs from BalloonTextMask") }
+        func append(_ dump: TextDump, typeface: CTFont, stem: String, fontSource: String) throws {
+            let image = pgm(dump.width, dump.height, dump.pixels)
+            files.append(("\(stem).pgm", image))
+            files.append(("\(stem).json", try jsonData([
+                "case": c.id, "text": s.text, "font": s.textFont.rawValue,
+                "fontSource": fontSource,
+                "fontPostScriptName": CTFontCopyPostScriptName(typeface) as String,
+                "width": dump.width, "height": dump.height, "aspect": dump.aspect, "glyphCount": dump.glyphCount,
+                "bounds": ["x": Double(dump.bounds.minX), "y": Double(dump.bounds.minY), "width": Double(dump.bounds.width), "height": Double(dump.bounds.height)],
+                "runs": dump.runs, "antialias": false,
+                "rowOrder": "row 0 is the bottom of the glyphs", "sha256": sha256(image)
+            ] as [String: Any])))
+        }
+        try append(dump, typeface: system, stem: c.id, fontSource: "system:\(s.textFont.postScriptName)")
+        // WP-R3 compares its TypeScript masks with <id>.ttf.pgm: the bundled font through CoreText and CoreGraphics.
+        if let source = writer.options.fontFiles[s.textFont.rawValue] ?? writer.options.fontFiles["*"] {
             guard let data = FileManager.default.contents(atPath: source),
                   let descriptor = CTFontManagerCreateFontDescriptorFromData(data as CFData)
             else { throw MeshError.invalid("cannot load the font file \(source)") }
-            typeface = CTFontCreateWithFontDescriptor(descriptor, 100, nil)
-        } else {
-            typeface = CTFontCreateWithName(s.textFont.postScriptName as CFString, 100, nil)
+            let typeface = CTFontCreateWithFontDescriptor(descriptor, 100, nil)
+            guard let dump = renderText(s.text, typeface: typeface) else { throw MeshError.invalid("text renders no mask") }
+            try append(dump, typeface: typeface, stem: "\(c.id).ttf", fontSource: "file:\((source as NSString).lastPathComponent)")
         }
-        guard let dump = renderText(s.text, typeface: typeface) else { throw MeshError.invalid("text renders no mask") }
-        if source == nil {
-            // Same font, same code: the dump must be the mask the 3MF export used.
-            guard let mask = BalloonTextMask(text: s.text, font: s.textFont), mask.width == dump.width, mask.height == dump.height,
-                  mask.pixels == dump.pixels, mask.aspect == dump.aspect
-            else { throw MeshError.invalid("text dump differs from BalloonTextMask") }
-        }
-        let image = pgm(dump.width, dump.height, dump.pixels)
-        files.append(("\(c.id).pgm", image))
-        files.append(("\(c.id).json", try jsonData([
-            "case": c.id, "text": s.text, "font": s.textFont.rawValue,
-            "fontSource": source.map { "file:\(($0 as NSString).lastPathComponent)" } ?? "system:\(s.textFont.postScriptName)",
-            "fontPostScriptName": CTFontCopyPostScriptName(typeface) as String,
-            "width": dump.width, "height": dump.height, "aspect": dump.aspect, "glyphCount": dump.glyphCount,
-            "bounds": ["x": Double(dump.bounds.minX), "y": Double(dump.bounds.minY), "width": Double(dump.bounds.width), "height": Double(dump.bounds.height)],
-            "runs": dump.runs, "antialias": false,
-            "rowOrder": "row 0 is the bottom of the glyphs", "sha256": sha256(image)
-        ] as [String: Any])))
     }
     return try files.map { name, data in
         try writer.write(data, "rasters/\(name)")
@@ -675,6 +677,43 @@ func stamp(_ arguments: [String]) throws {
     try writeJSON(manifest, to: URL(fileURLWithPath: outPath.isEmpty ? manifestPath : outPath))
 }
 
+// Takes the `rasters` lists of a partial run (--only) into an existing manifest. Refuses when anything else of a case
+// differs (durationMs aside) or a dump the manifest already lists came out differently: the run must only add dumps.
+func mergeRasters(_ arguments: [String]) throws {
+    var manifestPath = "", fromPath = ""
+    var i = 0
+    while i < arguments.count {
+        let flag = arguments[i], value = i+1 < arguments.count ? arguments[i+1] : ""
+        switch flag {
+        case "--manifest": manifestPath = value
+        case "--from": fromPath = value
+        default: fail("merge-rasters: unknown option \(flag)")
+        }
+        i += 2
+    }
+    func read(_ path: String) throws -> [String: Any] {
+        guard let data = FileManager.default.contents(atPath: path),
+              let object = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { fail("merge-rasters: cannot read \(path)") }
+        return object
+    }
+    var manifest = try read(manifestPath)
+    guard var cases = manifest["cases"] as? [[String: Any]],
+          let updates = try read(fromPath)["cases"] as? [[String: Any]] else { fail("merge-rasters: no cases") }
+    for update in updates {
+        guard let id = update["id"] as? String, let at = cases.firstIndex(where: { $0["id"] as? String == id }) else { fail("merge-rasters: unknown case \(update["id"] ?? "")") }
+        let ignored = ["rasters", "durationMs"]
+        let old = cases[at].filter { !ignored.contains($0.key) }, new = update.filter { !ignored.contains($0.key) }
+        guard (old as NSDictionary).isEqual(to: new) else { fail("merge-rasters: \(id) changed beyond its rasters") }
+        let before = cases[at]["rasters"] as? [[String: Any]] ?? [], after = update["rasters"] as? [[String: Any]] ?? []
+        for dump in before where !after.contains(where: { ($0 as NSDictionary).isEqual(to: dump) }) {
+            fail("merge-rasters: \(id): \(dump["name"] ?? "") came out differently")
+        }
+        cases[at]["rasters"] = after
+    }
+    manifest["cases"] = cases
+    try writeJSON(manifest, to: URL(fileURLWithPath: manifestPath))
+}
+
 // MARK: - Main
 
 func sourcesFacts(_ directory: String?) -> [String: Any] {
@@ -701,6 +740,7 @@ struct ReferenceExporter {
         setbuf(stdout, nil)
         var arguments = Array(CommandLine.arguments.dropFirst())
         if arguments.first == "stamp" { try stamp(Array(arguments.dropFirst())); return }
+        if arguments.first == "merge-rasters" { try mergeRasters(Array(arguments.dropFirst())); return }
         var options = Options(), sources: String? = nil, toolchain: [String: Any] = [:]
         func value() -> String {
             guard arguments.count > 1 else { fail("missing value for \(arguments[0])") }
@@ -736,7 +776,7 @@ struct ReferenceExporter {
         #endif
         if options.geometryOnly { options.rasters = false; options.tierA = nil }
         guard !options.cases.isEmpty, !options.out.isEmpty else {
-            fail("usage: reference-exporter --cases grid.json --out DIR [--only id,…] [--jobs N] [--rasters] [--geometry-only] [--tier-a DIR] [--font-file [Font=]file.ttf] [--sources DIR]\n       reference-exporter stamp --manifest FILE --release TAG --asset FILE URL … [--out FILE]")
+            fail("usage: reference-exporter --cases grid.json --out DIR [--only id,…] [--jobs N] [--rasters] [--geometry-only] [--tier-a DIR] [--font-file [Font=]file.ttf] [--sources DIR]\n       reference-exporter stamp --manifest FILE --release TAG --asset FILE URL … [--out FILE]\n       reference-exporter merge-rasters --manifest FILE --from FILE")
         }
         guard let gridData = FileManager.default.contents(atPath: options.cases),
               let grid = try JSONSerialization.jsonObject(with: gridData) as? [String: Any],

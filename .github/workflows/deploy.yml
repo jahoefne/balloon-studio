@@ -43,6 +43,24 @@ jobs:
         with:
           path: web/dist
 
+  # The real core behind #core. Pages keeps deploying the stub above; switching is a separate decision.
+  real-core:
+    runs-on: ubuntu-latest
+    env:
+      VITE_CORE: real
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck -- --customConditions balloon-core-real
+      - run: npm test
+      - run: npm run build
+      - run: npm run size
+
   deploy:
     if: github.ref == 'refs/heads/main'
     needs: build

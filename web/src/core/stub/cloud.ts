@@ -24,8 +24,11 @@ import {
   type WallLampKind,
 } from '../types';
 import { atan2, cos, hypot, PI, sin } from '../swift/dmath';
-import { container, ifPresent, lenientEnum, makeCodec } from './json';
-import { intTrunc, printfFixed, swiftMax, swiftMin, swiftMin3 } from './swiftCompat';
+import { keyedCodec, lenientEnumeration } from '../codec';
+import type { JSONKeyedContainer } from '../swift/json';
+import { formatFixed } from '../swift/format';
+import { swiftMax, swiftMin, swiftMin3 } from '../swift/minmax';
+import { intTrunc } from '../swift/rounding';
 
 // --- Profiles ----------------------------------------------------------------
 
@@ -334,7 +337,7 @@ export const lampDisplayName = (p: CloudParameters): string =>
   p.kind === 'sun' ? `Sun · ${SUN_STYLE_INFO[p.sunStyle].title}` : `${CLOUD_STYLE_INFO[p.style].title}${p.mirrored ? ' · mirrored' : ''}`;
 
 export const lampFilename = (p: CloudParameters): string => {
-  const surfaceSuffix = p.surface === 'sculpted' ? `-3d-${printfFixed(p.surfaceDepth, 1)}mm` : '';
+  const surfaceSuffix = p.surface === 'sculpted' ? `-3d-${formatFixed(p.surfaceDepth, 1)}mm` : '';
   const sides = cableSides(p);
   const cableSuffix =
     sides.length > 1
@@ -407,36 +410,35 @@ export const normalizeLamp = (input: CloudParameters): CloudParameters => {
 };
 
 /** CloudGeometry.swift:104-131: a sun saved with a former design opens as the first sun. */
-export const decodeLamp = (value: unknown): CloudParameters => {
-  const c = container(value);
-  const kind = ifPresent.enum(c, 'kind', WALL_LAMP_KINDS) ?? 'cloud';
+export const decodeLamp = (c: JSONKeyedContainer): CloudParameters => {
+  const kind = c.enumerationIfPresent('kind', WALL_LAMP_KINDS) ?? 'cloud';
   const d = { ...baseDefaults, kind, width: kind === 'sun' ? 200 : baseDefaults.width };
   return {
     kind,
-    style: ifPresent.enum(c, 'style', CLOUD_STYLES) ?? d.style,
-    sunStyle: lenientEnum(c, 'sunStyle', SUN_STYLES) ?? d.sunStyle,
-    mirrored: ifPresent.bool(c, 'mirrored') ?? d.mirrored,
-    width: ifPresent.double(c, 'width') ?? d.width,
-    depth: ifPresent.double(c, 'depth') ?? d.depth,
-    diffuserThickness: ifPresent.double(c, 'diffuserThickness') ?? d.diffuserThickness,
-    surface: ifPresent.enum(c, 'surface', LAMP_SURFACES) ?? 'flat',
-    surfaceDepth: ifPresent.double(c, 'surfaceDepth') ?? d.surfaceDepth,
-    stripWidth: ifPresent.double(c, 'stripWidth') ?? d.stripWidth,
-    stripThickness: ifPresent.double(c, 'stripThickness') ?? d.stripThickness,
-    stripCutLength: ifPresent.double(c, 'stripCutLength') ?? d.stripCutLength,
-    ledRowSpacing: ifPresent.double(c, 'ledRowSpacing') ?? d.ledRowSpacing,
-    clipFit: ifPresent.double(c, 'clipFit') ?? d.clipFit,
-    cableDiameter: ifPresent.double(c, 'cableDiameter') ?? d.cableDiameter,
-    cableSide: ifPresent.enum(c, 'cableSide', CABLE_SIDES) ?? d.cableSide,
-    secondCableSide: ifPresent.enum(c, 'secondCableSide', CABLE_SIDES) ?? null,
-    thirdCableSide: ifPresent.enum(c, 'thirdCableSide', CABLE_SIDES) ?? null,
-    fourthCableSide: ifPresent.enum(c, 'fourthCableSide', CABLE_SIDES) ?? null,
-    strainRelief: ifPresent.bool(c, 'strainRelief') ?? d.strainRelief,
-    nailHead: ifPresent.double(c, 'nailHead') ?? d.nailHead,
-    nailShaft: ifPresent.double(c, 'nailShaft') ?? d.nailShaft,
-    nailInsert: ifPresent.bool(c, 'nailInsert') ?? d.nailInsert,
-    nailDiameter: ifPresent.double(c, 'nailDiameter') ?? d.nailDiameter,
-    nailHeadDiameter: ifPresent.double(c, 'nailHeadDiameter') ?? d.nailHeadDiameter,
+    style: c.enumerationIfPresent('style', CLOUD_STYLES) ?? d.style,
+    sunStyle: lenientEnumeration(c, 'sunStyle', SUN_STYLES) ?? d.sunStyle,
+    mirrored: c.boolIfPresent('mirrored') ?? d.mirrored,
+    width: c.doubleIfPresent('width') ?? d.width,
+    depth: c.doubleIfPresent('depth') ?? d.depth,
+    diffuserThickness: c.doubleIfPresent('diffuserThickness') ?? d.diffuserThickness,
+    surface: c.enumerationIfPresent('surface', LAMP_SURFACES) ?? 'flat',
+    surfaceDepth: c.doubleIfPresent('surfaceDepth') ?? d.surfaceDepth,
+    stripWidth: c.doubleIfPresent('stripWidth') ?? d.stripWidth,
+    stripThickness: c.doubleIfPresent('stripThickness') ?? d.stripThickness,
+    stripCutLength: c.doubleIfPresent('stripCutLength') ?? d.stripCutLength,
+    ledRowSpacing: c.doubleIfPresent('ledRowSpacing') ?? d.ledRowSpacing,
+    clipFit: c.doubleIfPresent('clipFit') ?? d.clipFit,
+    cableDiameter: c.doubleIfPresent('cableDiameter') ?? d.cableDiameter,
+    cableSide: c.enumerationIfPresent('cableSide', CABLE_SIDES) ?? d.cableSide,
+    secondCableSide: c.enumerationIfPresent('secondCableSide', CABLE_SIDES) ?? null,
+    thirdCableSide: c.enumerationIfPresent('thirdCableSide', CABLE_SIDES) ?? null,
+    fourthCableSide: c.enumerationIfPresent('fourthCableSide', CABLE_SIDES) ?? null,
+    strainRelief: c.boolIfPresent('strainRelief') ?? d.strainRelief,
+    nailHead: c.doubleIfPresent('nailHead') ?? d.nailHead,
+    nailShaft: c.doubleIfPresent('nailShaft') ?? d.nailShaft,
+    nailInsert: c.boolIfPresent('nailInsert') ?? d.nailInsert,
+    nailDiameter: c.doubleIfPresent('nailDiameter') ?? d.nailDiameter,
+    nailHeadDiameter: c.doubleIfPresent('nailHeadDiameter') ?? d.nailHeadDiameter,
   };
 };
 
@@ -474,7 +476,7 @@ const uncheckedInsert = (p: CloudParameters): NailInsertInfo & { lampSlot: numbe
 };
 
 export const nailInsertProblem = (p: CloudParameters): string | null => {
-  const mm = (v: number) => printfFixed(v, 1);
+  const mm = (v: number) => formatFixed(v, 1);
   const i = uncheckedInsert(p), head = p.nailHeadDiameter / 2;
   if (i.slotHalfWidth + 0.25 > i.lampSlot) {
     return `A ${mm(p.nailDiameter)} mm shaft is too thick for the insert to narrow the ${mm(p.nailShaft)} mm slot.`;
@@ -516,7 +518,7 @@ export const clampMinimumWidth = (p: CloudParameters): number | null => {
 export const cloudParameters: CloudParameterApi = {
   defaults: lampDefaults,
   normalize: normalizeLamp,
-  codec: makeCodec(decodeLamp),
+  codec: keyedCodec(decodeLamp),
   filename: lampFilename,
   derived,
   constants: Object.freeze({

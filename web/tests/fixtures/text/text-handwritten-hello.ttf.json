@@ -1,0 +1,54 @@
+{
+  "antialias" : false,
+  "aspect" : 3.0558002936857562,
+  "bounds" : {
+    "height" : 68.099999999999994,
+    "width" : 208.09999999999999,
+    "x" : 7.5,
+    "y" : -0.60000000000000009
+  },
+  "case" : "text-handwritten-hello",
+  "font" : "Handwritten",
+  "fontPostScriptName" : "ComicNeue-Bold",
+  "fontSource" : "file:ComicNeue-Bold.ttf",
+  "glyphCount" : 5,
+  "height" : 256,
+  "rowOrder" : "row 0 is the bottom of the glyphs",
+  "runs" : [
+    {
+      "font" : "ComicNeue-Bold",
+      "glyphs" : [
+        43,
+        72,
+        79,
+        79,
+        82
+      ],
+      "positions" : [
+        [
+          0,
+          0
+        ],
+        [
+          71.400000000000006,
+          0
+        ],
+        [
+          120.5,
+          0
+        ],
+        [
+          144.09999999999999,
+          0
+        ],
+        [
+          167.69999999999999,
+          0
+        ]
+      ]
+    }
+  ],
+  "sha256" : "16d63d23b10eda73f3e9aacf6b380fc211d469a46d905bf2f20cb50ed5257cab",
+  "text" : "Hello",
+  "width" : 783
+}
