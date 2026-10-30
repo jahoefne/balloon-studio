@@ -12,3 +12,6 @@ web/.vite/
 # reference pack (Tier B, ~1 GB) and exporter scratch; Tier A under references/files is committed
 references/pack/
 references/build/
+
+# Claude desktop app: session worktrees and launch config
+.claude/
