@@ -3,12 +3,8 @@
 //
 // SWIFT-DIFF: RingParameters is the plain data interface of core/types.ts (the frozen contract), so
 // its computed properties are free functions of the parameters, with the Swift names.
-//
-// SWIFT-DIFF: the section at the end ports StringHoles.patch, punch and compact
-// (mac/Sources/BalloonStudio/StringHoles.swift:10-19, 55-77, 106-117). That file belongs to WP-K2
-// (core/balloon/stringHoles.ts), which had not landed when this was written; switch the import once
-// it is on main. Nothing here depends on the rest of StringHoles.
 import type { RingDerived } from '../api';
+import * as StringHoles from '../balloon/stringHoles';
 import { BalloonMesh } from '../geometry/mesh';
 import type { Point3, Triangle } from '../geometry/point3';
 import type { Range, RingParameters } from '../types';
@@ -368,7 +364,7 @@ export const RingGenerator = {
     ];
     for (let row = 0; row < profile.length - 1; row++) join(profile[row] as number[], profile[row + 1] as number[]);
     const mesh = new BalloonMesh(vertices, triangles, 0);
-    const pairs = holeColumns.map((column): [Patch, Patch] => [
+    const pairs = holeColumns.map((column): [StringHoles.Patch, StringHoles.Patch] => [
       StringHoles.patch(2, column, columns, (r, c) => (bottom[r] as number[])[c] as number),
       StringHoles.patch(2, column, columns, (r, c) => (top[r] as number[])[c] as number),
     ]);
@@ -386,14 +382,16 @@ export const RingGenerator = {
         );
         const center = mesh.vertices[lower.center] as Point3;
         const ratio = p.cordClearance / (p.cordClearance + 2 * bevel);
+        const lowerLoop = [lower.bottom, lower.right, lower.top, lower.left];
+        const upperLoop = [upper.bottom, upper.right, upper.top, upper.left];
         const throat = (z: number): number[] =>
-          patchLoop(lower).map((i) => {
+          lowerLoop.map((i) => {
             const v = mesh.vertices[i] as Point3;
             const index = mesh.vertices.length;
             mesh.vertices.push({ x: center.x + (v.x - center.x) * ratio, y: center.y + (v.y - center.y) * ratio, z });
             return index;
           });
-        const loops = [patchLoop(lower), throat(bevel), throat(p.height - bevel), patchLoop(upper)];
+        const loops = [lowerLoop, throat(bevel), throat(p.height - bevel), upperLoop];
         for (let level = 0; level < 3; level++) {
           for (let j = 0; j < 4; j++) {
             const k = (j + 1) % 4;
@@ -408,96 +406,5 @@ export const RingGenerator = {
       StringHoles.compact(mesh);
     }
     return mesh;
-  },
-};
-
-// StringHoles.swift (see SWIFT-DIFF at the top of the file).
-
-export interface Patch {
-  center: number;
-  bottom: number;
-  right: number;
-  top: number;
-  left: number;
-  bottomLeft: number;
-  topRight: number;
-}
-
-/** `patch.loop`. */
-export function patchLoop(patch: Patch): number[] {
-  return [patch.bottom, patch.right, patch.top, patch.left];
-}
-
-export const StringHoles = {
-  patch(row: number, column: number, columns: number, index: (row: number, column: number) => number): Patch {
-    const left = (column + columns - 1) % columns;
-    const right = (column + 1) % columns;
-    return {
-      center: index(row, column),
-      bottom: index(row - 1, column),
-      right: index(row, right),
-      top: index(row + 1, column),
-      left: index(row, left),
-      bottomLeft: index(row - 1, left),
-      topRight: index(row + 1, right),
-    };
-  },
-  punch(mesh: BalloonMesh, pairs: readonly (readonly [Patch, Patch])[]): void {
-    const removed = new Set<number>();
-    for (const [outer, inner] of pairs) {
-      removed.add(outer.center);
-      removed.add(inner.center);
-    }
-    mesh.triangles = mesh.triangles.filter((t) => !(removed.has(t.a) || removed.has(t.b) || removed.has(t.c)));
-    for (const [outer, inner] of pairs) {
-      mesh.triangles.push(
-        { a: outer.bottomLeft, b: outer.bottom, c: outer.left },
-        { a: outer.right, b: outer.topRight, c: outer.top },
-        { a: inner.bottomLeft, b: inner.left, c: inner.bottom },
-        { a: inner.right, b: inner.top, c: inner.topRight },
-      );
-      const outerLoop = patchLoop(outer);
-      const innerLoop = patchLoop(inner);
-      for (let j = 0; j < 4; j++) {
-        const k = (j + 1) % 4;
-        const a = outerLoop[j] as number;
-        const b = outerLoop[k] as number;
-        const c = innerLoop[k] as number;
-        const d = innerLoop[j] as number;
-        mesh.triangles.push({ a, b, c });
-        mesh.triangles.push({ a, b: c, c: d });
-      }
-    }
-    StringHoles.compact(mesh);
-  },
-  compact(mesh: BalloonMesh): void {
-    const used = new Uint8Array(mesh.vertices.length);
-    for (const t of mesh.triangles) {
-      used[t.a] = 1;
-      used[t.b] = 1;
-      used[t.c] = 1;
-    }
-    const remap = new Int32Array(used.length);
-    const vertices: Point3[] = [];
-    for (let i = 0; i < used.length; i++) {
-      if (used[i] === 1) {
-        remap[i] = vertices.length;
-        vertices.push(mesh.vertices[i] as Point3);
-      }
-    }
-    const range = mesh.innerVertexRange;
-    if (range !== undefined) {
-      let first = -1;
-      let last = -1;
-      for (let i = range.lowerBound; i < range.upperBound; i++) {
-        if (used[i] === 1) {
-          if (first < 0) first = i;
-          last = i;
-        }
-      }
-      if (first >= 0) mesh.innerVertexRange = { lowerBound: remap[first] as number, upperBound: (remap[last] as number) + 1 };
-    }
-    mesh.triangles = mesh.triangles.map((t) => ({ a: remap[t.a] as number, b: remap[t.b] as number, c: remap[t.c] as number }));
-    mesh.vertices = vertices;
   },
 };

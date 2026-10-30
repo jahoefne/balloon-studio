@@ -2,6 +2,7 @@
 // (SegmentedRingKit :4-226, RingArc :228-353).
 //
 // SWIFT-DIFF: `precondition`, force unwraps and out-of-range subscripts trap in Swift; here they throw.
+import * as StringHoles from '../balloon/stringHoles';
 import { BalloonMesh, MeshError } from '../geometry/mesh';
 import { zero, type Point3, type Triangle } from '../geometry/point3';
 import { binarySTL } from '../io/binaryStl';
@@ -23,9 +24,7 @@ import {
   ledFaces,
   normalized,
   outerProfile,
-  patchLoop,
   stripPathLength,
-  StringHoles,
   totalHeight,
   type RingQuality,
 } from './ringGeometry';
@@ -421,14 +420,16 @@ const RingArc = {
       const center = vertices[lower.center] as Point3;
       const h = holes[i] as Hole;
       const ratio = h.clearance / (h.clearance + 2 * h.bevel);
+      const lowerLoop = [lower.bottom, lower.right, lower.top, lower.left];
+      const upperLoop = [upper.bottom, upper.right, upper.top, upper.left];
       const throat = (z: number): number[] =>
-        patchLoop(lower).map((index) => {
+        lowerLoop.map((index) => {
           const point = vertices[index] as Point3;
           const created = vertices.length;
           vertices.push({ x: center.x + (point.x - center.x) * ratio, y: center.y + (point.y - center.y) * ratio, z });
           return created;
         });
-      const loops = [patchLoop(lower), throat(h.bevel), throat(height - h.bevel), patchLoop(upper)];
+      const loops = [lowerLoop, throat(h.bevel), throat(height - h.bevel), upperLoop];
       for (let layer = 0; layer < 3; layer++) {
         for (let j = 0; j < 4; j++) {
           const k = (j + 1) % 4;
