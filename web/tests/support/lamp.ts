@@ -1,6 +1,11 @@
 // Test support for the lamp cluster (WP-K4). Test-only: uses node: modules.
 import { readFileSync } from 'node:fs';
-import { cloudParametersCodec, encodeCloudParameters } from '../../src/core/lamp/cloudGeometry';
+import { CableClamp, CableClampGenerator } from '../../src/core/lamp/cableClamp';
+import { CableOutlet, CableSealGenerator } from '../../src/core/lamp/cableSeal';
+import { BalloonMesh } from '../../src/core/geometry/mesh';
+import { cloudParameters, cloudParametersCodec, encodeCloudParameters } from '../../src/core/lamp/cloudGeometry';
+import { LampSurfaceGenerator } from '../../src/core/lamp/lampSurface';
+import { NailInsert, NailInsertGenerator } from '../../src/core/lamp/nailInsert';
 import type { CloudParameters } from '../../src/core/types';
 
 /** Swift `==` on CloudParameters: every field, with Double equality. */
@@ -59,4 +64,26 @@ export const decodedCase = (c: GridCase, defaults: (kind: 'cloud' | 'sun') => Cl
   const kind = c.part === 'sun' ? 'sun' : 'cloud';
   const restored = c.parameters === null || c.parameters === undefined ? defaults(kind) : cloudParametersCodec.decodeValue(c.parameters);
   return { ...restored, kind };
+};
+
+const stillFrozen = (probe: () => unknown): boolean => {
+  try {
+    probe();
+    return false;
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('WP-K4')) return true;
+    throw error;
+  }
+};
+
+/** Which of the frozen signatures (WP-K4a part 1) still throw. A test of a kit skips until they are filled. */
+export const waitsFor = {
+  k4b:
+    stillFrozen(() => new CableOutlet(cloudParameters())) ||
+    stillFrozen(() => CableClamp.create(cloudParameters())) ||
+    stillFrozen(() => CableClampGenerator.bar(cloudParameters())) ||
+    stillFrozen(() => CableClampGenerator.anvil(cloudParameters())) ||
+    stillFrozen(() => CableSealGenerator.generate(cloudParameters(), 'preview')) ||
+    stillFrozen(() => NailInsertGenerator.generate(NailInsert.create(cloudParameters())!)),
+  k4c: stillFrozen(() => LampSurfaceGenerator.sculpt(new BalloonMesh([], [], 0), cloudParameters(), 'preview')),
 };

@@ -1,15 +1,21 @@
-// Ported from mac/Tests/SunTests.swift @ cbda68d. Settings, clips, core sweeps and silhouettes here
-// (:10-52, :59, :65-131, :172-186); the kits, LED layouts and "Soft star and Cones share their back"
-// (:53-57, :133-169, :187-195) follow with the generator in WP-K4a part 2.
+// Ported from mac/Tests/SunTests.swift @ cbda68d, without the files written to .build/test-output
+// (:161-166, plan §8). The kits wait for WP-K4b, the sculpted fronts of :55-57 for WP-K4c too.
+// Without FULL the kits run at preview quality, with the default and the next two only.
 import { describe, it } from 'vitest';
-import { CloudConstants, CloudGenerator, cloudParameters, filename, height, LampClips, Layout, minimumWidth, normalized } from '../src/core/lamp/cloudGeometry';
+import { binarySTL } from '../src/core/io/binaryStl';
+import { CloudConstants, CloudGenerator, cloudParameters, displayName, filename, fitsP2S, height, LampClips, Layout, minimumWidth, normalized } from '../src/core/lamp/cloudGeometry';
+import { CloudKit } from '../src/core/lamp/cloudKit';
 import { sunNotchAngles, sunNotchRadius, sunProfile, wallLampDefaults } from '../src/core/lamp/sunGeometry';
 import { atan2, cos, hypot, PI, sin } from '../src/core/swift/dmath';
 import { arrayMax } from '../src/core/swift/minmax';
 import { strideThrough } from '../src/core/swift/rounding';
 import { check } from '../src/core/testing/check';
-import { SUN_STYLE_INFO, SUN_STYLES, WALL_LAMP_KIND_INFO, type CloudParameters, type SunStyle } from '../src/core/types';
-import { decoded, roundTripped, sameParameters } from './support/lamp';
+import { parseSTL } from '../src/core/testing/stl';
+import { CABLE_SIDES, SUN_STYLE_INFO, SUN_STYLES, WALL_LAMP_KIND_INFO, type CloudParameters, type SunStyle } from '../src/core/types';
+import { decoded, roundTripped, sameParameters, waitsFor } from './support/lamp';
+import { checkCloudFeatures, checkLEDLayout } from './support/lampFeatures';
+
+const FULL = Boolean(process.env['FULL']);
 
 type Pair = [number, number];
 
@@ -175,4 +181,74 @@ describe('suns', () => {
       }
     });
   });
+});
+
+const bytesEqual = (a: Uint8Array, b: Uint8Array): boolean => a.length === b.length && a.every((value, i) => value === b[i]);
+
+describe.skipIf(waitsFor.k4b)('sun kits', () => {
+  const defaults = wallLampDefaults('sun');
+
+  it('Soft star and Cones share their back', () => {
+    const backs = (['soft-star', 'cones'] as const).map((sunStyle) => binarySTL(new CloudKit({ ...defaults, sunStyle }).back));
+    check(bytesEqual(backs[0]!, backs[1]!), 'Soft star and Cones no longer share their back');
+  });
+
+  it.skipIf(waitsFor.k4c)('Soft star and Cones have their own fronts', () => {
+    const fronts = (['soft-star', 'cones'] as const).map((sunStyle) => binarySTL(new CloudKit({ ...defaults, sunStyle, surface: 'sculpted' }).front));
+    check(!bytesEqual(fronts[0]!, fronts[1]!), 'Soft star and Cones have the same front');
+  });
+
+  it.each(SUN_STYLES)('%s: closed solids, lamp fittings, LED layouts and kit packaging', (style) => {
+    const base: CloudParameters = { ...defaults, sunStyle: style };
+    const cases: CloudParameters[] = [base];
+    for (const width of [minimumWidth(base), 180, 200, 240, 241, 500]) {
+      for (const largeFittings of [false, true]) {
+        cases.push(
+          normalized({
+            ...base,
+            width, depth: largeFittings ? 40 : 16,
+            cableDiameter: largeFittings ? 6 : 2, nailHead: largeFittings ? 10 : 5,
+            nailShaft: largeFittings ? 5 : 2, stripWidth: largeFittings ? 12 : 3.5,
+            stripThickness: largeFittings ? 6 : 1, clipFit: largeFittings ? 0.5 : 0.2,
+            diffuserThickness: largeFittings ? 2 : 0.8,
+            cableSide: CABLE_SIDES[(cases.length + SUN_STYLES.indexOf(style)) % 4]!,
+          }),
+        );
+      }
+    }
+    cases.forEach((p, index) => {
+      checkLEDLayout(p);
+      if (!FULL && index > 2) return;
+      for (const quality of FULL ? (['preview', 'export'] as const) : (['preview'] as const)) {
+        const kit = new CloudKit(p, quality);
+        const parts = [];
+        for (const [name, mesh] of [['back', kit.back], ['front', kit.front]] as const) {
+          mesh.validate();
+          const parsed = parseSTL(binarySTL(mesh));
+          parsed.validate();
+          parts.push(parsed);
+          const dimensions = parsed.dimensions;
+          check(Math.abs(dimensions.x - p.width) < 0.002 && Math.abs(dimensions.y - p.width) < 0.002, 'Sun must remain round and match its diameter');
+          check(Math.abs(dimensions.z - (name === 'back' ? p.depth : p.diffuserThickness + 12)) < 0.002, 'Sun print depth incorrect');
+          check(parsed.vertices.every((v) => v.z >= -1e-6), 'Sun extends below bed');
+          check(parsed.vertices.length - parsed.triangles.length / 2 === (name === 'back' ? 0 : 2), 'Sun has extra shells or holes');
+          check(fitsP2S(p) === (p.width <= 240), 'Sun bed fit incorrect');
+        }
+        checkCloudFeatures(p, parts[0]!, parts[1]!, FULL && index < 2);
+      }
+    });
+    for (const width of [minimumWidth(base), 200, 500]) {
+      for (const cut of [16.0, 50, 100]) {
+        for (const spacing of [14.0, 40]) {
+          checkLEDLayout({ ...base, width, stripCutLength: cut, ledRowSpacing: spacing });
+        }
+      }
+    }
+    const kit = new CloudKit(base);
+    const entries = kit.entries().map(([name]) => name);
+    const expected = ['A-sun-back-opaque.stl', 'B-sun-front-diffuser.stl', 'C-cable-seal-TPU.stl', 'D-cable-clamp-bar.stl', 'E-cable-clamp-anvil.stl', 'LED-LAYOUT.svg', 'ASSEMBLY.md', 'sun-settings.json'];
+    check(new Set(entries).size === expected.length && expected.every((name) => entries.includes(name)), 'Sun kit names or contents incorrect');
+    check(kit.instructions.includes('Sun wall lamp') && kit.ledPlan.svg.includes(displayName(base)), 'Sun export mislabeled');
+    check(kit.ledPlan.sections.length > 0 && kit.ledPlan.rowCount > 3, 'Sun has no useful LED layout');
+  }, 900_000);
 });

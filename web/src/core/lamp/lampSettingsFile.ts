@@ -7,6 +7,7 @@ import { decodeCloudParameters, decodeRequiredDouble, normalized } from './cloud
 /** Swift `ReadError.invalidSettings` carries `LAMP_SETTINGS_ERROR` of core/api.ts as its description. */
 export const decodeLampSettings = (data: string): CloudParameters => {
   try {
+    // SWIFT-DIFF: JSON.parse, see cloudParametersCodec.
     const value: unknown = JSON.parse(data);
     // Preferences allow missing values for migration. An opened file must
     // identify a lamp before those defaults can replace the current design.
