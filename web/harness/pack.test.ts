@@ -110,6 +110,29 @@ describe.skipIf(!hasPack())('reference pack', () => {
     }
   }, TIMEOUT);
 
+  it('a listed model and a listed front are valid meshes and pass when moved a little', () => {
+    const model = exported('text-sans-hello');
+    const archive = reference(model);
+    const nudged = rebuilt(archive, (entry, bytes) => {
+      if (entry !== '3D/3dmodel.model') return bytes;
+      // A shift far beyond the model tolerance, far within the entry's limit.
+      return new TextEncoder().encode(new TextDecoder().decode(bytes).replace(/<vertex x="(-?[\d.]+)"/g, (tag, x: string) => `<vertex x="${Number(x) + 1e-9}"`));
+    });
+    const result = compareCase(model.id, nudged);
+    expect(statusLabel(result)).toBe('equivalent-bounded');
+    expect(result.entries?.map((entry) => entry.name)).toEqual(['3D/3dmodel.model']);
+
+    const kit = exported('cloud-sculpted-classic');
+    const name = 'B-cloud-front-white-PLA.stl';
+    const front = loadEntryBody(kit, (kit.entries as ManifestEntry[]).find((entry) => entry.name === name) as ManifestEntry) as Uint8Array;
+    let moved = front;
+    for (let i = 0; i < 2; i++) moved = bumpVertexEverywhere(moved, 50, 2, 0).bytes;
+    const kitResult = compareCase(kit.id, rebuilt(reference(kit), (entry, bytes) => (entry === name ? moved : bytes)));
+    expect(statusLabel(kitResult)).toBe('equivalent-bounded');
+    expect(kitResult.bounded).toBeUndefined();
+    expect(kitResult.entries?.[0]?.bounded?.verticesWithoutPartner).toBe(2);
+  }, TIMEOUT);
+
   it('the largest model compares in reasonable time', () => {
     const c = allCases().filter(isExported).filter((candidate) => candidate.kind === '3mf').sort((a, b) => b.bytes - a.bytes)[0] as ExportedCase;
     const archive = reference(c);

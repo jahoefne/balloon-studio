@@ -2,6 +2,7 @@
 // version by WP-V4).
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import type { BoundedMeasures } from './boundedDiff';
 import type { CaseResult } from './compare';
 import { REFERENCES_DIR, loadManifest } from './manifest';
 import { statusLabel, type Status } from './result';
@@ -20,6 +21,8 @@ export interface ReportRow {
   normalDiffs: number;
   nearZeroCorners: number;
   differingTriangles: number;
+  /** `equivalent-bounded` only: what was measured against the entry's limits. */
+  bounded: BoundedMeasures | null;
   warnings: string[];
   tsMs: number | null;
   swiftMs: number;
@@ -36,6 +39,7 @@ export function toRow(result: CaseResult): ReportRow {
     normalDiffs: result.normalDiffs,
     nearZeroCorners: result.nearZeroCorners,
     differingTriangles: result.differingTriangles,
+    bounded: result.bounded ?? null,
     warnings: result.warnings ?? [],
     tsMs: result.tsMs ?? null,
     swiftMs: result.swiftMs,
@@ -54,6 +58,7 @@ export function skippedRow(id: string, by: string, swiftMs: number): ReportRow {
     normalDiffs: 0,
     nearZeroCorners: 0,
     differingTriangles: 0,
+    bounded: null,
     warnings: [],
     tsMs: null,
     swiftMs,
@@ -84,7 +89,7 @@ export function formatTable(rows: readonly ReportRow[]): string {
 }
 
 export function summarize(rows: readonly ReportRow[]): Record<RowStatus, number> {
-  const counts: Record<RowStatus, number> = { identical: 0, ulp: 0, equivalent: 0, mismatch: 0, unverified: 0, skipped: 0 };
+  const counts: Record<RowStatus, number> = { identical: 0, ulp: 0, equivalent: 0, 'equivalent-bounded': 0, mismatch: 0, unverified: 0, skipped: 0 };
   for (const row of rows) counts[row.status]++;
   return counts;
 }

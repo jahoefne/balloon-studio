@@ -9,7 +9,8 @@
 // 1 - dot < 1e-5, hence WRITER_NORMAL_DOT.
 import { sha256Hex } from './refs';
 import type { StlFacts } from './manifest';
-import { NoteList, mismatch, type DiffResult } from './result';
+import { checkBounds, describeMeasures, type BoundedLimits, type BoundedMesh } from './boundedDiff';
+import { NoteList, boundedResult, mismatch, type DiffResult } from './result';
 import { NEAR_ZERO_MM, classifyCoordinate, ordinal, solidEquivalence, weld } from './solidDiff';
 
 /** Stored normal against the normal of the stored vertices (writer check, both files). */
@@ -98,6 +99,24 @@ function digestProblem(bytes: Uint8Array): boolean {
   return sha256Hex(joined).slice(0, 32) !== hex(bytes.subarray(BSTL_SIGNED_BYTES, BSTL_DIGEST_END));
 }
 
+/** Stored normals that do not fit their vertices (writer check); slivers only get a note. */
+function normalFailures(data: DataView, triangles: number, who: string, notes: NoteList): number {
+  let failures = 0;
+  for (let i = 0; i < triangles; i++) {
+    const o = HEADER_BYTES + 4 + RECORD_BYTES * i;
+    const dot = writerDot(data, o);
+    if (dot === null || dot >= WRITER_NORMAL_DOT) continue;
+    const angle = minimumAngle(data, o);
+    if (angle < SLIVER_DEGREES) {
+      notes.add(`triangle ${i} (${who}): sliver (smallest angle ${angle.toExponential(2)}°), stored normal off by dot ${dot}`);
+      continue;
+    }
+    failures++;
+    notes.add(`triangle ${i} (${who}): stored normal does not fit its vertices, dot ${dot}`);
+  }
+  return failures;
+}
+
 /** Header rules; `bodyDiffers` = the bytes from 80 on differ. */
 function headerProblems(expected: Uint8Array, actual: Uint8Array, bodyDiffers: boolean, tags: string[], notes: NoteList): void {
   if (!startsWithBstl(expected) && !startsWithBstl(actual)) {
@@ -122,8 +141,47 @@ function headerProblems(expected: Uint8Array, actual: Uint8Array, bodyDiffers: b
   }
 }
 
-/** `allowEquivalent`: this STL is on the allowlist, so the same solid in other triangles may pass as `equivalent`. */
-export function diffStl(expected: Uint8Array, actual: Uint8Array, allowEquivalent = false): DiffResult {
+export interface StlAllowance {
+  /** This STL is on the allowlist, so the same solid in other triangles may pass as `equivalent`. */
+  allowEquivalent?: boolean;
+  /** This STL is on the bounded allowlist, with these limits. */
+  bounds?: BoundedLimits | undefined;
+}
+
+function boundedMesh(data: DataView, triangles: number): BoundedMesh {
+  const welded = weld(data, triangles);
+  const colors = new Int32Array(triangles);
+  for (let i = 0; i < triangles; i++) colors[i] = data.getUint16(HEADER_BYTES + 4 + RECORD_BYTES * i + 48, true);
+  return { positions: Float64Array.from(new Float32Array(welded.bits.buffer, welded.bits.byteOffset, welded.bits.length)), triangles: welded.indices, colors };
+}
+
+/** A strict mismatch of a listed STL: the writer has to be right, the rest is measured. */
+function diffBounded(expected: Uint8Array, actual: Uint8Array, limits: BoundedLimits, strict: DiffResult): DiffResult {
+  if (strict.tags.includes('stl format')) return strict;
+  const e = view(expected);
+  const a = view(actual);
+  const tags: string[] = [];
+  const notes = new NoteList();
+  const bodyDiffers = expected.length !== actual.length || !equalRange(expected, actual, HEADER_BYTES, expected.length);
+  headerProblems(expected, actual, bodyDiffers, tags, notes);
+  const eTriangles = e.getUint32(HEADER_BYTES, true);
+  const aTriangles = a.getUint32(HEADER_BYTES, true);
+  if (normalFailures(a, aTriangles, 'TS', notes) > 0) tags.push('normal');
+  if (normalFailures(e, eTriangles, 'reference', notes) > 0) tags.push('reference normal');
+  if (tags.length > 0) return { ...strict, tags: [...new Set([...strict.tags, ...tags])], notes: [...notes.all(), ...strict.notes] };
+  const check = checkBounds(boundedMesh(e, eTriangles), boundedMesh(a, aTriangles), limits);
+  if (check.invalid !== null) return { ...mismatch('invalid mesh', check.invalid), notes: [check.invalid, ...strict.notes] };
+  if (check.exceeded.length > 0) return { ...mismatch('bounds', ...check.exceeded), notes: [...check.exceeded, describeMeasures(check.measures), ...strict.notes] };
+  return boundedResult(check.measures);
+}
+
+/** Compares an STL; see `StlAllowance` for the two allowlists. */
+export function diffStl(expected: Uint8Array, actual: Uint8Array, allowance: StlAllowance = {}): DiffResult {
+  const strict = diffStrict(expected, actual, allowance.allowEquivalent ?? false);
+  return allowance.bounds === undefined || strict.status !== 'mismatch' ? strict : diffBounded(expected, actual, allowance.bounds, strict);
+}
+
+function diffStrict(expected: Uint8Array, actual: Uint8Array, allowEquivalent: boolean): DiffResult {
   const referenceProblem = formatProblem(expected);
   if (referenceProblem !== null) throw new Error(`The reference is not a binary STL: ${referenceProblem}`);
   const actualProblem = formatProblem(actual);
@@ -220,20 +278,7 @@ export function diffStl(expected: Uint8Array, actual: Uint8Array, allowEquivalen
   if (badNormals > 0 && topologyEqual) tags.push('normal');
 
   for (const [data, who, tag] of [[a, 'TS', 'normal'], [e, 'reference', 'reference normal']] as const) {
-    let failures = 0;
-    for (let i = 0; i < triangles; i++) {
-      const o = HEADER_BYTES + 4 + RECORD_BYTES * i;
-      const dot = writerDot(data, o);
-      if (dot === null || dot >= WRITER_NORMAL_DOT) continue;
-      const angle = minimumAngle(data, o);
-      if (angle < SLIVER_DEGREES) {
-        notes.add(`triangle ${i} (${who}): sliver (smallest angle ${angle.toExponential(2)}°), stored normal off by dot ${dot}`);
-        continue;
-      }
-      failures++;
-      notes.add(`triangle ${i} (${who}): stored normal does not fit its vertices, dot ${dot}`);
-    }
-    if (failures > 0 && !tags.includes(tag)) tags.push(tag);
+    if (normalFailures(data, triangles, who, notes) > 0 && !tags.includes(tag)) tags.push(tag);
   }
 
   const bodyDiffers = !equalRange(expected, actual, HEADER_BYTES, expected.length);
