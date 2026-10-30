@@ -84,6 +84,9 @@
   line-height: 1.4;
   color: var(--ink-secondary);
 }
+.balloon-live:empty {
+  margin-top: calc(-1 * var(--space-14));
+}
 .balloon-note {
   margin: 0;
   font-size: var(--text-11);

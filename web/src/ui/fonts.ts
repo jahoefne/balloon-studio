@@ -7,9 +7,9 @@ import type { CSSProperties } from 'react';
 // and stay as persisted. The Mac renders Apple system fonts (PostScript names in the
 // comments); the web bundles OFL replacements (docs/plan.md, Abschnitt 7, Fonts).
 //
-// TODO(WP-R3/R7): add the @font-face rules once the TTFs live under web/public/fonts/,
-// with these exact family names, font-weight 700 and `import.meta.env.BASE_URL` in the URL.
-// Until then the stacks fall back to the Mac originals or a generic family.
+// The stacks name the @font-face family first; `installBalloonTextFontFaces` declares those
+// families. The browser fetches a file only when text is set in it, so the picker costs nothing
+// until the Text pattern is open. The fallbacks cover the moment before the file arrives.
 
 export const BALLOON_TEXT_FONTS = ['Rounded', 'Sans serif', 'Serif', 'Handwritten', 'Monospaced'] as const;
 
@@ -36,4 +36,29 @@ export function balloonTextFontFamily(font: BalloonTextFontName): string {
 /** Inline style for text set in a lettering font; every Mac face is the bold cut. */
 export function balloonTextFontStyle(font: BalloonTextFontName): CSSProperties {
   return { fontFamily: BALLOON_TEXT_FONT_FAMILIES[font], fontWeight: 700 };
+}
+
+/** Same files as BUNDLED_FONTS in core/text/fontSet.ts, which the UI thread must not import (it pulls in opentype.js). */
+export const BALLOON_TEXT_FONT_FACES: Readonly<Record<BalloonTextFontName, { family: string; file: string }>> = {
+  Rounded: { family: 'Nunito', file: 'Nunito-Bold.ttf' },
+  'Sans serif': { family: 'Arimo', file: 'Arimo-Bold.ttf' },
+  Serif: { family: 'Gelasio', file: 'Gelasio-Bold.ttf' },
+  Handwritten: { family: 'Comic Neue', file: 'ComicNeue-Bold.ttf' },
+  Monospaced: { family: 'DejaVu Sans Mono', file: 'DejaVuSansMono-Bold.ttf' },
+};
+
+/** The rules for the TTFs under web/public/fonts/, which the core worker parses too. */
+export function balloonTextFontFaceRules(baseUrl: string = import.meta.env.BASE_URL): string {
+  return BALLOON_TEXT_FONTS.map((font) => {
+    const { family, file } = BALLOON_TEXT_FONT_FACES[font];
+    return `@font-face { font-family: "${family}"; src: url("${baseUrl}fonts/${file}") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; }`;
+  }).join('\n');
+}
+
+/** Once at startup, from main.tsx. */
+export function installBalloonTextFontFaces(target: Document = document): void {
+  const style = target.createElement('style');
+  style.dataset['fonts'] = 'balloon-text';
+  style.textContent = balloonTextFontFaceRules();
+  target.head.append(style);
 }

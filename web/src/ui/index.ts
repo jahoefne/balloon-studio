@@ -9,10 +9,13 @@ export { Dialog, type DialogProps } from './Dialog';
 export { DisclosureGroup, type DisclosureGroupProps } from './DisclosureGroup';
 export { FILAMENT_SWATCHES, filamentHex, type FilamentColorName } from './filamentColors';
 export {
+  BALLOON_TEXT_FONT_FACES,
   BALLOON_TEXT_FONT_FAMILIES,
   BALLOON_TEXT_FONTS,
+  balloonTextFontFaceRules,
   balloonTextFontFamily,
   balloonTextFontStyle,
+  installBalloonTextFontFaces,
   type BalloonTextFontName,
 } from './fonts';
 export {

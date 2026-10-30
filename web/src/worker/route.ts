@@ -1,7 +1,7 @@
 // Routes one worker request to the CoreApi. Pure apart from the core call, so tests run it
 // without a Worker.
 
-import { toCoreError, type CoreApi } from '../core/api';
+import { toCoreError, type AssetLoader, type CoreApi } from '../core/api';
 import { collectTransferables, type ExportRequest, type PreviewRequest, type WorkerRequest, type WorkerResponse } from './protocol';
 
 const preview = (core: CoreApi, request: PreviewRequest): unknown => {
@@ -63,4 +63,28 @@ export const routeRequest = (core: CoreApi, request: WorkerRequest): { response:
   } catch (error) {
     return { response: { id: request.id, ok: false, error: toCoreError(error) }, transfer: [] };
   }
+};
+
+/** The balloon's Text pattern is the one thing that needs what `prepare` loads, in a preview or an export. */
+export const needsAssets = (request: WorkerRequest): boolean =>
+  (request.type === 'preview' || request.type === 'export') && request.request.part === 'balloon' && request.request.input.pattern.style === 'Text';
+
+/**
+ * Starts loading the assets right away, once, and returns what answers each request. The core is
+ * synchronous, so requests run one after another in arrival order, except that a request that needs the
+ * assets waits for them: a slow font download must not hold back the first preview of a solid balloon.
+ * A failed load only costs the Text pattern, whose requests then fail with the core's message.
+ */
+export const createRequestHandler = (core: CoreApi, loader: AssetLoader, post: (response: WorkerResponse, transfer: ArrayBuffer[]) => void) => {
+  const ready = core.prepare(loader).catch((error: unknown) => {
+    console.error(error);
+  });
+  return (request: WorkerRequest): void => {
+    const answer = () => {
+      const { response, transfer } = routeRequest(core, request);
+      post(response, transfer);
+    };
+    if (needsAssets(request)) void ready.then(answer);
+    else answer();
+  };
 };

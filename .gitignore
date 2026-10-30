@@ -9,6 +9,7 @@ web/node_modules/
 web/dist/
 web/coverage/
 web/.vite/
+web/.build/
 # reference pack (Tier B, ~1 GB) and exporter scratch; Tier A under references/files is committed
 references/pack/
 references/build/

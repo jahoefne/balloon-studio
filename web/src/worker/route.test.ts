@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest';
-import { STL_ERRORS } from '../core/api';
+import { describe, expect, it, vi } from 'vitest';
+import { CoreFailure, STL_ERRORS, type CoreApi } from '../core/api';
 import { core } from '../core/stub/index';
 import { CLOUD_VIEWS, type MeshBuffers } from '../core/types';
 import type { ExportRequest, PreviewRequest, WorkerRequest } from './protocol';
-import { routeRequest } from './route';
+import { createRequestHandler, needsAssets, routeRequest } from './route';
 
 const snapshot = { parameters: core.balloon.defaults, pattern: core.balloon.pattern.defaults, purge: core.balloon.purge.defaults };
 
@@ -158,5 +158,81 @@ describe('routeRequest', () => {
       ok: false,
       error: { code: 'internal', message: 'kaputt' },
     });
+  });
+});
+
+describe('createRequestHandler', () => {
+  const text = { ...snapshot, pattern: { ...snapshot.pattern, style: 'Text' as const } };
+  const textPreview: WorkerRequest = { type: 'preview', id: 2, request: { part: 'balloon', input: text } };
+
+  /** The stub with a `prepare` the test settles, and a Text preview that needs it to have succeeded. */
+  const setup = () => {
+    let settle: { resolve(): void; reject(error: Error): void } | undefined;
+    const loaded = new Promise<void>((resolve, reject) => {
+      settle = { resolve, reject };
+    });
+    let failure: Error | undefined;
+    const prepare = vi.fn(() =>
+      loaded.catch((error: Error) => {
+        failure = error;
+        throw error;
+      }),
+    );
+    const fake = {
+      ...core,
+      prepare,
+      balloon: {
+        ...core.balloon,
+        preview(input: Parameters<CoreApi['balloon']['preview']>[0]) {
+          if (failure && input.pattern.style === 'Text') throw new CoreFailure('internal', `The fonts of the Text pattern could not be loaded (${failure.message}).`);
+          return core.balloon.preview(input);
+        },
+      },
+    } as CoreApi;
+    const posted: { id: number; ok: boolean; message?: string }[] = [];
+    const handle = createRequestHandler(fake, vi.fn(), (response) => posted.push(response.ok ? { id: response.id, ok: true } : { id: response.id, ok: false, message: response.error.message }));
+    return { handle, posted, prepare, settle: settle! };
+  };
+  const flush = () => new Promise((resolve) => setTimeout(resolve));
+
+  it('asks only the Text pattern of the balloon to wait', () => {
+    expect(needsAssets(textPreview)).toBe(true);
+    expect(needsAssets({ type: 'export', id: 1, request: { part: 'balloon', input: text } })).toBe(true);
+    expect(needsAssets({ type: 'preview', id: 1, request: { part: 'balloon', input: snapshot } })).toBe(false);
+    expect(needsAssets({ type: 'preview', id: 1, request: previews[1]! })).toBe(false);
+    expect(needsAssets({ type: 'init', id: 1 })).toBe(false);
+  });
+
+  it('loads once at the start, without waiting for a request', () => {
+    const { prepare, handle } = setup();
+    expect(prepare).toHaveBeenCalledTimes(1);
+    handle({ type: 'init', id: 1 });
+    handle(textPreview);
+    expect(prepare).toHaveBeenCalledTimes(1);
+  });
+
+  it('answers everything but Text while the fonts load, and Text once they are there', async () => {
+    const { handle, posted, settle } = setup();
+    handle({ type: 'init', id: 1 });
+    handle(textPreview);
+    handle({ type: 'preview', id: 3, request: { part: 'balloon', input: snapshot } });
+    expect(posted.map((r) => r.id)).toEqual([1, 3]);
+    settle.resolve();
+    await flush();
+    expect(posted.map((r) => r.id)).toEqual([1, 3, 2]);
+    expect(posted.every((r) => r.ok)).toBe(true);
+  });
+
+  it('turns a failed load into a failure of the Text request only', async () => {
+    const { handle, posted, settle } = setup();
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    handle(textPreview);
+    settle.reject(new Error('Nunito-Bold.ttf: HTTP 404'));
+    await flush();
+    expect(logged).toHaveBeenCalledTimes(1);
+    logged.mockRestore();
+    expect(posted).toEqual([{ id: 2, ok: false, message: 'The fonts of the Text pattern could not be loaded (Nunito-Bold.ttf: HTTP 404).' }]);
+    handle({ type: 'preview', id: 3, request: { part: 'balloon', input: snapshot } });
+    expect(posted[1]).toEqual({ id: 3, ok: true });
   });
 });

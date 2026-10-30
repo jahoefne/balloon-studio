@@ -6,7 +6,7 @@
 // hollow inset (BalloonGeometry.swift:308). Exports and imports run in `Task.detached` without a
 // cancellation handler, so nothing there ever sees a cancellation and nothing polls.
 
-import { CoreFailure, type AssetLoader, type BalloonGeometryApi, type BasketGeometryApi, type ClipGeometryApi, type CloudGeometryApi, type CoreApi, type ExportOptions, type FigureGeometryApi, type RingGeometryApi, type RunOptions, type StlGeometryApi } from '../api';
+import { CoreFailure, toCoreError, type AssetLoader, type BalloonGeometryApi, type BasketGeometryApi, type ClipGeometryApi, type CloudGeometryApi, type CoreApi, type ExportOptions, type FigureGeometryApi, type RingGeometryApi, type RunOptions, type StlGeometryApi } from '../api';
 import { drawNightFlight } from '../artwork/nightFlightArtwork';
 import { drawSummitCableCar } from '../artwork/summitCableCarArtwork';
 import { generate } from '../balloon/balloonGenerator';
@@ -72,9 +72,12 @@ function preview<T>(options: RunOptions | undefined, cancelled: () => T, body: (
 /** `prepare` fills this; the Text pattern cannot do without it. */
 let fonts: FontSet | null = null;
 let textRasterizer: TextRasterizer | null = null;
+let fontFailure: string | null = null;
 
 const loadedFonts = (): { fonts: FontSet; textRasterizer: TextRasterizer } => {
-  if (fonts === null || textRasterizer === null) throw new CoreFailure('internal', 'The fonts of the Text pattern are not loaded.');
+  if (fonts === null || textRasterizer === null) {
+    throw new CoreFailure('internal', fontFailure === null ? 'The fonts of the Text pattern are not loaded.' : `The fonts of the Text pattern could not be loaded (${fontFailure}). Reload the page to try again.`);
+  }
   return { fonts, textRasterizer };
 };
 
@@ -317,8 +320,14 @@ const stl: StlGeometryApi = {
 export const core: CoreApi = {
   implementation: 'real',
   async prepare(loader: AssetLoader) {
-    fonts = await loadFontSet(loader);
-    textRasterizer = createTextRasterizer(fonts);
+    try {
+      fonts = await loadFontSet(loader);
+      textRasterizer = createTextRasterizer(fonts);
+      fontFailure = null;
+    } catch (error) {
+      fontFailure = toCoreError(error).message;
+      throw error;
+    }
   },
   balloon: { ...parameters.balloon, ...balloon },
   basket: { ...parameters.basket, ...basket },

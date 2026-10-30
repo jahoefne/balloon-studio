@@ -31,6 +31,21 @@ function Caption({ children }: { children: ReactNode }) {
   return <p className="balloon-caption">{children}</p>;
 }
 
+/** No string in Swift, where CoreText's fallback always finds a glyph: with the bundled fonts a character can be left out (core/text/shaper.ts). */
+function MissingGlyphs() {
+  const glyphs = useBalloonStore((state) => state.bundle?.missingGlyphs) ?? [];
+  // The live region stays mounted, so the announcement fires when the hint appears; `:empty` takes it out of the gaps.
+  return (
+    <div className="balloon-live" aria-live="polite" data-testid="missingGlyphs">
+      {glyphs.length > 0 && (
+        <Caption>
+          Not in any bundled font: {glyphs.join(' ')}. {glyphs.length === 1 ? 'This character is' : 'These characters are'} left out.
+        </Caption>
+      )}
+    </div>
+  );
+}
+
 function ColorChoice({ label, field }: { label: string; field: 'base' | 'detail' | 'flightBody' | 'flightCap' }) {
   const value = useBalloonStore((state) => state.pattern[field]);
   return <ColorPicker label={label} value={value} onChange={(color: FilamentColor) => setPattern(field, color)} />;
@@ -95,6 +110,7 @@ export function PatternEditor() {
                   onChange={(event) => setPattern('text', event.currentTarget.value)}
                 />
               </div>
+              <MissingGlyphs />
               <Select<BalloonTextFont>
                 hug
                 rich
