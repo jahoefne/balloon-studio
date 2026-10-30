@@ -12,10 +12,20 @@ import { encodeFigureParameters, figureParameterApi } from '../figures/figureGeo
 import { encodeRingParameters, filename as ringFilename, normalized as normalizedRing, OUTER_LIP, RING_DEFAULTS, RING_LARGE, RING_SOLID, ringDerived } from '../ring/ringGeometry';
 import type { JSONKeyedContainer } from '../swift/json';
 import { rounded } from '../swift/rounding';
-import { balloonExportFilename, balloonExportFormat, balloonParameters as stubBalloon } from '../stub/balloon';
+import * as patternModel from '../patterns/balloonPatterns';
 import { cloudParameters } from '../stub/cloud';
 import { lampSettings } from '../stub/lampSettings';
-import { BASKET_STYLES, CABLE_CLIP_MOUNTS, FIGURE_STYLES, FIGURE_SURFACES, type BasketParameters, type CableClipDerived, type CableClipParameters, type FigureParameters, type RingParameters } from '../types';
+import { patternHasRelief, BASKET_STYLES, CABLE_CLIP_MOUNTS, FIGURE_STYLES, FIGURE_SURFACES, type BasketParameters, type CableClipDerived, type CableClipParameters, type FigureParameters, type RingParameters } from '../types';
+
+const exportFormat: BalloonParameterApi['exportFormat'] = (pattern) => (pattern.style === 'Solid' ? 'stl' : '3mf');
+
+/** BalloonStudioApp.swift:169-170 */
+const exportFilename: BalloonParameterApi['exportFilename'] = ({ parameters, pattern }) => {
+  const name = balloonModel.filename(balloonModel.normalized(parameters));
+  if (exportFormat(pattern) === 'stl') return name;
+  const suffix = pattern.style === 'Night Flight' ? '-night-flight' : pattern.style === 'Summit Cable Car' ? '-summit-cable-car' : '-pattern';
+  return `${name.split('.stl').join(suffix)}.3mf`;
+};
 
 const balloon: BalloonParameterApi = {
   defaults: balloonModel.classic,
@@ -38,11 +48,27 @@ const balloon: BalloonParameterApi = {
     openingDiameter: balloonModel.openingDiameter(p),
     filename: balloonModel.filename(p),
   }),
-  // TODO(WP-K3): PatternSettings and PurgeSettings from core/patterns.
-  pattern: stubBalloon.pattern,
-  purge: stubBalloon.purge,
-  exportFormat: balloonExportFormat,
-  exportFilename: balloonExportFilename,
+  pattern: {
+    defaults: patternModel.PATTERN_DEFAULTS,
+    normalize: patternModel.normalized,
+    codec: settingsCodec(patternModel.patternFromJSON, patternModel.patternFromValue, patternModel.patternToJSON),
+    derived: (s, p) => ({
+      hasRelief: patternHasRelief(s.style),
+      baseColor: patternModel.baseColor(s),
+      detailColor: patternModel.detailColor(s),
+      multicolor: patternModel.multicolor(s),
+      capBoundary: patternModel.capBoundary(s, p),
+      maximumTextHeight: patternModel.maximumTextHeight(s, p),
+      maximumSize: patternModel.maximumSize(s, p),
+    }),
+  },
+  purge: {
+    defaults: patternModel.PURGE_DEFAULTS,
+    normalize: patternModel.normalizedPurge,
+    codec: settingsCodec(patternModel.purgeFromJSON, patternModel.purgeFromValue, patternModel.purgeToJSON),
+  },
+  exportFormat,
+  exportFilename,
 };
 
 /** Synthesized Codable (BasketGeometry.swift:19): every key is required, in declaration order. */

@@ -5,7 +5,8 @@
 // REFS_CASES=clip-*,cloud-classic  only these ids (* is a wildcard)
 // REFS_SHARD=2/4                   the second of four parts of the selection
 import { core } from '#core';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { fontLoader } from '../tests/support/textFonts';
 import { compareCase, compareCaseError, type CaseResult } from './compare';
 import { exportedFile, prepareCase } from './exportCase';
 import { describeResult } from './index';
@@ -13,7 +14,11 @@ import { allCases, isExported, loadManifest, type ReferenceCase } from './manife
 import { formatTable, skippedRow, summarize, toRow, writeReport } from './report';
 import { skippedBy } from './skipList';
 
-/** What depends on the rasterizer: plan §1 exempts it from the byte criterion, WP-R checks it by tolerances. */
+/**
+ * What depends on the rasterizer: plan §1 exempts it from the byte criterion, WP-R checks it by tolerances.
+ * It also covers the 12 tie-flip models (`TIE_FLIPS` in tests/patterns.reference.test.ts, all relief or text),
+ * so they need no line in skipList.ts here; WP-K3 checks those with Swift's rasters and its limits.
+ */
 const RASTER_ENTRIES = ['3D/3dmodel.model', 'Metadata/balloon-studio.txt'];
 
 function selectCases(): ReferenceCase[] {
@@ -29,6 +34,8 @@ function selectCases(): ReferenceCase[] {
 
 const cases = selectCases();
 const isReal = core.implementation === 'real';
+
+beforeAll(() => core.prepare(fontLoader));
 
 describe.skipIf(isReal)('grid structure (stub core)', () => {
   it('covers the grid the manifest was generated from', () => {

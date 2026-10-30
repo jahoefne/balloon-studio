@@ -6,7 +6,8 @@
 // hollow inset (BalloonGeometry.swift:308). Exports and imports run in `Task.detached` without a
 // cancellation handler, so nothing there ever sees a cancellation and nothing polls.
 
-import { CoreFailure, type BalloonGeometryApi, type BasketGeometryApi, type ClipGeometryApi, type CoreApi, type ExportOptions, type FigureGeometryApi, type RingGeometryApi, type RunOptions, type StlGeometryApi } from '../api';
+import { CoreFailure, type AssetLoader, type BalloonGeometryApi, type BasketGeometryApi, type ClipGeometryApi, type CoreApi, type ExportOptions, type FigureGeometryApi, type RingGeometryApi, type RunOptions, type StlGeometryApi } from '../api';
+import { drawNightFlight } from '../artwork/nightFlightArtwork';
 import { generate } from '../balloon/balloonGenerator';
 import { normalized as normalizedBalloon } from '../balloon/balloonParameters';
 import { exportSTL } from '../balloon/balloonStl';
@@ -14,12 +15,17 @@ import { open, STLImportError } from '../balloon/stlImport';
 import { BasketGenerator, basketFilename, normalizedBasket } from '../basket/basketGeometry';
 import { CableClip, CableClipKit, filename as clipFilename, normalized as normalizedClip } from '../clip/cableClip';
 import { figureFilename, figureHangingView, figureHoles, figureHolesWanted, figureSetArchive, figureSetFilename, generateFigure, normalizedFigure } from '../figures/figureGeometry';
-import { MeshError } from '../geometry/mesh';
+import { MeshError, type BalloonMesh } from '../geometry/mesh';
 import { binarySTL } from '../io/binaryStl';
 import { filename as ringFilename, ledFaces, normalized as normalizedRing, RingGenerator } from '../ring/ringGeometry';
 import { SegmentedRingKit } from '../ring/segmentedRing';
+import { calculatePurgeEstimate, PaintedBalloon } from '../patterns/balloonPatterns';
+import type { PatternRasterizers, TextRasterizer } from '../patterns/raster';
+import { threeMF } from '../patterns/threeMF';
 import { geometry as stubGeometry } from '../stub/geometry';
-import type { ExportResult, MeshBuffers, PurgeEstimate } from '../types';
+import { loadFontSet, type FontSet } from '../text/fontSet';
+import { createTextRasterizer, missingGlyphs } from '../text/textMask';
+import type { BalloonPreview, ExportResult, MeshBuffers, PatternSettings, PurgeEstimate } from '../types';
 import { emptyMeshBuffers, toMeshBuffers } from './buffers';
 import { clipDerived, core as parameters } from './parameters';
 
@@ -59,33 +65,80 @@ function preview<T>(options: RunOptions | undefined, cancelled: () => T, body: (
   });
 }
 
-// A solid balloon has one color: `PurgeEstimate.calculate` schedules no change.
-const SOLID_ESTIMATE: Readonly<PurgeEstimate> = Object.freeze({ mixedLayers: 0, minimumChanges: 0, maximumChanges: 0, minimumGrams: 0, maximumGrams: 0 });
+// --- Rasterizers --------------------------------------------------------------------
+
+/** `prepare` fills this; the Text pattern cannot do without it. */
+let fonts: FontSet | null = null;
+let textRasterizer: TextRasterizer | null = null;
+
+const loadedFonts = (): { fonts: FontSet; textRasterizer: TextRasterizer } => {
+  if (fonts === null || textRasterizer === null) throw new CoreFailure('internal', 'The fonts of the Text pattern are not loaded.');
+  return { fonts, textRasterizer };
+};
+
+const SUMMIT_UNAVAILABLE = 'The Summit Cable Car pattern is not available in the web app yet.';
+
+const rasterizers: PatternRasterizers = {
+  artworks: {
+    nightFlight: drawNightFlight,
+    // TODO(WP-R5): SummitCableCarArtwork.draw. Until then the preview is the plain two-color envelope
+    // and the export refuses, so nobody prints a balloon without its scene.
+    summitCableCar: (_width, _height, _diameter, columns, rows) => new Float32Array(columns * rows),
+  },
+  textRasterizer: (text, font) => loadedFonts().textRasterizer(text, font),
+};
+
+// --- Balloon -------------------------------------------------------------------------
+
+const NO_ESTIMATE: Readonly<PurgeEstimate> = Object.freeze({ mixedLayers: 0, minimumChanges: 0, maximumChanges: 0, minimumGrams: 0, maximumGrams: 0 });
+
+/** BalloonModel.unpainted (BalloonStudioApp.swift:94): a change of pattern keeps the generated mesh. `make` leaves it alone. */
+let unpainted: { key: string; mesh: BalloonMesh } | null = null;
+
+const generatedPreview = (p: BalloonPreview['parameters'], isCancelled: (() => boolean) | undefined): BalloonMesh => {
+  const key = parameters.balloon.codec.encode(p);
+  if (unpainted?.key === key) return unpainted.mesh;
+  const mesh = generate(p, 'preview', isCancelled);
+  if (mesh.triangles.length > 0) unpainted = { key, mesh };
+  return mesh;
+};
+
+/** `missingGlyphs` is about the Text pattern only. A blank or inkless text has no layout, so nothing is missing there either. */
+const missingGlyphsOf = (pattern: PatternSettings): string[] =>
+  pattern.style === 'Text' ? missingGlyphs(pattern.text, pattern.textFont, loadedFonts().fonts) : [];
 
 const balloon: BalloonGeometryApi = {
   preview(snapshot, options) {
     const p = normalizedBalloon(snapshot.parameters);
     const pattern = parameters.balloon.pattern.normalize(snapshot.pattern, p);
     const purge = parameters.balloon.purge.normalize(snapshot.purge);
-    // TODO(WP-K3): PaintedBalloon.make and PurgeEstimate.calculate from core/patterns.
-    if (pattern.style !== 'Solid') return stubGeometry.balloon.preview(snapshot);
-    // TODO(WP-R3): `missingGlyphs` of the text rasterizer; a Solid balloon has none anyway.
-    const bundle = (mesh: MeshBuffers) => ({ parameters: p, pattern, purge, mesh, estimate: { ...SOLID_ESTIMATE }, missingGlyphs: [] });
-    return preview(
-      options,
-      () => bundle(emptyMeshBuffers()),
-      () => {
-        const mesh = generate(p, 'preview', options?.isCancelled);
-        return bundle(toMeshBuffers(mesh, new Uint8Array(mesh.triangles.length)));
-      },
-    );
+    const cancelled = (): BalloonPreview => ({ parameters: p, pattern, purge, mesh: emptyMeshBuffers(), estimate: { ...NO_ESTIMATE }, missingGlyphs: [] });
+    return preview(options, cancelled, () => {
+      const original = generatedPreview(p, options?.isCancelled);
+      // The balloon's own poll came back cancelled; `make` has nothing to paint.
+      if (original.triangles.length === 0) return cancelled();
+      const painted = PaintedBalloon.make(original, p, pattern, rasterizers);
+      return {
+        parameters: p,
+        pattern,
+        purge,
+        mesh: toMeshBuffers(painted.mesh, painted.colors),
+        estimate: calculatePurgeEstimate(painted, purge),
+        missingGlyphs: missingGlyphsOf(pattern),
+      };
+    });
   },
   export(snapshot, options) {
     const p = normalizedBalloon(snapshot.parameters);
     const pattern = parameters.balloon.pattern.normalize(snapshot.pattern, p);
-    // TODO(WP-K3): PaintedBalloon.make(...).threeMF(settings:purge:) from core/patterns.
-    if (parameters.balloon.exportFormat(pattern) === '3mf') return stubGeometry.balloon.export(snapshot);
-    return run(options, () => single(parameters.balloon.exportFilename({ ...snapshot, parameters: p, pattern }), 'model/stl', exportSTL(generate(p, qualityOf(options)), p)));
+    const purge = parameters.balloon.purge.normalize(snapshot.purge);
+    const filename = parameters.balloon.exportFilename({ parameters: p, pattern, purge });
+    if (pattern.style === 'Summit Cable Car') throw new CoreFailure('export-blocked', SUMMIT_UNAVAILABLE);
+    return run(options, () => {
+      const mesh = generate(p, qualityOf(options));
+      if (parameters.balloon.exportFormat(pattern) === 'stl') return single(filename, 'model/stl', exportSTL(mesh, p));
+      return single(filename, 'model/3mf', threeMF(PaintedBalloon.make(mesh, p, pattern, rasterizers), pattern, purge));
+    });
   },
 };
 
@@ -212,6 +265,10 @@ const stl: StlGeometryApi = {
 
 export const core: CoreApi = {
   implementation: 'real',
+  async prepare(loader: AssetLoader) {
+    fonts = await loadFontSet(loader);
+    textRasterizer = createTextRasterizer(fonts);
+  },
   balloon: { ...parameters.balloon, ...balloon },
   basket: { ...parameters.basket, ...basket },
   ring: { ...parameters.ring, ...ring },

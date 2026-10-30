@@ -7,6 +7,7 @@ import { core as parameters } from './parameters';
 
 export const core: CoreApi = {
   implementation: 'stub',
+  prepare: () => Promise.resolve(),
   balloon: { ...parameters.balloon, ...geometry.balloon },
   basket: { ...parameters.basket, ...geometry.basket },
   ring: { ...parameters.ring, ...geometry.ring },

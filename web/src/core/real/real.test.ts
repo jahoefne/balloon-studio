@@ -1,7 +1,8 @@
 // The wiring of the real core: what the grid in harness/ cannot see. Bytes and normalized settings
 // of exports are the harness's job (`VITE_CORE=real npm run test:reference`).
 import { readdirSync, readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { fontLoader } from '../../../tests/support/textFonts';
 import { routeRequest } from '../../worker/route';
 import type { ExportRequest, PreviewRequest } from '../../worker/protocol';
 import { CoreFailure, INVALID_SETTINGS_MESSAGE, LAMP_SETTINGS_ERROR, MISSING_SETTINGS_MESSAGE, STL_ERRORS, type Codec } from '../api';
@@ -37,6 +38,8 @@ const checkMesh = (mesh: MeshBuffers, colored: boolean) => {
   expect(mesh.dimensions.x).toBeGreaterThan(0);
 };
 
+beforeAll(() => core.prepare(fontLoader));
+
 const snapshot = { parameters: core.balloon.defaults, pattern: core.balloon.pattern.defaults, purge: core.balloon.purge.defaults };
 
 describe('the two halves', () => {
@@ -63,6 +66,7 @@ describe('previews through the worker route', () => {
     expect(preview.mesh.faceColors!.every((c) => c === 0)).toBe(true);
     expect(preview.mesh.dimensions).toEqual({ x: 180, y: 180, z: 220 });
     expect(preview.estimate).toEqual({ mixedLayers: 0, minimumChanges: 0, maximumChanges: 0, minimumGrams: 0, maximumGrams: 0 });
+    expect(preview.missingGlyphs).toEqual([]);
     expect((result as typeof preview).parameters).toEqual(core.balloon.defaults);
     expect(transfer.length).toBe(3);
   });
@@ -108,10 +112,46 @@ describe('previews through the worker route', () => {
     expect(preview.clip).toEqual(core.clip.clip(core.clip.defaults));
   });
 
-  it('cloud and patterned balloons still come from the stub', () => {
-    const patterned = { ...snapshot, pattern: { ...snapshot.pattern, style: 'Hearts' as const } };
-    expect(core.balloon.preview(patterned).mesh.positions).toEqual(stub.balloon.preview(patterned).mesh.positions);
+  it('cloud still comes from the stub', () => {
     expect(core.cloud.preview).toBe(stub.cloud.preview);
+  });
+
+  it('patterns: painted mesh, two colors, a real purge estimate', () => {
+    const preview = core.balloon.preview({ ...snapshot, pattern: { ...snapshot.pattern, style: 'Hearts' } });
+    checkMesh(preview.mesh, true);
+    expect(new Set(preview.mesh.faceColors)).toEqual(new Set([0, 1]));
+    expect(preview.mesh.indices.length).toBeGreaterThan(core.balloon.preview(snapshot).mesh.indices.length);
+    expect(preview.estimate.mixedLayers).toBeGreaterThan(0);
+    expect(preview.estimate.maximumChanges).toBeGreaterThanOrEqual(preview.estimate.minimumChanges);
+    expect(preview.missingGlyphs).toEqual([]);
+  });
+
+  it('text: paints with the bundled fonts and names what no font has', () => {
+    const preview = core.balloon.preview({ ...snapshot, pattern: { ...snapshot.pattern, style: 'Text', text: 'Hi 東' } });
+    checkMesh(preview.mesh, true);
+    expect(new Set(preview.mesh.faceColors)).toEqual(new Set([0, 1]));
+    expect(preview.missingGlyphs).toEqual(['東']);
+  });
+
+  it('text without fonts fails per request, everything else still works', async () => {
+    vi.resetModules();
+    const fresh = (await import('./index')).core;
+    expect(fresh).not.toBe(core);
+    // resetModules gives this core its own CoreFailure class, so match the text.
+    expect(() => fresh.balloon.preview({ ...snapshot, pattern: { ...snapshot.pattern, style: 'Text' } })).toThrow('fonts');
+    expect(fresh.balloon.preview({ ...snapshot, pattern: { ...snapshot.pattern, style: 'Hearts' } }).mesh.indices.length).toBeGreaterThan(0);
+  });
+
+  it('night flight: a relief in two colors', { timeout: 120_000 }, () => {
+    const preview = core.balloon.preview({ ...snapshot, pattern: { ...snapshot.pattern, style: 'Night Flight' } });
+    checkMesh(preview.mesh, true);
+    expect(new Set(preview.mesh.faceColors)).toEqual(new Set([0, 1]));
+  });
+
+  it('summit: previews without its scene and refuses to export (WP-R5)', { timeout: 120_000 }, () => {
+    const summit = { ...snapshot, pattern: { ...snapshot.pattern, style: 'Summit Cable Car' as const } };
+    checkMesh(core.balloon.preview(summit).mesh, true);
+    expect(failure(() => core.balloon.export(summit)).code).toBe('export-blocked');
   });
 });
 
@@ -139,9 +179,19 @@ describe('cancellation', () => {
     expect(hollow).toBeGreaterThan(2);
   });
 
+  it('a change of pattern keeps the generated mesh, like BalloonModel.unpainted', () => {
+    const parameters = { ...core.balloon.defaults, hollow: true, diameter: 62, height: 80, neckDiameter: 12 };
+    let first = 0;
+    core.balloon.preview({ ...snapshot, parameters }, { isCancelled: () => (first++, false) });
+    expect(first).toBeGreaterThan(2);
+    let second = 0;
+    core.balloon.preview({ ...snapshot, parameters, pattern: { ...snapshot.pattern, style: 'Hearts' } }, { isCancelled: () => (second++, false) });
+    expect(second).toBe(2);
+  });
+
   it('cancelling mid-generation is the empty mesh too', () => {
     let polls = 0;
-    const parameters = { ...core.balloon.defaults, hollow: true, diameter: 60, height: 80, neckDiameter: 12 };
+    const parameters = { ...core.balloon.defaults, hollow: true, diameter: 61, height: 80, neckDiameter: 12 };
     const preview = core.balloon.preview({ ...snapshot, parameters }, { isCancelled: () => ++polls > 5 });
     expect(preview.mesh.indices.length).toBe(0);
   });
@@ -172,6 +222,9 @@ describe('exports', () => {
       return result;
     };
     expect(route({ part: 'balloon', input: snapshot }).mime).toBe('model/stl');
+    const hearts = route({ part: 'balloon', input: { ...snapshot, pattern: { ...snapshot.pattern, style: 'Hearts' } } });
+    expect(hearts.mime).toBe('model/3mf');
+    expect(hearts.filename).toBe('Balloon-180x220mm-20panels-pattern.3mf');
     expect(route({ part: 'clip', input: core.clip.defaults }).mime).toBe('model/stl');
     expect(route({ part: 'basket', input: core.basket.defaults }).filename).toBe('Basket-wicker-64x48x42mm.stl');
     expect(route({ part: 'ring', input: core.ring.presets.solid }).mime).toBe('model/stl');
@@ -284,6 +337,25 @@ describe('the stub agrees with the real core on everything but geometry', () => 
       expect(stub.balloon.normalize({ ...p, panels: 17, height: 1e4 })).toEqual(core.balloon.normalize({ ...p, panels: 17, height: 1e4 }));
       expect(stub.balloon.codec.encode(p)).toBe(core.balloon.codec.encode(p));
     }
+  });
+
+  it('pattern and purge', () => {
+    const patterns = [snapshot.pattern, { ...snapshot.pattern, style: 'Night Flight' as const, capHeight: 99, reliefDepth: 9 }, { ...snapshot.pattern, style: 'Text' as const, text: 'Zoë\u00a0&\tLéa', size: 99, rows: 9 }];
+    for (const s of patterns) {
+      const p = balloons[0]!;
+      expect(stub.balloon.pattern.normalize(s, p)).toEqual(core.balloon.pattern.normalize(s, p));
+      expect(stub.balloon.pattern.derived(s, p)).toEqual(core.balloon.pattern.derived(s, p));
+      expect(stub.balloon.pattern.codec.encode(s)).toBe(core.balloon.pattern.codec.encode(s));
+      expect(core.balloon.pattern.codec.decode(core.balloon.pattern.codec.encode(s))).toEqual(s);
+      const q = { parameters: p, pattern: s, purge: snapshot.purge };
+      expect(stub.balloon.exportFilename(q)).toBe(core.balloon.exportFilename(q));
+      expect(stub.balloon.exportFormat(s)).toBe(core.balloon.exportFormat(s));
+    }
+    expect(stub.balloon.purge.defaults).toEqual(core.balloon.purge.defaults);
+    const wild = { layerHeight: 9, baseToDetail: -1, detailToBase: 2000, multiplier: Number.NaN, density: 0 };
+    expect(stub.balloon.purge.normalize(wild)).toEqual(core.balloon.purge.normalize(wild));
+    expect(failure(() => core.balloon.purge.codec.decode('{"layerHeight":0.2}')).message).toBe(MISSING_SETTINGS_MESSAGE);
+    expect(failure(() => core.balloon.pattern.codec.decode('{"style":"Zebra"}')).message).toBe(INVALID_SETTINGS_MESSAGE);
   });
 
   it('basket and ring', () => {

@@ -491,8 +491,17 @@ export interface CoreParameterApi {
   readonly lampSettings: LampSettingsApi;
 }
 
+/** Fetches one bundled file by name: `fetch` in the worker, `readFile` in tests. */
+export type AssetLoader = (file: string) => Promise<Uint8Array | ArrayBuffer>;
+
 /** Everything; runs in the core worker (`#core`). */
 export interface CoreApi extends CoreParameterApi {
+  /**
+   * Loads what the synchronous calls below need and cannot fetch themselves: the bundled fonts of the
+   * Text pattern. Call once and await it before the first request. If it rejects, everything but the
+   * Text pattern keeps working. The stub needs nothing.
+   */
+  prepare(loader: AssetLoader): Promise<void>;
   readonly balloon: BalloonParameterApi & BalloonGeometryApi;
   readonly basket: BasketParameterApi & BasketGeometryApi;
   readonly ring: RingParameterApi & RingGeometryApi;

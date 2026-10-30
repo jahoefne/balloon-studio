@@ -105,7 +105,7 @@ The relief and text groups are exempt from the byte criterion (plan §1), so the
 
 `core/real` honors two `ExportOptions` the app does not use (`GridRunOptions` in `exportCase.ts`): `quality` for the 59 preview-quality cases, and `ignoreExportProblem` for `clip-small-head`, which the app refuses to export but the reference keeps.
 
-**Skip list** (`skipList.ts`): the parts `core/real` still takes from the stub (`cloud`, `sun`, `pattern`, the groups `relief`, `text`) are left out and count as `skipped (WP-K3)` / `skipped (WP-K4)` in the table and in `summary.skipped`. WP-K3 and WP-K4 delete their lines when they hook into `core/real`.
+**Skip list** (`skipList.ts`): what `core/real` cannot produce yet is left out and counts as `skipped (WP-…)` in the table and in `summary.skipped`: the parts `cloud` and `sun` (WP-K4) and the Summit Cable Car cases (WP-R5).
 
 ## Files
 
