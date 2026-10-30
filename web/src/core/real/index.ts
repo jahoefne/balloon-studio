@@ -6,7 +6,7 @@
 // hollow inset (BalloonGeometry.swift:308). Exports and imports run in `Task.detached` without a
 // cancellation handler, so nothing there ever sees a cancellation and nothing polls.
 
-import { CoreFailure, type BalloonGeometryApi, type BasketGeometryApi, type ClipGeometryApi, type CoreApi, type ExportOptions, type FigureGeometryApi, type RingGeometryApi, type RunOptions, type StlGeometryApi } from '../api';
+import { CoreFailure, type BalloonGeometryApi, type BasketGeometryApi, type ClipGeometryApi, type CloudGeometryApi, type CoreApi, type ExportOptions, type FigureGeometryApi, type RingGeometryApi, type RunOptions, type StlGeometryApi } from '../api';
 import { generate } from '../balloon/balloonGenerator';
 import { normalized as normalizedBalloon } from '../balloon/balloonParameters';
 import { exportSTL } from '../balloon/balloonStl';
@@ -14,14 +14,16 @@ import { open, STLImportError } from '../balloon/stlImport';
 import { BasketGenerator, basketFilename, normalizedBasket } from '../basket/basketGeometry';
 import { CableClip, CableClipKit, filename as clipFilename, normalized as normalizedClip } from '../clip/cableClip';
 import { figureFilename, figureHangingView, figureHoles, figureHolesWanted, figureSetArchive, figureSetFilename, generateFigure, normalizedFigure } from '../figures/figureGeometry';
-import { MeshError } from '../geometry/mesh';
+import { MeshError, type BalloonMesh } from '../geometry/mesh';
 import { binarySTL } from '../io/binaryStl';
+import { filename as lampFilename, normalized as normalizedLamp } from '../lamp/cloudGeometry';
+import { CloudKit } from '../lamp/cloudKit';
 import { filename as ringFilename, ledFaces, normalized as normalizedRing, RingGenerator } from '../ring/ringGeometry';
 import { SegmentedRingKit } from '../ring/segmentedRing';
 import { geometry as stubGeometry } from '../stub/geometry';
-import type { ExportResult, MeshBuffers, PurgeEstimate } from '../types';
+import { CLOUD_VIEWS, type CloudView, type ExportResult, type MeshBuffers, type PurgeEstimate } from '../types';
 import { emptyMeshBuffers, toMeshBuffers } from './buffers';
-import { clipDerived, core as parameters } from './parameters';
+import { clipDerived, core as parameters, nailInsertInfo } from './parameters';
 
 /** A failure of the ported modules as the contract's error, with the same Mac string. */
 function mapped<T>(body: () => T): T {
@@ -140,6 +142,60 @@ const ring: RingGeometryApi = {
   },
 };
 
+const emptyCloudViews = (): Record<CloudView, MeshBuffers> =>
+  Object.fromEntries(CLOUD_VIEWS.map((view) => [view, emptyMeshBuffers()])) as Record<CloudView, MeshBuffers>;
+
+/** Swift hands `[]` to the preview where a mesh has no colors, and `rearColors` is `[]` without an insert. */
+const colored = (mesh: BalloonMesh, colors: readonly number[]): MeshBuffers => toMeshBuffers(mesh, colors.length === 0 ? undefined : colors);
+
+const cloud: CloudGeometryApi = {
+  // CloudEditor.swift:385-402, every view at once. The two fallbacks share the buffers of their mesh.
+  preview(input, options) {
+    const p = normalizedLamp(input);
+    return preview(
+      options,
+      () => ({ parameters: p, views: emptyCloudViews(), ledPlan: { sections: [], totalLength: 0, nominalWatts: 0, rowCount: 0 }, nailInsert: null, hasInsertMesh: false, clampCount: 0, cableCount: 0, cablesWithoutClamp: [], printedParts: 0, instructions: '' }),
+      () => {
+        const kit = new CloudKit(p);
+        const assemblyColors = kit.assemblyColors;
+        const clampPrint = kit.clampPrintView;
+        const seal = toMeshBuffers(kit.sealPrintView);
+        const rear = colored(kit.rear, kit.rearColors);
+        return {
+          parameters: p,
+          views: {
+            assembled: toMeshBuffers(kit.assembly(), assemblyColors),
+            exploded: toMeshBuffers(kit.assembly(true), assemblyColors),
+            back: toMeshBuffers(kit.backWithLEDGuides, kit.backColors),
+            rear,
+            front: toMeshBuffers(kit.front),
+            seal,
+            clamp: clampPrint === null ? seal : toMeshBuffers(clampPrint),
+            insert: kit.insertMesh === null ? rear : toMeshBuffers(kit.insertMesh),
+          },
+          ledPlan: {
+            sections: kit.ledPlan.sections.map(({ x, y, length }) => ({ x, y, length })),
+            totalLength: kit.ledPlan.totalLength,
+            nominalWatts: kit.ledPlan.nominalWatts,
+            rowCount: kit.ledPlan.rowCount,
+          },
+          nailInsert: kit.nailInsert === null ? null : nailInsertInfo(kit.nailInsert),
+          hasInsertMesh: kit.insertMesh !== null,
+          clampCount: kit.clampCount,
+          cableCount: kit.cables.length,
+          cablesWithoutClamp: kit.cables.filter((cable) => cable.clamp === null).map((cable) => cable.parameters.cableSide),
+          printedParts: kit.printedParts,
+          instructions: kit.instructions,
+        };
+      },
+    );
+  },
+  export(input, options) {
+    const p = normalizedLamp(input);
+    return run(options, () => single(lampFilename(p), 'application/zip', new CloudKit(p, qualityOf(options)).archive()));
+  },
+};
+
 const figure: FigureGeometryApi = {
   preview(input, options) {
     const p = normalizedFigure(input);
@@ -215,8 +271,7 @@ export const core: CoreApi = {
   balloon: { ...parameters.balloon, ...balloon },
   basket: { ...parameters.basket, ...basket },
   ring: { ...parameters.ring, ...ring },
-  // TODO(WP-K4): CloudKit from core/lamp, once K4c is on main.
-  cloud: { ...parameters.cloud, ...stubGeometry.cloud },
+  cloud: { ...parameters.cloud, ...cloud },
   figure: { ...parameters.figure, ...figure },
   clip: { ...parameters.clip, ...clip },
   stl: { ...parameters.stl, ...stl },

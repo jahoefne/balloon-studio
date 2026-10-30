@@ -11,7 +11,7 @@ import { exportedFile, prepareCase } from './exportCase';
 import { describeResult } from './index';
 import { allCases, isExported, loadManifest, type ReferenceCase } from './manifest';
 import { formatTable, skippedRow, summarize, toRow, writeReport } from './report';
-import { skippedBy } from './skipList';
+import { skippedBy, skippedEntries } from './skipList';
 
 /** What depends on the rasterizer: plan §1 exempts it from the byte criterion, WP-R checks it by tolerances. */
 const RASTER_ENTRIES = ['3D/3dmodel.model', 'Metadata/balloon-studio.txt'];
@@ -83,7 +83,8 @@ describe.skipIf(!isReal)('grid against the Swift references', () => {
       const file = exportedFile(exported);
       const tsMs = performance.now() - started;
       if (isExported(c)) expect(exported.filename, 'filename').toBe(c.filename);
-      result = compareCase(id, file.bytes, { tsMs, ...(c.group === 'identity' ? {} : { skipEntries: RASTER_ENTRIES }) });
+      const skipEntries = [...(c.group === 'identity' ? [] : RASTER_ENTRIES), ...skippedEntries(c)];
+      result = compareCase(id, file.bytes, { tsMs, ...(skipEntries.length === 0 ? {} : { skipEntries }) });
     } catch (error) {
       // Right for the case Swift fails on; a mismatch row with the message for all others.
       result = compareCaseError(id, error, { tsMs: performance.now() - started });
