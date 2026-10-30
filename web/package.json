@@ -27,7 +27,8 @@
     "test:watch": "vitest",
     "test:reference": "vitest run --config vitest.reference.config.ts",
     "size": "node scripts/check-bundle-size.mjs",
-    "lint": "eslint src/core"
+    "lint": "eslint src/core",
+    "bench": "vite build --config bench/vite.config.ts --logLevel warn && node node_modules/.bench/budgets.js"
   },
   "dependencies": {
     "@noble/hashes": "^2.4.0",

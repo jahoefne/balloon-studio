@@ -4,25 +4,6 @@
 import { describe, expect, it } from 'vitest';
 import { FIGURE_STYLES, type Vec2 } from '../types';
 import { core } from './index';
-import { printfFixed, printfG, rounded, swiftMax, swiftMin } from './swiftCompat';
-
-describe('Swift formatting stand-ins', () => {
-  it('printf %.1f/%.2f round the exact value, exact ties to even', () => {
-    expect([0.25, 0.35, 2.25, 1.25, -0.04, 0].map((x) => printfFixed(x, 1))).toEqual(['0.2', '0.3', '2.2', '1.2', '-0.0', '0.0']);
-    expect([2.675, 1.005, 0.125, 15.625].map((x) => printfFixed(x, 2))).toEqual(['2.67', '1.00', '0.12', '15.62']);
-    expect(printfFixed(9.96, 1)).toBe('10.0');
-  });
-  it('%g keeps six significant digits', () => {
-    expect([8, 3.75, 3.5, 12, 450, 0.0001, 1e-5, 1234567, 8.015625].map((x) => printfG(x))).toEqual([
-      '8', '3.75', '3.5', '12', '450', '0.0001', '1E-05', '1.23457E+06', '8.01562',
-    ]);
-  });
-  it('rounded() halves away from zero and min/max keep Swift tie rules', () => {
-    expect([2.5, -2.5, 0.49999999999999994, -0.4].map(rounded)).toEqual([3, -3, 0, -0]);
-    expect(Object.is(swiftMax(0, -0), -0)).toBe(true);
-    expect(Object.is(swiftMin(0, -0), 0)).toBe(true);
-  });
-});
 
 describe('balloon', () => {
   it('reports the classic balloon', () => {

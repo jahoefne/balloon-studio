@@ -8,9 +8,12 @@ import { statusLabel, type Status } from './result';
 
 export const DEFAULT_REPORT_PATH = `${REFERENCES_DIR}report.json`;
 
+/** `skipped`: the core does not implement the case's part yet (skipList.ts). */
+export type RowStatus = Status | 'skipped';
+
 export interface ReportRow {
   id: string;
-  status: Status;
+  status: RowStatus;
   label: string;
   maxUlp: number;
   ulpCount: number;
@@ -40,6 +43,24 @@ export function toRow(result: CaseResult): ReportRow {
   };
 }
 
+/** A case left out by the skip list; `by` is the work package it waits for. */
+export function skippedRow(id: string, by: string, swiftMs: number): ReportRow {
+  return {
+    id,
+    status: 'skipped',
+    label: `skipped (${by})`,
+    maxUlp: 0,
+    ulpCount: 0,
+    normalDiffs: 0,
+    nearZeroCorners: 0,
+    differingTriangles: 0,
+    warnings: [],
+    tsMs: null,
+    swiftMs,
+    note: '',
+  };
+}
+
 const COLUMNS = ['id', 'status', 'maxUlp', 'ulpCount', 'tsMs', 'swiftMs', 'note'] as const;
 
 /** `id | status | maxUlp | ulpCount | tsMs | swiftMs | note`, one line per row. */
@@ -62,8 +83,8 @@ export function formatTable(rows: readonly ReportRow[]): string {
   return [line(COLUMNS), line(widths.map((width) => '-'.repeat(width))), ...cells.map(line)].join('\n');
 }
 
-export function summarize(rows: readonly ReportRow[]): Record<Status, number> {
-  const counts: Record<Status, number> = { identical: 0, ulp: 0, equivalent: 0, mismatch: 0, unverified: 0 };
+export function summarize(rows: readonly ReportRow[]): Record<RowStatus, number> {
+  const counts: Record<RowStatus, number> = { identical: 0, ulp: 0, equivalent: 0, mismatch: 0, unverified: 0, skipped: 0 };
   for (const row of rows) counts[row.status]++;
   return counts;
 }

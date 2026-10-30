@@ -14,8 +14,12 @@ import {
   type PurgeSettings,
 } from '../types';
 import { PI } from '../swift/dmath';
-import { container, ifPresent, makeCodec, required } from './json';
-import { intTrunc, isSwiftWhitespace, printfFixed, rounded, swiftCharacters, swiftMax, swiftMin, swiftMin3 } from './swiftCompat';
+import { keyedCodec } from '../codec';
+import type { JSONKeyedContainer } from '../swift/json';
+import { formatFixed } from '../swift/format';
+import { swiftMax, swiftMin, swiftMin3 } from '../swift/minmax';
+import { intTrunc, rounded } from '../swift/rounding';
+import { isSwiftWhitespace, swiftCharacters } from '../swift/text';
 
 const classic: BalloonParameters = Object.freeze({
   height: 220,
@@ -53,7 +57,7 @@ const minimumNeckDiameter = (p: BalloonParameters): number =>
 const minimumNeckHeight = (p: BalloonParameters): number => (p.stringHoles ? 12 : 3);
 
 export const balloonFilename = (p: BalloonParameters): string => {
-  const suffix = p.hollow ? `-hollow-${printfFixed(p.wallThickness, 1)}mm` : '';
+  const suffix = p.hollow ? `-hollow-${formatFixed(p.wallThickness, 1)}mm` : '';
   return `Balloon-${intTrunc(p.diameter)}x${intTrunc(p.height)}mm-${p.panels}panels${suffix}${p.stringHoles ? '-tethers' : ''}${p.hangingLoop ? '-hanger' : ''}.stl`;
 };
 
@@ -100,27 +104,26 @@ export const normalizeBalloon = (input: BalloonParameters): BalloonParameters =>
 };
 
 /** BalloonGeometry.swift:76-96 */
-const decodeBalloon = (value: unknown): BalloonParameters => {
-  const c = container(value);
+const decodeBalloon = (c: JSONKeyedContainer): BalloonParameters => {
   const d = classic;
   return {
-    height: ifPresent.double(c, 'height') ?? d.height,
-    diameter: ifPresent.double(c, 'diameter') ?? d.diameter,
-    panels: ifPresent.int(c, 'panels') ?? d.panels,
-    panelDepth: ifPresent.double(c, 'panelDepth') ?? d.panelDepth,
-    neckDiameter: ifPresent.double(c, 'neckDiameter') ?? d.neckDiameter,
-    neckHeight: ifPresent.double(c, 'neckHeight') ?? d.neckHeight,
-    shoulder: ifPresent.double(c, 'shoulder') ?? d.shoulder,
-    hollow: ifPresent.bool(c, 'hollow') ?? false,
-    wallThickness: ifPresent.double(c, 'wallThickness') ?? 1.2,
-    stringHoles: ifPresent.bool(c, 'stringHoles') ?? false,
-    cordClearance: ifPresent.double(c, 'cordClearance') ?? 3,
-    hangingLoop: ifPresent.bool(c, 'hangingLoop') ?? false,
-    hangingClearance: ifPresent.double(c, 'hangingClearance') ?? 4,
-    hangingThickness: ifPresent.double(c, 'hangingThickness') ?? d.hangingThickness,
-    hangingWall: ifPresent.double(c, 'hangingWall') ?? d.hangingWall,
-    hangingFillet: ifPresent.double(c, 'hangingFillet') ?? d.hangingFillet,
-    hangingCrownThickness: ifPresent.double(c, 'hangingCrownThickness') ?? d.hangingCrownThickness,
+    height: c.doubleIfPresent('height') ?? d.height,
+    diameter: c.doubleIfPresent('diameter') ?? d.diameter,
+    panels: c.intIfPresent('panels') ?? d.panels,
+    panelDepth: c.doubleIfPresent('panelDepth') ?? d.panelDepth,
+    neckDiameter: c.doubleIfPresent('neckDiameter') ?? d.neckDiameter,
+    neckHeight: c.doubleIfPresent('neckHeight') ?? d.neckHeight,
+    shoulder: c.doubleIfPresent('shoulder') ?? d.shoulder,
+    hollow: c.boolIfPresent('hollow') ?? false,
+    wallThickness: c.doubleIfPresent('wallThickness') ?? 1.2,
+    stringHoles: c.boolIfPresent('stringHoles') ?? false,
+    cordClearance: c.doubleIfPresent('cordClearance') ?? 3,
+    hangingLoop: c.boolIfPresent('hangingLoop') ?? false,
+    hangingClearance: c.doubleIfPresent('hangingClearance') ?? 4,
+    hangingThickness: c.doubleIfPresent('hangingThickness') ?? d.hangingThickness,
+    hangingWall: c.doubleIfPresent('hangingWall') ?? d.hangingWall,
+    hangingFillet: c.doubleIfPresent('hangingFillet') ?? d.hangingFillet,
+    hangingCrownThickness: c.doubleIfPresent('hangingCrownThickness') ?? d.hangingCrownThickness,
   };
 };
 
@@ -188,28 +191,27 @@ export const normalizePattern = (input: PatternSettings, p: BalloonParameters): 
 };
 
 /** BalloonPatterns.swift:100-121: settings saved before relief composition 3 get at least 2.4 mm relief. */
-const decodePattern = (value: unknown): PatternSettings => {
-  const c = container(value);
+const decodePattern = (c: JSONKeyedContainer): PatternSettings => {
   const d = patternDefaults;
   const s: PatternSettings = {
     ...d,
-    style: ifPresent.enum(c, 'style', BALLOON_PATTERNS) ?? d.style,
-    bands: ifPresent.int(c, 'bands') ?? d.bands,
-    repeats: ifPresent.int(c, 'repeats') ?? d.repeats,
-    rows: ifPresent.int(c, 'rows') ?? d.rows,
-    size: ifPresent.double(c, 'size') ?? d.size,
-    base: ifPresent.enum(c, 'base', FILAMENT_COLORS) ?? d.base,
-    detail: ifPresent.enum(c, 'detail', FILAMENT_COLORS) ?? d.detail,
-    text: ifPresent.string(c, 'text') ?? d.text,
-    textFont: ifPresent.enum(c, 'textFont', BALLOON_TEXT_FONTS) ?? d.textFont,
-    textRepeats: ifPresent.int(c, 'textRepeats') ?? d.textRepeats,
-    textHeight: ifPresent.double(c, 'textHeight') ?? d.textHeight,
+    style: c.enumerationIfPresent('style', BALLOON_PATTERNS) ?? d.style,
+    bands: c.intIfPresent('bands') ?? d.bands,
+    repeats: c.intIfPresent('repeats') ?? d.repeats,
+    rows: c.intIfPresent('rows') ?? d.rows,
+    size: c.doubleIfPresent('size') ?? d.size,
+    base: c.enumerationIfPresent('base', FILAMENT_COLORS) ?? d.base,
+    detail: c.enumerationIfPresent('detail', FILAMENT_COLORS) ?? d.detail,
+    text: c.stringIfPresent('text') ?? d.text,
+    textFont: c.enumerationIfPresent('textFont', BALLOON_TEXT_FONTS) ?? d.textFont,
+    textRepeats: c.intIfPresent('textRepeats') ?? d.textRepeats,
+    textHeight: c.doubleIfPresent('textHeight') ?? d.textHeight,
   };
-  s.reliefDepth = ifPresent.double(c, 'reliefDepth') ?? s.reliefDepth;
-  if (ifPresent.int(c, 'flightCompositionVersion') === undefined) s.reliefDepth = swiftMax(2.4, s.reliefDepth);
-  s.capHeight = ifPresent.double(c, 'capHeight') ?? s.capHeight;
-  s.flightBody = ifPresent.enum(c, 'flightBody', FILAMENT_COLORS) ?? s.flightBody;
-  s.flightCap = ifPresent.enum(c, 'flightCap', FILAMENT_COLORS) ?? s.flightCap;
+  s.reliefDepth = c.doubleIfPresent('reliefDepth') ?? s.reliefDepth;
+  if (c.intIfPresent('flightCompositionVersion') === undefined) s.reliefDepth = swiftMax(2.4, s.reliefDepth);
+  s.capHeight = c.doubleIfPresent('capHeight') ?? s.capHeight;
+  s.flightBody = c.enumerationIfPresent('flightBody', FILAMENT_COLORS) ?? s.flightBody;
+  s.flightCap = c.enumerationIfPresent('flightCap', FILAMENT_COLORS) ?? s.flightCap;
   return s;
 };
 
@@ -229,14 +231,13 @@ export const normalizePurge = (input: PurgeSettings): PurgeSettings => {
   };
 };
 
-const decodePurge = (value: unknown): PurgeSettings => {
-  const c = container(value);
+const decodePurge = (c: JSONKeyedContainer): PurgeSettings => {
   return {
-    layerHeight: required.double(c, 'layerHeight'),
-    baseToDetail: required.double(c, 'baseToDetail'),
-    detailToBase: required.double(c, 'detailToBase'),
-    multiplier: required.double(c, 'multiplier'),
-    density: required.double(c, 'density'),
+    layerHeight: c.double('layerHeight'),
+    baseToDetail: c.double('baseToDetail'),
+    detailToBase: c.double('detailToBase'),
+    multiplier: c.double('multiplier'),
+    density: c.double('density'),
   };
 };
 
@@ -258,16 +259,16 @@ export const balloonParameters: BalloonParameterApi = {
   defaults: classic,
   presets: Object.freeze({ classic, round, tall }),
   normalize: normalizeBalloon,
-  codec: makeCodec(decodeBalloon),
+  codec: keyedCodec(decodeBalloon),
   filename: balloonFilename,
   derived: balloonDerived,
   pattern: {
     defaults: patternDefaults,
     normalize: normalizePattern,
-    codec: makeCodec(decodePattern),
+    codec: keyedCodec(decodePattern),
     derived: patternDerived,
   },
-  purge: { defaults: purgeDefaults, normalize: normalizePurge, codec: makeCodec(decodePurge) },
+  purge: { defaults: purgeDefaults, normalize: normalizePurge, codec: keyedCodec(decodePurge) },
   exportFormat: balloonExportFormat,
   exportFilename: balloonExportFilename,
 };

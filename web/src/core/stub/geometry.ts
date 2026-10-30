@@ -41,7 +41,7 @@ import { FIGURE_STYLES } from '../types';
 import { figureFilename, figureOutline, figureParameters, figureSetFilename, normalizeFigure } from './figure';
 import { append, binarySTL, box, emptyMesh, extrude, lathe, storedZip, toBuffers, torus, transformed, translated, utf8, type StubMesh } from './mesh';
 import { normalizeRing, ringFilename, ringParameters } from './ring';
-import { swiftMax, swiftMin } from './swiftCompat';
+import { swiftMax, swiftMin } from '../swift/minmax';
 
 const single = (filename: string, mime: ExportResult['mime'], bytes: Uint8Array): ExportResult => ({
   filename,
