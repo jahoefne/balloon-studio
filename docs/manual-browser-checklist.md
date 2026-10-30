@@ -11,8 +11,8 @@ Legend: ✅ checked and fine · 🔶 checked by script with a synthetic stand-in
 | All seven tabs render, no uncaught error | ✅ | ✅ | ✅ | ✅ | ⬜ | ⬜ |
 | WebGL stage draws | ✅ | ✅ | ✅ | ✅ | ⬜ | ⬜ |
 | `showSaveFilePicker` present | yes | yes | no, uses the fallback | no, uses the fallback | ⬜ | ⬜ |
-| Export through File System Access | ⬜ WP-U9 | ⬜ WP-U9 | ➖ | ➖ | ➖ | ⬜ |
-| Export through the download fallback | ⬜ WP-U9 | ⬜ WP-U9 | ⬜ WP-U9 | ⬜ WP-U9 | ⬜ | ⬜ |
+| Export through File System Access | 🔶 | 🔶 | ➖ | ➖ | ➖ | ⬜ |
+| Export through the download fallback | ✅ | ✅ | ✅ | ✅ | ⬜ | ⬜ |
 | Drag and drop a settings JSON | 🔶 | 🔶 | 🔶 | 🔶 | ⬜ | ⬜ |
 | Shortcuts: Mod+E, Mod+O, Alt+N | ✅ | ✅ | ✅ | ✅ | ⬜ | ⬜ |
 | Reload keeps settings under `BalloonStudio.*.v1` | ✅ | ✅ | ✅ | ✅ | ⬜ | ⬜ |
@@ -28,6 +28,7 @@ Legend: ✅ checked and fine · 🔶 checked by script with a synthetic stand-in
 - **Safari.app:** `safaridriver` and scripting need “Allow remote automation” in Safari’s Developer settings, which only the user can turn on. Playwright’s WebKit is the same engine family but not Safari. WP-U7 and WP-U8 ran a page in the system’s WKWebView (WebKit 26.6.2), which is also not Safari.
 - **Windows:** no Windows machine in this setup.
 - **Real drags from the Finder or Explorer:** only synthetic `DragEvent`s were dispatched, with a real `File` in a `DataTransfer`. Do this by hand once.
+- **The system’s save dialog:** the two export rows ran on a trial merge of this branch with WP-U9 (#45), for the clip on the stub core. For File System Access a script answered `showSaveFilePicker` with a real handle from the origin private file system, so the write was real and the native dialog was not shown. WP-U9’s own PR holds the hash comparison of downloaded files with the references.
 - **Mod+O’s system dialog:** the file chooser event fires in all browsers; picking a file by hand was not done.
 
 **Notes:**

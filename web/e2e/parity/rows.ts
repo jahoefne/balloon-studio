@@ -975,6 +975,23 @@ const ring: Scene[] = [
 const VIEWS = ['Assembled', 'Exploded', 'Back · inside', 'Back · wall side', 'Front · print view', 'Cable seal · print view', 'Cable clamp · print view', 'Slot insert · print view'];
 const SIDES = ['Left', 'Right', 'Top', 'Bottom'];
 
+/** The kit's save panel; until U9 the editor's stand-in shows name and message under the button. */
+async function lampPanel(page: Page, noun: 'cloud' | 'sun', title: string, name: string): Promise<void> {
+  await page.getByTestId(`export${title}`).click();
+  const message = /\d+ print-ready STLs, a full-size LED placement plan, cut list and assembly notes\./;
+  const dialog = page.getByTestId('exportDialog');
+  if ((await dialog.count()) === 0) {
+    await expect(page.getByTestId(`${noun}ExportMessage`)).toContainText(message);
+    await expect(page.getByTestId(`${noun}ExportMessage`)).toContainText(name);
+    throw new Pending('WP-U9', 'Name and message checked in the footer stand-in; the dialog with title and prompt comes with U9.');
+  }
+  await expect(dialog).toContainText(`Export ${title} Lamp Kit`);
+  await expect(dialog).toContainText('Export Kit');
+  await expect(dialog).toContainText(message);
+  await expect(page.getByTestId('exportFilename')).toHaveValue(name);
+  await page.keyboard.press('Escape');
+}
+
 const lampCommon = (noun: 'cloud' | 'sun', title: 'Cloud' | 'Sun', store: string): Row[] => [
   P('Back depth', 16, 40, 1, 'mm', { value: '22' }),
   T('Front surface', { needle: 'Text("Front surface")', webNeedle: 'cloud-field-title">Front surface' }),
@@ -1275,14 +1292,7 @@ const cloud: Scene[] = [
       }, { webNeedle: 'filename' }),
       fileName('Suggested name', 'Cloud-Lamp\\(variant)', 'useCloudStore', 'Cloud-Lamp-230mm-kit.zip', (core, p) => core.cloud.filename(p)),
       Do('Export', 'Save panel strings (title, prompt, name, message)', 'Export \\(kind.title) Lamp Kit', async (page) => {
-        await page.getByTestId('exportCloud').click();
-        const dialog = page.locator('dialog[open]');
-        if (await dialog.count() === 0) {
-          // The editor's stand-in until U9 shows name and message under the button.
-          await expect(page.getByTestId('cloudExportMessage')).toContainText(/^Cloud-Lamp-230mm-kit\.zip · \d+ print-ready STLs, a full-size LED placement plan, cut list and assembly notes\.$/);
-          throw new Pending('WP-U9', 'Name and message checked in the footer stand-in; the dialog with title and prompt comes with U9.');
-        }
-        await page.keyboard.press('Escape');
+        await lampPanel(page, 'cloud', 'Cloud', 'Cloud-Lamp-230mm-kit.zip');
       }, { webNeedle: 'exportRequest' }),
       Do('Shortcut', 'Reset: Alt+N → defaults', 'case .cloud:cloud.apply(CloudParameters())', resetShortcut('Back depth', '30', '22'), { decided: ALT_N, webNeedle: 'onReset' }),
       Do('Persistence', `${K.cloud}: written at once, Mac JSON keys, survives a reload`, 'var settingsKey', persists(K.cloud, 'Cloud', 'Back depth', '28', 'depth', LAMP_KEYS), { webNeedle: 'cloud.v1' }),
@@ -1370,12 +1380,7 @@ const sun: Scene[] = [
       }, { webNeedle: 'filename' }),
       fileName('Suggested name', 'Sun-Lamp-\\(sunStyle.rawValue)', 'useSunStore', 'Sun-Lamp-soft-star-200mm-kit.zip', (core, p) => core.cloud.filename(p)),
       Do('Export', 'Save panel strings (title, prompt, name, message)', 'Export \\(kind.title) Lamp Kit', async (page) => {
-        await page.getByTestId('exportSun').click();
-        if (await page.locator('dialog[open]').count() === 0) {
-          await expect(page.getByTestId('sunExportMessage')).toContainText(/^Sun-Lamp-soft-star-200mm-kit\.zip · \d+ print-ready STLs/);
-          throw new Pending('WP-U9', 'Name and message checked in the footer stand-in; the dialog with title and prompt comes with U9.');
-        }
-        await page.keyboard.press('Escape');
+        await lampPanel(page, 'sun', 'Sun', 'Sun-Lamp-soft-star-200mm-kit.zip');
       }, { webNeedle: 'exportRequest' }),
       Do('Shortcut', 'Reset: Alt+N → sun defaults, width 200', 'case .sun:sun.apply(WallLampKind.sun.defaults)', resetShortcut('Back depth', '30', '22'), { decided: ALT_N, webNeedle: 'onReset' }),
       Do('Persistence', `${K.sun}: written at once, Mac JSON keys, survives a reload`, 'var settingsKey', persists(K.sun, 'Sun', 'Back depth', '28', 'depth', LAMP_KEYS), { webNeedle: 'sun.v1' }),
