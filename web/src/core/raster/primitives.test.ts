@@ -405,7 +405,9 @@ describe('performance', () => {
       times.push(performance.now() - start);
     }
     const best = Math.min(...times);
-    // Plan budget: under 0.6 s in Node. CI runners get the soft gate of §7 (3 s).
-    expect(best).toBeLessThan(process.env['CI'] === undefined ? 600 : 3000);
-  });
+    // Plan budget: under 0.6 s in Node. CI runners only get the soft gate of §7 (3 s), as a warning: they are slower
+    // and share their cores with every other test worker.
+    if (process.env['CI'] === undefined) expect(best).toBeLessThan(600);
+    else if (best >= 3000) console.warn(`worst-case scene: ${best.toFixed(0)} ms, soft gate 3000 ms`);
+  }, 60_000);
 });
