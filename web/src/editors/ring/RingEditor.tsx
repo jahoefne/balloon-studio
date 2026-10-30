@@ -21,6 +21,7 @@ import {
   SegmentedControl,
   Select,
 } from '../../ui';
+import { startExport } from '../../io';
 import { ExportFooter, PartEditor, PreviewStatus, StageFrame, StageResetButton, useOnChange } from '../shared/PartEditor';
 import { ContinuousCordDiagram, SeparateCordDiagram } from './CordDiagrams';
 import { LEDReflectorDiagram } from './LEDReflectorDiagram';
@@ -235,8 +236,7 @@ export function RingEditor() {
       caption={parameters.segmented ? 'ZIP · 4 STL designs + assembly notes' : 'STL · millimetres · checked before export'}
       exporting={model.exporting}
       exported={model.exported}
-      // WP-U9 opens the save dialog with the snapshot this returns.
-      onExport={() => model.beginExport()}
+      onExport={() => void startExport('ring')}
     />
   );
 

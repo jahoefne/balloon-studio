@@ -1,12 +1,13 @@
 // The result every diff returns, and how results of archive entries roll up (WP-V2).
+import { describeMeasures, type BoundedMeasures } from './boundedDiff';
 
 export type OutputKind = 'stl' | 'zip' | '3mf' | 'json' | 'text' | 'svg' | 'model';
 
-export type Status = 'identical' | 'ulp' | 'equivalent' | 'mismatch' | 'unverified';
+export type Status = 'identical' | 'ulp' | 'equivalent' | 'equivalent-bounded' | 'mismatch' | 'unverified';
 
 export interface DiffResult {
   status: Status;
-  /** Why it is not identical: `topology`, `signed zero`, `ulp`, `json`, `needs-pack`, … Empty for `identical`, `ulp` and `equivalent`. */
+  /** Why it is not identical: `topology`, `signed zero`, `ulp`, `json`, `needs-pack`, … Empty for `identical`, `ulp`, `equivalent` and `equivalent-bounded`. */
   tags: string[];
   /** Largest distance of a differing coordinate: Float32 steps in an STL, Float64 steps in a 3MF model. */
   maxUlp: number;
@@ -16,8 +17,10 @@ export interface DiffResult {
   normalDiffs: number;
   /** Differing vertex coordinates that are both within `NEAR_ZERO_MM` of zero (libm noise on a value that should be 0). Not in `ulpCount` or `maxUlp`. */
   nearZeroCorners: number;
-  /** `equivalent` only: triangles that differ at their position in the file (same solid, other triangles). */
+  /** `equivalent`: triangles that differ at their position in the file (same solid, other triangles). `equivalent-bounded`: triangles without a partner. */
   differingTriangles: number;
+  /** `equivalent-bounded` only: what was measured against the entry's limits. */
+  bounded?: BoundedMeasures;
   /** Readable details, most important first. */
   notes: string[];
   /** JSON only: the parsed values agree (`writer`) or they do not (`port`). */
@@ -44,6 +47,20 @@ export function needsPack(...notes: string[]): DiffResult {
   return { status: 'unverified', tags: ['needs-pack'], maxUlp: 0, ulpCount: 0, normalDiffs: 0, nearZeroCorners: 0, differingTriangles: 0, notes };
 }
 
+export function boundedResult(measures: BoundedMeasures): DiffResult {
+  return {
+    status: 'equivalent-bounded',
+    tags: [],
+    maxUlp: 0,
+    ulpCount: 0,
+    normalDiffs: 0,
+    nearZeroCorners: 0,
+    differingTriangles: measures.trianglesWithoutPartner,
+    notes: [describeMeasures(measures)],
+    bounded: measures,
+  };
+}
+
 /** `identical`, `ulp`, `mismatch (topology)`, `unverified-needs-pack`. */
 export function statusLabel(result: Pick<DiffResult, 'status' | 'tags'>): string {
   if (result.status === 'unverified') return result.tags.includes('needs-pack') ? 'unverified-needs-pack' : 'unverified';
@@ -51,7 +68,7 @@ export function statusLabel(result: Pick<DiffResult, 'status' | 'tags'>): string
   return result.status;
 }
 
-const SEVERITY: Record<Status, number> = { identical: 0, ulp: 1, equivalent: 2, unverified: 3, mismatch: 4 };
+const SEVERITY: Record<Status, number> = { identical: 0, ulp: 1, equivalent: 2, 'equivalent-bounded': 3, unverified: 4, mismatch: 5 };
 
 /** Worst status wins: a mismatch in one entry is not hidden by another entry that cannot be checked. */
 export function rollUp(entries: EntryDiff[], own: DiffResult = identical()): DiffResult {

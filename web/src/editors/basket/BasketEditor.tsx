@@ -3,6 +3,7 @@
 import { useEffect, useId, useState } from 'react';
 import { core } from '#core/parameters';
 import { BASKET_STYLE_INFO, BASKET_STYLES, type BasketParameters, type BasketStyle } from '../../core/types';
+import { startExport } from '../../io';
 import { calibrated, Stage } from '../../preview';
 import { useBalloonStore, useBasketStore } from '../../stores';
 import {
@@ -109,8 +110,7 @@ export function BasketEditor() {
       caption="Separate STL · four string holes · millimetres"
       exporting={model.exporting}
       exported={model.exported}
-      // WP-U9 opens the save dialog with the snapshot this returns.
-      onExport={() => model.beginExport()}
+      onExport={() => void startExport('basket')}
     />
   );
 

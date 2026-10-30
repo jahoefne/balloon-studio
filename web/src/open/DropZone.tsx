@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAppStore, useImportStore } from '../stores';
+import { openDroppedFile } from '../io/openFile';
 import { Icon } from '../ui';
 import './open.css';
 
@@ -38,7 +38,7 @@ export function DropZone() {
       depth = 0;
       setDragging(false);
       const file = event.dataTransfer?.files[0];
-      if (file && useImportStore.getState().chooseFile()) void useAppStore.getState().openFile(file);
+      if (file) openDroppedFile(file);
     };
     window.addEventListener('dragenter', onDragEnter);
     window.addEventListener('dragover', onDragOver);

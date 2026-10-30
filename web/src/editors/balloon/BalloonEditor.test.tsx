@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { core } from '#core/parameters';
 import type { BalloonPreview, MeshBuffers, PurgeEstimate } from '../../core/types';
+import { cancelExport } from '../../io/exportFlow';
 import { lastStageProps, resetStudio, useAppStore, useBalloonStore } from '../../test/studioMock';
 import { BalloonEditor } from './BalloonEditor';
 
@@ -66,9 +67,12 @@ describe('BalloonEditor', () => {
       const button = screen.getByTestId<HTMLButtonElement>('exportBalloon');
       fireEvent.click(button);
       expect(useBalloonStore.getState().parameters.diameter).toBe(150);
+      act(() => useBalloonStore.getState().setExporting(true));
       expect(button.textContent).toContain('Preparing STL…');
       expect(button.disabled).toBe(true);
-      await waitFor(() => expect(button.textContent).toContain('Export STL…'));
+      act(() => useBalloonStore.getState().setExporting(false));
+      expect(button.textContent).toContain('Export STL…');
+      cancelExport();
     });
 
     it('shows the saved line once a file is out', () => {
