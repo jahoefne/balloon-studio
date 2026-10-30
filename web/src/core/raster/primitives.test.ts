@@ -2,21 +2,17 @@
 // drawn on GrayCanvas and compared with the CoreGraphics dumps in references/files (Tier A), plus the larger probes
 // in tests/fixtures/primitives/probes, and the worst-case scene of the performance budget.
 // The time budget is hard only with PERF=1 (`PERF=1 npx vitest run primitives`), otherwise it is a warning.
-//
-// Strokes need WP-R1 and are skipped while its modules are not on this branch.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { blockMeanDifference, pixelAgreement, THRESHOLDS } from '../../../tests/support/compare';
 import { fixtureText } from '../../../tests/support/swiftProbe';
 import { sha256 } from '../io/sha256';
 import { cos, PI, sin } from '../swift/dmath';
-import { ellipsePath, GrayCanvas, hasStrokeGeometry, rectPath } from './canvas';
+import { ellipsePath, GrayCanvas, rectPath } from './canvas';
 import { GrayGradient } from './gradient';
 import { decodePGM } from './pgm';
 import { Path } from './path';
 import { addPathEdges, EdgeTable, rasterize } from './scanline';
-
-const hasR1 = hasStrokeGeometry();
 
 const references = new URL('../../../../references/', import.meta.url);
 const manifest = JSON.parse(readFileSync(new URL('manifest.json', references), 'utf8')) as {
@@ -278,9 +274,9 @@ describe('primitives against CoreGraphics', () => {
   // true lengths the ends of this widest dash land up to a third of a pixel away, 0.975 at ±2 and 0.99 at ±16.
   const exceptions: Readonly<Record<string, number>> = { 'cubic-dash-8-5-w4': 0.97 };
 
-  for (const [name, needsR1, body] of PRIMITIVES) {
+  for (const [name, , body] of PRIMITIVES) {
     const min = exceptions[name] ?? THRESHOLDS.primitives.min;
-    it.skipIf(needsR1 && !hasR1)(`${name}: pixelAgreement(±2) ≥ ${min}`, () => {
+    it(`${name}: pixelAgreement(±2) ≥ ${min}`, () => {
       const cg = reference(name);
       const ts = draw(body).pixels;
       expect(pixelAgreement(ts, cg, THRESHOLDS.primitives.tolerance)).toBeGreaterThanOrEqual(min);
