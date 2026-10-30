@@ -2,11 +2,11 @@
 
 export type OutputKind = 'stl' | 'zip' | '3mf' | 'json' | 'text' | 'svg' | 'model';
 
-export type Status = 'identical' | 'ulp' | 'mismatch' | 'unverified';
+export type Status = 'identical' | 'ulp' | 'equivalent' | 'mismatch' | 'unverified';
 
 export interface DiffResult {
   status: Status;
-  /** Why it is not identical: `topology`, `signed zero`, `ulp`, `json`, `needs-pack`, … Empty for `identical` and `ulp`. */
+  /** Why it is not identical: `topology`, `signed zero`, `ulp`, `json`, `needs-pack`, … Empty for `identical`, `ulp` and `equivalent`. */
   tags: string[];
   /** Largest distance of a differing coordinate: Float32 steps in an STL, Float64 steps in a 3MF model. */
   maxUlp: number;
@@ -16,6 +16,8 @@ export interface DiffResult {
   normalDiffs: number;
   /** Differing vertex coordinates that are both within `NEAR_ZERO_MM` of zero (libm noise on a value that should be 0). Not in `ulpCount` or `maxUlp`. */
   nearZeroCorners: number;
+  /** `equivalent` only: triangles that differ at their position in the file (same solid, other triangles). */
+  differingTriangles: number;
   /** Readable details, most important first. */
   notes: string[];
   /** JSON only: the parsed values agree (`writer`) or they do not (`port`). */
@@ -31,15 +33,15 @@ export interface EntryDiff extends DiffResult {
 const NOTE_LIMIT = 8;
 
 export function identical(): DiffResult {
-  return { status: 'identical', tags: [], maxUlp: 0, ulpCount: 0, normalDiffs: 0, nearZeroCorners: 0, notes: [] };
+  return { status: 'identical', tags: [], maxUlp: 0, ulpCount: 0, normalDiffs: 0, nearZeroCorners: 0, differingTriangles: 0, notes: [] };
 }
 
 export function mismatch(tag: string, ...notes: string[]): DiffResult {
-  return { status: 'mismatch', tags: [tag], maxUlp: 0, ulpCount: 0, normalDiffs: 0, nearZeroCorners: 0, notes };
+  return { status: 'mismatch', tags: [tag], maxUlp: 0, ulpCount: 0, normalDiffs: 0, nearZeroCorners: 0, differingTriangles: 0, notes };
 }
 
 export function needsPack(...notes: string[]): DiffResult {
-  return { status: 'unverified', tags: ['needs-pack'], maxUlp: 0, ulpCount: 0, normalDiffs: 0, nearZeroCorners: 0, notes };
+  return { status: 'unverified', tags: ['needs-pack'], maxUlp: 0, ulpCount: 0, normalDiffs: 0, nearZeroCorners: 0, differingTriangles: 0, notes };
 }
 
 /** `identical`, `ulp`, `mismatch (topology)`, `unverified-needs-pack`. */
@@ -49,7 +51,7 @@ export function statusLabel(result: Pick<DiffResult, 'status' | 'tags'>): string
   return result.status;
 }
 
-const SEVERITY: Record<Status, number> = { identical: 0, ulp: 1, unverified: 2, mismatch: 3 };
+const SEVERITY: Record<Status, number> = { identical: 0, ulp: 1, equivalent: 2, unverified: 3, mismatch: 4 };
 
 /** Worst status wins: a mismatch in one entry is not hidden by another entry that cannot be checked. */
 export function rollUp(entries: EntryDiff[], own: DiffResult = identical()): DiffResult {
@@ -72,6 +74,7 @@ export function rollUp(entries: EntryDiff[], own: DiffResult = identical()): Dif
     ulpCount: differing.reduce((sum, entry) => sum + entry.ulpCount, own.ulpCount),
     normalDiffs: differing.reduce((sum, entry) => sum + entry.normalDiffs, own.normalDiffs),
     nearZeroCorners: differing.reduce((sum, entry) => sum + entry.nearZeroCorners, own.nearZeroCorners),
+    differingTriangles: differing.reduce((sum, entry) => sum + entry.differingTriangles, own.differingTriangles),
     notes: notes.slice(0, NOTE_LIMIT),
     entries: differing,
   };

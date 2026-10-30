@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { storedZipArchive } from '../src/core/io/storedZip';
 import { zipEntries } from '../src/core/testing/zipReader';
 import { compareCase, compareOutput } from './compare';
-import { bumpVertexEverywhere, copy, resealBstl } from './fixtures';
+import { EQUIVALENT_CASES } from './equivalentCases';
+import { bumpVertexEverywhere, copy, resealBstl, swapTriangles } from './fixtures';
 import { allCases, getCase, isExported, type ExportedCase, type ManifestEntry } from './manifest';
 import { hasPack, loadCaseBody, loadEntryBody, sha256Hex } from './refs';
 import { statusLabel } from './result';
@@ -96,6 +97,17 @@ describe.skipIf(!hasPack())('reference pack', () => {
 
     const painted = compareCase(c.id, edit((model) => model.replace('paint_color="4"', 'paint_color="8"')));
     expect(statusLabel(painted)).toBe('mismatch (triangle)');
+  }, TIMEOUT);
+
+  it('the listed clamp entries are valid meshes and reordered copies of them pass', () => {
+    for (const { caseId, entry } of EQUIVALENT_CASES) {
+      const c = exported(caseId);
+      const manifestEntry = (c.entries as ManifestEntry[]).find((candidate) => candidate.name === entry) as ManifestEntry;
+      const body = loadEntryBody(c, manifestEntry) as Uint8Array;
+      const result = compareOutput(body, swapTriangles(body, 0, 1), 'stl', { allowEquivalent: () => true });
+      expect(statusLabel(result), `${caseId}/${entry}`).toBe('equivalent');
+      expect(result.differingTriangles).toBe(2);
+    }
   }, TIMEOUT);
 
   it('the largest model compares in reasonable time', () => {

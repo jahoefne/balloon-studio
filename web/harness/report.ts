@@ -16,6 +16,8 @@ export interface ReportRow {
   ulpCount: number;
   normalDiffs: number;
   nearZeroCorners: number;
+  differingTriangles: number;
+  warnings: string[];
   tsMs: number | null;
   swiftMs: number;
   note: string;
@@ -30,9 +32,11 @@ export function toRow(result: CaseResult): ReportRow {
     ulpCount: result.ulpCount,
     normalDiffs: result.normalDiffs,
     nearZeroCorners: result.nearZeroCorners,
+    differingTriangles: result.differingTriangles,
+    warnings: result.warnings ?? [],
     tsMs: result.tsMs ?? null,
     swiftMs: result.swiftMs,
-    note: (result.notes[0] ?? '').split('\n')[0] as string,
+    note: (result.warnings?.[0] ?? result.notes[0] ?? '').split('\n')[0] as string,
   };
 }
 
@@ -59,7 +63,7 @@ export function formatTable(rows: readonly ReportRow[]): string {
 }
 
 export function summarize(rows: readonly ReportRow[]): Record<Status, number> {
-  const counts: Record<Status, number> = { identical: 0, ulp: 0, mismatch: 0, unverified: 0 };
+  const counts: Record<Status, number> = { identical: 0, ulp: 0, equivalent: 0, mismatch: 0, unverified: 0 };
   for (const row of rows) counts[row.status]++;
   return counts;
 }
@@ -73,6 +77,7 @@ export function writeReport(rows: readonly ReportRow[], implementation: string, 
     manifestGeneratedAt: manifest.generatedAt,
     sourcesSha256: manifest.sourcesSha256,
     summary: summarize(rows),
+    warnings: rows.flatMap((row) => row.warnings),
     rows,
   };
   mkdirSync(dirname(path), { recursive: true });

@@ -6,6 +6,7 @@ import { statusLabel } from './result';
 import { diffJson } from './jsonDiff';
 
 export { compareCase, compareCaseError, compareOutput, type CaseResult, type CompareCaseOptions } from './compare';
+export { EQUIVALENT_CASES, type EquivalentCase } from './equivalentCases';
 export { allCases, getCase, isExported, isStrictKind, kindOfName, loadManifest } from './manifest';
 export type { ExportedCase, FailingCase, ManifestEntry, ReferenceCase } from './manifest';
 export { hasPack, loadCaseBody, loadEntryBody, packDir, referenceAvailable } from './refs';
@@ -13,7 +14,7 @@ export { formatTable, summarize, toRow, writeReport, type ReportRow } from './re
 export { statusLabel, type DiffResult, type OutputKind, type Status } from './result';
 
 export interface ExpectReferenceOptions extends CompareCaseOptions {
-  /** Require byte identity: `ulp` fails as well. */
+  /** Require byte identity: `ulp` and `equivalent` fail as well. */
   strict?: boolean;
   /**
    * A PR run without the pack: whatever Tier A and the manifest can check is still checked and
@@ -35,12 +36,13 @@ export class ReferenceMismatchError extends Error {
 
 /** The table row, then every note. */
 export function describeResult(result: CaseResult): string {
-  return [`${result.id}: ${statusLabel(result)}`, formatTable([toRow(result)]), ...result.notes].join('\n');
+  return [`${result.id}: ${statusLabel(result)}`, formatTable([toRow(result)]), ...(result.warnings ?? []), ...result.notes].join('\n');
 }
 
 function enforce(result: CaseResult, options: ExpectReferenceOptions): CaseResult {
   if (result.status === 'mismatch') throw new ReferenceMismatchError(result);
-  if (result.status === 'ulp' && options.strict === true) throw new ReferenceMismatchError(result);
+  if ((result.status === 'ulp' || result.status === 'equivalent') && options.strict === true) throw new ReferenceMismatchError(result);
+  for (const warning of result.warnings ?? []) console.warn(warning);
   if (result.status === 'unverified') {
     const fatal = options.allowUnverified !== true && process.env['CI'] !== undefined && process.env['CI'] !== '';
     if (fatal) throw new ReferenceMismatchError(result);
