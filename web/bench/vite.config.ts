@@ -8,5 +8,12 @@ const conditions = [CORE_REAL_CONDITION, ...defaultServerConditions];
 export default defineConfig({
   resolve: { conditions },
   ssr: { noExternal: true, resolve: { conditions } },
-  build: { ssr: 'bench/budgets.ts', outDir: 'node_modules/.bench', emptyOutDir: true, target: 'esnext', minify: false },
+  build: {
+    ssr: true,
+    rolldownOptions: { input: { budgets: 'bench/budgets.ts', 'bench-patterns': 'scripts/bench-patterns.ts', 'export-pattern-tests': 'scripts/export-pattern-tests.ts' } },
+    outDir: 'node_modules/.bench',
+    emptyOutDir: true,
+    target: 'esnext',
+    minify: false,
+  },
 });

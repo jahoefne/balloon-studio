@@ -23,6 +23,7 @@ import {
   stage,
   stageChanges,
   storeCall,
+  STORE,
   storeRead,
   T,
   W,
@@ -546,9 +547,26 @@ const balloon: Scene[] = [
         await expect(page.locator('#root')).toContainText(/\d+ cop(y|ies), evenly spaced in one row\. Long messages shrink to fit\. Use fewer repeats for larger letters\. Up to 64 characters\./);
       }),
       W2('Enter a name or message to add lettering.'),
-      Do('Readout', 'Hint on glyphs the bundled fonts lack', null, async (page) => {
-        expect(await page.getByTestId('balloonText').count()).toBe(1);
-      }, { open: { owner: 'WP-R7', note: '`BalloonPreview.missingGlyphs` has no UI hint yet; the plan gives R7 the text, it goes into `PatternEditor.tsx`.' }, webNeedle: 'balloon-text-field' }),
+      Do('Readout', 'Hint on characters the bundled fonts lack, “Not in any bundled font: 東. This character is left out.”, live region #missingGlyphs', null, async (page) => {
+        const hint = page.getByTestId('missingGlyphs');
+        await expect(hint).toHaveAttribute('aria-live', 'polite');
+        await expect(hint).toBeEmpty();
+        const field = page.getByTestId('balloonText');
+        const text = await field.inputValue();
+        await field.fill('Hi 東');
+        // The stub's core reports nothing missing, so there the bundle is driven through the store.
+        if (coreMode === 'stub') {
+          await page.evaluate(async (url) => {
+            const { useBalloonStore } = await import(/* @vite-ignore */ url);
+            await new Promise((resolve) => setTimeout(resolve, 300));
+            const { bundle } = useBalloonStore.getState();
+            useBalloonStore.setState({ bundle: { ...bundle, missingGlyphs: ['東'] } });
+          }, STORE);
+        }
+        await expect(hint).toHaveText('Not in any bundled font: 東. This character is left out.');
+        await field.fill(text);
+        await expect(hint).toBeEmpty();
+      }, { decided: 'Plan §7: CoreText falls back on every system font, the five bundled fonts cannot; no Swift string, the hint is new.', webNeedle: 'data-testid="missingGlyphs"' }),
     ],
   },
   {

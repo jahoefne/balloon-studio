@@ -33,6 +33,8 @@
     "lint": "eslint src/core",
     "test:browser": "vitest run --config vitest.browser.config.ts",
     "bench": "vite build --config bench/vite.config.ts --logLevel warn && node node_modules/.bench/budgets.js",
+    "bench:patterns": "vite build --config bench/vite.config.ts --logLevel warn && node node_modules/.bench/bench-patterns.js",
+    "export-pattern-tests": "vite build --config bench/vite.config.ts --logLevel warn && node node_modules/.bench/export-pattern-tests.js && python3 ../mac/scripts/verify-3mf.py",
     "e2e": "playwright test smoke",
     "e2e:parity": "E2E_CORE=stub playwright test parity --project=chromium; E2E_CORE=real playwright test parity --project=chromium; node e2e/parity/report.mjs"
   },

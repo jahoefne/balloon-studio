@@ -29,6 +29,12 @@ const setBundle = (m: MeshBuffers, estimate: PurgeEstimate = { mixedLayers: 12, 
     useBalloonStore.setState({ bundle: { parameters, pattern, purge, mesh: m, estimate, missingGlyphs: [] }, faceColors: m.faceColors ?? null, estimate, revision: revision + 1, updating: false });
   });
 
+const setMissingGlyphs = (missingGlyphs: string[]) =>
+  act(() => {
+    const { parameters, pattern, purge } = useBalloonStore.getState();
+    useBalloonStore.setState({ bundle: { parameters, pattern, purge, mesh: mesh(), estimate: { mixedLayers: 0, minimumChanges: 0, maximumChanges: 0, minimumGrams: 0, maximumGrams: 0 }, missingGlyphs } });
+  });
+
 const metrics = () =>
   [...screen.getByTestId('balloonMetrics').querySelectorAll('.ui-metric')].map((metric) => [
     metric.querySelector('dt')!.textContent,
@@ -450,6 +456,31 @@ describe('BalloonEditor', () => {
       const link = screen.getByRole<HTMLAnchorElement>('link', { name: 'About Bambu flushing volumes' });
       expect(link.href).toBe('https://wiki.bambulab.com/en/software/bambu-studio/reduce-wasting-during-filament-change');
       expect(screen.getByText(/^3MF preserves filament painting\./)).toBeTruthy();
+    });
+  });
+
+  describe('missing glyphs', () => {
+    it('names what the fonts lack, in a polite live region that is always there', () => {
+      setPattern({ style: 'Text', text: 'Hi 東京' });
+      render(<BalloonEditor />);
+      const hint = screen.getByTestId('missingGlyphs');
+      expect(hint.getAttribute('aria-live')).toBe('polite');
+      expect(hint.textContent).toBe('');
+      setMissingGlyphs(['東', '京']);
+      expect(hint.textContent).toBe('Not in any bundled font: 東 京. These characters are left out.');
+      setMissingGlyphs(['東']);
+      expect(hint.textContent).toBe('Not in any bundled font: 東. This character is left out.');
+      setMissingGlyphs([]);
+      expect(hint.textContent).toBe('');
+    });
+
+    it('shows only with the Text pattern', () => {
+      setPattern({ style: 'Hearts' });
+      render(<BalloonEditor />);
+      setMissingGlyphs(['東']);
+      expect(screen.queryByTestId('missingGlyphs')).toBeNull();
+      setPattern({ style: 'Text' });
+      expect(screen.getByTestId('missingGlyphs').textContent).toContain('東');
     });
   });
 

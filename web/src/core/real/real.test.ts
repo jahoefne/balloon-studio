@@ -185,6 +185,16 @@ describe('previews through the worker route', () => {
     expect(fresh.balloon.preview({ ...snapshot, pattern: { ...snapshot.pattern, style: 'Hearts' } }).mesh.indices.length).toBeGreaterThan(0);
   });
 
+  it('a failed font load names the cause in the Text request', async () => {
+    vi.resetModules();
+    const fresh = (await import('./index')).core;
+    await expect(fresh.prepare(() => Promise.reject(new Error('Nunito-Bold.ttf: HTTP 404')))).rejects.toThrow('HTTP 404');
+    const text = { ...snapshot, pattern: { ...snapshot.pattern, style: 'Text' as const } };
+    expect(() => fresh.balloon.preview(text)).toThrow('The fonts of the Text pattern could not be loaded (Nunito-Bold.ttf: HTTP 404). Reload the page to try again.');
+    expect(() => fresh.balloon.export(text, { quality: 'preview' })).toThrow('HTTP 404');
+    expect(fresh.balloon.preview({ ...snapshot, pattern: { ...snapshot.pattern, style: 'Hearts' } }).mesh.indices.length).toBeGreaterThan(0);
+  });
+
   it('night flight: a relief in two colors', () => {
     const preview = core.balloon.preview({ ...snapshot, pattern: { ...snapshot.pattern, style: 'Night Flight' } });
     checkMesh(preview.mesh, true);
