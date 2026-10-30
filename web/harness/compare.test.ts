@@ -332,12 +332,12 @@ describe('report', () => {
       const report = JSON.parse(readFileSync(path, 'utf8')) as { implementation: string; release: string; summary: Record<string, number>; rows: { id: string }[] };
       expect(report.implementation).toBe('stub');
       expect(report.release).toBe('refs-v1');
-      expect(report.summary).toEqual({ identical: 1, ulp: 0, equivalent: 0, mismatch: 1, unverified: 0, skipped: 0 });
+      expect(report.summary).toEqual({ identical: 1, ulp: 0, equivalent: 0, 'equivalent-bounded': 0, mismatch: 1, unverified: 0 });
       expect(report.rows.length).toBe(2);
     } finally {
       rmSync(dir, { recursive: true });
     }
     expect(DEFAULT_REPORT_PATH.endsWith('references/report.json')).toBe(true);
-    expect(summarize([])).toEqual({ identical: 0, ulp: 0, equivalent: 0, mismatch: 0, unverified: 0, skipped: 0 });
+    expect(summarize([])).toEqual({ identical: 0, ulp: 0, equivalent: 0, 'equivalent-bounded': 0, mismatch: 0, unverified: 0 });
   });
 });

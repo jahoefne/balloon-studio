@@ -297,7 +297,7 @@ describe('the allowlist in compareCase', () => {
     expect(rows[1]?.warnings.length).toBe(1);
     expect(rows[1]?.note).toContain('allowlist stale');
     expect(formatTable(rows)).toContain('| equivalent |');
-    expect(summarize(rows)).toEqual({ identical: 1, ulp: 0, equivalent: 1, mismatch: 0, unverified: 0, skipped: 0 });
+    expect(summarize(rows)).toEqual({ identical: 1, ulp: 0, equivalent: 1, 'equivalent-bounded': 0, mismatch: 0, unverified: 0 });
     const dir = mkdtempSync(join(tmpdir(), 'balloon-report-'));
     try {
       const path = join(dir, 'report.json');

@@ -33,7 +33,8 @@ const setup = async (kind: WallLampKind, change: Partial<CloudParameters> = {}, 
 };
 
 const settle = async (store: ReturnType<typeof createCloudStore>) => {
-  await vi.waitFor(() => expect(store.getState().updating).toBe(false));
+  // Instant on the stub; a sculpted sun on the real core takes seconds on a CI runner.
+  await vi.waitFor(() => expect(store.getState().updating).toBe(false), { timeout: 30_000 });
   await act(async () => {});
 };
 

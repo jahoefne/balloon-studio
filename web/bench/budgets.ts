@@ -21,11 +21,13 @@ const BUDGETS: readonly Budget[] = [
   { id: 'figureset-defaults', title: 'Figure set', ms: 15000 },
   { id: 'basket-wicker-default', title: 'Wicker basket, export', ms: 6000 },
   { id: 'pattern-hearts', title: 'Hearts 3MF', ms: 8000 },
-  // TODO(WP-K4): Cloud 230 kit ≤ 6 s, sun kit ≤ 12 s, sculpted sun 500 (preview) ≤ 8 s.
+  { id: 'cloud-classic', title: 'Cloud 230 kit', ms: 6000 },
+  { id: 'sun-soft-star', title: 'Sun kit', ms: 12000 },
+  { id: 'sun-sculpted-pinwheel-500', title: 'Sculpted sun 500, preview', ms: 8000 },
 ];
 
 /** Slow cases without a budget, for the record. */
-const EXTRA: readonly string[] = ['relief-night-flight-classic', 'relief-night-flight-round', 'text-rounded-hello', 'balloon-hollow-classic', 'balloon-tethered-classic', 'balloon-hanger-small', 'figureset-two-sided'];
+const EXTRA: readonly string[] = ['relief-night-flight-classic', 'relief-night-flight-round', 'relief-summit-classic', 'text-rounded-hello', 'sun-sculpted-soft-star', 'cloud-sculpted-classic', 'balloon-hollow-classic', 'balloon-tethered-classic', 'balloon-hanger-small', 'figureset-two-sided'];
 
 const REGRESSION_LIMIT = 1.25;
 

@@ -11,13 +11,12 @@ import { compareCase, compareCaseError, type CaseResult } from './compare';
 import { exportedFile, prepareCase } from './exportCase';
 import { describeResult } from './index';
 import { allCases, isExported, loadManifest, type ReferenceCase } from './manifest';
-import { formatTable, skippedRow, summarize, toRow, writeReport } from './report';
-import { skippedBy } from './skipList';
+import { formatTable, summarize, toRow, writeReport } from './report';
 
 /**
  * What depends on the rasterizer: plan §1 exempts it from the byte criterion, WP-R checks it by tolerances.
- * It also covers the 12 tie-flip models (`TIE_FLIPS` in tests/patterns.reference.test.ts, all relief or text),
- * so they need no line in skipList.ts here; WP-K3 checks those with Swift's rasters and its limits.
+ * The 12 tie-flip models on the `equivalent-bounded` allowlist are among these, so they only get their
+ * verdict where they run on Swift's rasters: tests/patterns.reference.test.ts.
  */
 const RASTER_ENTRIES = ['3D/3dmodel.model', 'Metadata/balloon-studio.txt'];
 
@@ -63,20 +62,15 @@ describe.skipIf(isReal)('grid structure (stub core)', () => {
 
 describe.skipIf(!isReal)('grid against the Swift references', () => {
   const results: CaseResult[] = [];
-  const compared = cases.filter((c) => skippedBy(c) === null);
 
   afterAll(() => {
-    const skipped = cases.flatMap((c) => {
-      const by = skippedBy(c);
-      return by === null ? [] : [skippedRow(c.id, by, c.durationMs)];
-    });
-    const rows = [...results.map(toRow), ...skipped];
+    const rows = results.map(toRow);
     console.log(formatTable(rows));
     console.log(JSON.stringify(summarize(rows)));
     writeReport(rows, core.implementation);
   });
 
-  it.each(compared.map((c) => [c.id, c] as const))('%s', (id, c) => {
+  it.each(cases.map((c) => [c.id, c] as const))('%s', (id, c) => {
     const started = performance.now();
     let result: CaseResult;
     try {
