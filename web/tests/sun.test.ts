@@ -196,7 +196,7 @@ describe('sun kits', () => {
   it.skipIf(waitsFor.k4c)('Soft star and Cones have their own fronts', () => {
     const fronts = (['soft-star', 'cones'] as const).map((sunStyle) => binarySTL(new CloudKit({ ...defaults, sunStyle, surface: 'sculpted' }).front));
     check(!bytesEqual(fronts[0]!, fronts[1]!), 'Soft star and Cones have the same front');
-  }, 120_000);
+  }, 300_000);
 
   it.each(shardOf(SUN_STYLES))('%s: closed solids, lamp fittings, LED layouts and kit packaging', (style) => {
     const base: CloudParameters = { ...defaults, sunStyle: style };

@@ -136,7 +136,7 @@ describe('cloud kits', () => {
     }
   }, 300_000);
 
-  it('lays the LEDs out for every cut pitch and row spacing', () => {
+  it('lays the LEDs out for every cut pitch and row spacing', { timeout: 300_000 }, () => {
     const p = cloudParameters();
     for (const width of [100.0, 160, 230, 500]) {
       for (const cut of [15.625, 16, 25, 50, 100]) {
@@ -145,7 +145,7 @@ describe('cloud kits', () => {
         }
       }
     }
-  }, 120_000);
+  });
 
   it('plans the LEDs for the size of the lamp', () => {
     const compact = new CloudLEDPlan(small), large = new CloudLEDPlan(cloudParameters());

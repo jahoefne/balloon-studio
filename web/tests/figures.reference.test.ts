@@ -219,7 +219,7 @@ describe('figures against the Swift references', () => {
       expect(figureSetFilename(p)).toBe(c.filename);
     });
 
-    it('writes the same ZIP', { timeout: 120_000 }, () => {
+    it('writes the same ZIP', { timeout: 300_000 }, () => {
       const started = performance.now();
       const archive = figureSetArchive(p);
       const elapsed = performance.now() - started;

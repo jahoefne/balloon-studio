@@ -193,7 +193,7 @@ describe('balloon references', () => {
         expect(d.maxNormalUlp).toBeLessThanOrEqual(1);
         expect(sha).toBe(KNOWN_ULP[c.id]);
       },
-      300_000,
+      900_000,
     );
   }
 

@@ -182,7 +182,7 @@ describe('slot insert', () => {
       if (Math.abs(o.x) < 1.15 && o.y < rest + 0.9) continue;
       close(distance(placed, o, down), cap - 0.05 - (low.z + 1), 'Head on the plate');
     }
-  }, 300_000);
+  }, 900_000);
 
   // Keyholes and nails: every insert that is offered is sound, every
   // refusal says why.
@@ -210,7 +210,7 @@ describe('slot insert', () => {
       }
     });
     check(offered > 0 && refused > 0, 'A sweep with nothing offered or nothing refused');
-  }, 300_000);
+  }, 900_000);
 
   it('says why', () => {
     const user: CloudParameters = { ...cloudParameters(), nailInsert: true };

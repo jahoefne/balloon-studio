@@ -24,11 +24,9 @@ export default defineConfig({
     include: SHARD === null ? include : [...filesOfShard(globSync(include, { cwd: web }), SHARD)],
     exclude: [...configDefaults.exclude, ...(core === 'real' ? ['harness/grid.reference.test.ts'] : [])],
     setupFiles: ['src/test/setup.ts'],
-    // Under parallel load a test takes ten times as long; what needs more than this names its own timeout (WP-V3).
-    testTimeout: 30_000,
+    // Parallel runs make a test up to 30 times slower (measured at load 70); what needs more names its own timeout (WP-V3).
+    testTimeout: 60_000,
     hookTimeout: 120_000,
-    // Store tests that build a hollow preview are instant on the stub and take seconds on the real core.
-    ...(core === 'real' ? { testTimeout: 60_000 } : {}),
     env: { VITE_CORE: core },
   },
 });
