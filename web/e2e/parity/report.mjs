@@ -151,7 +151,7 @@ lines.push(`| Rows | ${STATUS.ok} identical | ${STATUS.decided} difference the p
 lines.push('| --- | --- | --- | --- | --- | --- |');
 lines.push(`| ${rows.length} | ${count(STATUS.ok)} | ${count(STATUS.decided)} | ${count(STATUS.pending)} | ${count(STATUS.open)} | ${count(STATUS.fail)} |`);
 lines.push('');
-lines.push('What the checks can and cannot see: text, order, ranges, steps, units, help, default values, accessibility names and identifiers, JSON keys and reload behaviour are read from the DOM and localStorage. A row of kind Preview checks that the control changes what the stage draws (pixel comparison of the canvas in software WebGL), not the colors or framing themselves; those are in `Stage`-prop tests of each editor and the WP-U4 comparison with SceneKit. Numbers that come from generated meshes are checked by format; their values are the reference harness’s job. Until the K9 lamps and patterns land, `VITE_CORE=real` runs those parts on the stub, so a green row there says nothing beyond the stub.');
+lines.push('What the checks can and cannot see: text, order, ranges, steps, units, help, default values, accessibility names and identifiers, JSON keys and reload behaviour are read from the DOM and localStorage. A row of kind Preview checks that the control changes what the stage draws (pixel comparison of the canvas in software WebGL), not the colors or framing themselves; those are in `Stage`-prop tests of each editor and the WP-U4 comparison with SceneKit. Numbers that come from generated meshes are checked by format; their values are the reference harness’s job. Until the K9 patterns land (#43), `VITE_CORE=real` runs patterns on the stub, so a green pattern row says nothing beyond the stub yet.');
 lines.push('');
 lines.push('## Decided differences');
 lines.push('');
@@ -174,7 +174,7 @@ for (const [owner, group] of byOwner) {
 }
 for (const extra of [
   '**WP-U3 / WP-U9:** the store’s `error` serves export and preview alike, so a failed preview reads “… export failed”. Neither the Mac nor the stub produces such a preview failure, so no row shows it.',
-  '**WP-K9:** cloud, sun and patterns run on the stub behind `VITE_CORE=real` until the K9 hook-ups land (#42 lamps); WP-R5 for the Summit artwork.',
+  '**WP-K9:** patterns run on the stub behind `VITE_CORE=real` until #43 lands. Rerun this walk then.',
 ]) lines.push(`- ${extra}`);
 lines.push('');
 

@@ -1,6 +1,6 @@
 # Manual browser checklist
 
-Run this before a release, on the deployed page or `npm run build && npm run preview`. Results below are from 2026-10-30, on a Mac with macOS 26, unless a cell says otherwise. Chromium, Firefox and WebKit are the Playwright builds; Chrome is the installed Google Chrome, headless.
+Run this before a release, on the deployed page or `npm run build && npm run preview`. Results below are from 2026-10-30, on a Mac with macOS 26, on the stub core and with `VITE_CORE=real`, unless a cell says otherwise. Chromium, Firefox and WebKit are the Playwright builds; Chrome is the installed Google Chrome, headless.
 
 Legend: ✅ checked and fine · 🔶 checked by script with a synthetic stand-in, a person should still do it once · ⬜ not checked · ➖ does not apply.
 
@@ -21,6 +21,7 @@ Legend: ✅ checked and fine · 🔶 checked by script with a synthetic stand-in
 | 980×730: no sideways scrolling, header intact | ✅ | ✅ | ✅ | ✅ | ⬜ | ⬜ |
 | Tab through every tab: no trap, focus visible | ✅ | ➖ | ✅ | ✅ with ⌥Tab | ⬜ | ⬜ |
 | Dialogs: focus inside, Esc, Enter, focus back | ✅ | ➖ | ✅ | ✅, see notes | ⬜ | ⬜ |
+| Export dialog: name field focused, Esc, Enter, focus back, axe clean | ✅ | ➖ | ✅ | ✅ | ⬜ | ⬜ |
 | axe-core on all tabs and states | ✅, see notes | ➖ | ✅, see notes | ✅, see notes | ⬜ | ⬜ |
 
 **Not checked, and why:**
@@ -28,7 +29,7 @@ Legend: ✅ checked and fine · 🔶 checked by script with a synthetic stand-in
 - **Safari.app:** `safaridriver` and scripting need “Allow remote automation” in Safari’s Developer settings, which only the user can turn on. Playwright’s WebKit is the same engine family but not Safari. WP-U7 and WP-U8 ran a page in the system’s WKWebView (WebKit 26.6.2), which is also not Safari.
 - **Windows:** no Windows machine in this setup.
 - **Real drags from the Finder or Explorer:** only synthetic `DragEvent`s were dispatched, with a real `File` in a `DataTransfer`. Do this by hand once.
-- **The system’s save dialog:** the two export rows ran on a trial merge of this branch with WP-U9 (#45), for the clip on the stub core. For File System Access a script answered `showSaveFilePicker` with a real handle from the origin private file system, so the write was real and the native dialog was not shown. WP-U9’s own PR holds the hash comparison of downloaded files with the references.
+- **The system’s save dialog:** for File System Access a script answered `showSaveFilePicker` with a real handle from the origin private file system, so the write was real and the native dialog was not shown. The export rows ran for the clip on the stub and on the real core (40484 bytes, the same in all four browsers). WP-U9’s PR holds the hash comparison of downloaded files with the references.
 - **Mod+O’s system dialog:** the file chooser event fires in all browsers; picking a file by hand was not done.
 
 **Notes:**
@@ -42,7 +43,7 @@ Legend: ✅ checked and fine · 🔶 checked by script with a synthetic stand-in
 
 ## Bundle budget
 
-`npm run build && npm run size` on the stub build of this branch: entry 68.4 KiB gz, total 310.2 KiB gz (three 131.5, react 66.0, core worker 37.1, CSS 6.8). Limits: 2 MiB gzipped in total, 300 KiB for the entry chunk (`scripts/check-bundle-size.mjs`).
+`npm run build && npm run size` on the stub build of this branch: entry 71.0 KiB gz, total 312.9 KiB gz. Limits: 2 MiB gzipped in total, 300 KiB for the entry chunk (`scripts/check-bundle-size.mjs`).
 
 ## The steps
 

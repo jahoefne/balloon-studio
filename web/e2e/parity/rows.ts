@@ -1304,7 +1304,7 @@ const cloud: Scene[] = [
     tab: 'Cloud',
     part: 'Cloud',
     title: 'Too small for a clamp',
-    seed: { [K.cloud]: { kind: 'cloud', width: 100, depth: 16 } },
+    seed: { [K.cloud]: { kind: 'cloud', width: 100, cableSide: 'top' } }, // CableClampTests.swift:332
     rows: [
       Do('Warning', 'No room for the clamp: reason and what would fit', 'No room for the clamp behind this outlet', async (page) => {
         await expect(page.getByRole('alert').filter({ hasText: 'No room for the clamp behind this outlet: the nail pocket or the wall is too close. The kit comes without it.' })).toBeVisible();
