@@ -13,8 +13,8 @@ import { parseSTL } from '../src/core/testing/stl';
 import { CABLE_SIDE_TITLE, CABLE_SIDES, CLOUD_STYLES, SUN_STYLES, type CableSide, type CloudParameters, type WallLampKind } from '../src/core/types';
 import { decoded, sameParameters, waitsFor } from './support/lamp';
 import { checkCableClamp, checkCableOutlet, checkLEDLayout } from './support/lampFeatures';
+import { FULL, shardOf } from './support/tier';
 
-const FULL = Boolean(process.env['FULL']);
 
 const same = (a: readonly CableSide[], b: readonly CableSide[]): boolean => a.length === b.length && a.every((side, i) => side === b[i]);
 
@@ -102,7 +102,7 @@ describe('chained outlets: the kits', () => {
   ];
   const cases = designs.map((design, designIndex) => [displayName(design), design.mirrored, designIndex, design] as const);
 
-  it.each(FULL ? cases : cases.filter(([, , designIndex]) => designIndex === 0 || designIndex === 12))('%s, mirrored %s', (_, __, designIndex, design) => {
+  it.each(FULL ? shardOf(cases) : cases.filter(([, , designIndex]) => designIndex === 0 || designIndex === 12))('%s, mirrored %s', (_, __, designIndex, design) => {
     sets.forEach((set, setIndex) => {
       if (!FULL && setIndex !== 0 && set.length !== 4) return;
       for (let variant = 0; variant < 3; variant++) {

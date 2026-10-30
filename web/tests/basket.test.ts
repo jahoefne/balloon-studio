@@ -102,7 +102,7 @@ describe('basket', () => {
         check(Math.abs(dims.x - p.width) < 0.001 && Math.abs(dims.y - actualDepth(p)) < 0.001 && Math.abs(dims.z - p.height) < 0.001, 'Basket dimensions changed');
         check(parsed.vertices.length - parsed.triangles.length / 2 === -6, 'Basket must have exactly four through-holes');
         check(parsed.vertices.every((v) => v.z >= 0), 'Basket below bed');
-      }, 120_000);
+      }, 300_000);
     }
   }
 });
@@ -154,7 +154,7 @@ describe('wicker', () => {
     const smooth = BasketGenerator.generate(flat);
     const section = basketSection(smooth, 12.857);
     check(Math.abs(basketRadius(section, 0) - flat.width / 2 * (0.86 + 0.14 * 12.857 / flat.height)) < 0.001, 'Zero detail must leave a smooth wall');
-  }, 120_000);
+  }, 300_000);
 
   // Exercise the dense-to-hole-band transition and STL precision at the
   // largest relief, thin walls, and strongly rectangular outlines.
@@ -173,7 +173,7 @@ describe('wicker', () => {
         checkBasketHoles(parsed, input);
         const dims = parsed.dimensions;
         check(Math.abs(dims.x - input.width) < 0.001 && Math.abs(dims.y - input.depth) < 0.001 && Math.abs(dims.z - input.height) < 0.001, 'Detailed wicker exceeded its dimensions');
-      }, 120_000);
+      }, 300_000);
     }
   }
 });

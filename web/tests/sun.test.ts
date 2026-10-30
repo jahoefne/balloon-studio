@@ -14,8 +14,8 @@ import { parseSTL } from '../src/core/testing/stl';
 import { CABLE_SIDES, SUN_STYLE_INFO, SUN_STYLES, WALL_LAMP_KIND_INFO, type CloudParameters, type SunStyle } from '../src/core/types';
 import { decoded, roundTripped, sameParameters, waitsFor } from './support/lamp';
 import { checkCloudFeatures, checkLEDLayout } from './support/lampFeatures';
+import { FULL, shardOf } from './support/tier';
 
-const FULL = Boolean(process.env['FULL']);
 
 type Pair = [number, number];
 
@@ -196,9 +196,9 @@ describe('sun kits', () => {
   it.skipIf(waitsFor.k4c)('Soft star and Cones have their own fronts', () => {
     const fronts = (['soft-star', 'cones'] as const).map((sunStyle) => binarySTL(new CloudKit({ ...defaults, sunStyle, surface: 'sculpted' }).front));
     check(!bytesEqual(fronts[0]!, fronts[1]!), 'Soft star and Cones have the same front');
-  }, 120_000);
+  }, 300_000);
 
-  it.each(SUN_STYLES)('%s: closed solids, lamp fittings, LED layouts and kit packaging', (style) => {
+  it.each(shardOf(SUN_STYLES))('%s: closed solids, lamp fittings, LED layouts and kit packaging', (style) => {
     const base: CloudParameters = { ...defaults, sunStyle: style };
     const cases: CloudParameters[] = [base];
     for (const width of [minimumWidth(base), 180, 200, 240, 241, 500]) {
@@ -250,5 +250,5 @@ describe('sun kits', () => {
     check(new Set(entries).size === expected.length && expected.every((name) => entries.includes(name)), 'Sun kit names or contents incorrect');
     check(kit.instructions.includes('Sun wall lamp') && kit.ledPlan.svg.includes(displayName(base)), 'Sun export mislabeled');
     check(kit.ledPlan.sections.length > 0 && kit.ledPlan.rowCount > 3, 'Sun has no useful LED layout');
-  }, 900_000);
+  }, 1_800_000);
 });

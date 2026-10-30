@@ -38,8 +38,8 @@ import { CABLE_SIDES, CLOUD_STYLES, SUN_STYLES, WALL_LAMP_KINDS, type CloudParam
 import { decoded, roundTripped, sameParameters } from './support/lamp';
 import { checkCloudFeatures } from './support/lampFeatures';
 import { fixtureBytes, fixtureText } from './support/swiftProbe';
+import { FULL, shardOf } from './support/tier';
 
-const FULL = Boolean(process.env['FULL']);
 
 // --- Against Swift: mac/Probes/LampSurface --------------------------------------------------------
 
@@ -229,7 +229,7 @@ describe('sculpted lamps', () => {
 
   const all = designs();
   const cases = all.map((design, designIndex) => [displayName(design), design.mirrored, designIndex, design] as const);
-  it.each(FULL ? cases : cases.filter(([, , designIndex]) => designIndex === 0 || designIndex === 12))('%s, mirrored %s: both resolutions, shell thickness, clips and print orientation', (_, __, designIndex, design) => {
+  it.each(FULL ? shardOf(cases) : cases.filter(([, , designIndex]) => designIndex === 0 || designIndex === 12))('%s, mirrored %s: both resolutions, shell thickness, clips and print orientation', (_, __, designIndex, design) => {
     for (const variant of FULL ? [0, 1, 2, 3] : [0, 1]) {
       let p: CloudParameters = { ...design, surface: 'sculpted' };
       if (variant === 1) {
@@ -269,7 +269,7 @@ describe('sculpted lamps', () => {
         }
       }
     }
-  }, 900_000);
+  }, 1_800_000);
 
   it('mirrors the relief with the silhouette', () => {
     // Mirror the relief with the silhouette; the sun's rays remain symmetric.

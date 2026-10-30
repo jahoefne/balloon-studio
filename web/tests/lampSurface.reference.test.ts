@@ -39,6 +39,7 @@ import { wallLampDefaults } from '../src/core/lamp/sunGeometry';
 import { check } from '../src/core/testing/check';
 import { parseSTL } from '../src/core/testing/stl';
 import { decodedCase, LIBM_FLIPPED_FRONTS, type GridCase } from './support/lamp';
+import { FULL } from './support/tier';
 
 /** SHA-256 of the front as it ships. */
 const PINNED: Readonly<Record<string, string>> = {
@@ -64,7 +65,8 @@ const measure = (mesh: BalloonMesh): { volume: number; area: number } => {
 // Coordinates that should be 0 come out as ±1e-14 mm with one libm and 0 with the other (harness rule).
 const key = (v: Point3): string => [v.x, v.y, v.z].map((q) => (Math.abs(q) < 1e-9 ? 0 : q)).join();
 
-describe.each(Object.keys(LIBM_FLIPPED_FRONTS))('%s', (id) => {
+// All at export quality: the `full` tier.
+describe.skipIf(!FULL).each(Object.keys(LIBM_FLIPPED_FRONTS))('%s', (id) => {
   it('as it ships, has the pinned front', () => {
     apple.on = false;
     expect(sha256Hex(binarySTL(kitOf(id).front))).toBe(PINNED[id]);

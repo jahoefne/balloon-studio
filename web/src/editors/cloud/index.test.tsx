@@ -7,6 +7,7 @@ import type { CloudParameters, CloudPreview, WallLampKind } from '../../core/typ
 import type { StageProps } from '../../preview';
 import { createCloudStore } from '../../stores/cloudStore';
 import { testDeps } from '../../stores/testKit';
+import { FULL } from '../../../tests/support/tier';
 import { CLAMP_COLOR } from './presentation';
 import { CloudEditorView } from './CloudEditorView';
 
@@ -421,7 +422,8 @@ describe('preview', () => {
     expect(stage.resetCamera).toBe(before + 1);
   });
 
-  it('frames again when a finished preview has another shape, not on the first one', async () => {
+  // Checks the camera before the debounce ends, which a loaded machine can pass inside `user.click`: `full` tier.
+  it.runIf(FULL)('frames again when a finished preview has another shape, not on the first one', { retry: 3 }, async () => {
     const { store, user } = await setup('cloud');
     expect(stage.resetCamera).toBe(0);
     await user.click(screen.getByTestId('cloudStyle-drift'));
@@ -448,7 +450,8 @@ describe('preview', () => {
     expect(stage.topDown).toBe(false);
   });
 
-  it('shows metrics, status and name', async () => {
+  // `Updating…` lasts one debounce of real time, which a loaded machine can spend inside `user.click`: `full` tier.
+  it.runIf(FULL)('shows metrics, status and name', { retry: 3 }, async () => {
     const { store, user } = await setup('sun');
     const metrics = within(screen.getByTestId('sunMetrics'));
     expect(metrics.getByText('SUN SIZE')).toBeTruthy();

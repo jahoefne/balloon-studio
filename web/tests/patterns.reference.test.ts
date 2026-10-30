@@ -25,8 +25,8 @@ import { threeMF } from '../src/core/patterns/threeMF';
 import { zipEntries } from '../src/core/testing/zipReader';
 import { compareRefinedModels } from './support/refinementFlips';
 import { fixtureBytes } from './support/swiftProbe';
+import { FULL } from './support/tier';
 
-const FULL = process.env['FULL'] !== undefined && process.env['FULL'] !== '';
 const MODEL = '3D/3dmodel.model';
 
 const cases = loadManifest().cases.filter((c): c is ExportedCase => c.part === 'pattern' && isExported(c));
@@ -122,6 +122,8 @@ function checkCase(c: ExportedCase, rasterizers: PatternRasterizers): void {
   expectNormalized(c.id, purgeToJSON(purge), 'purge');
   const suffix = settings.style === 'Night Flight' ? '-night-flight' : settings.style === 'Summit Cable Car' ? '-summit-cable-car' : '-pattern';
   expect(filename(p).replace(/\.stl$/, `${suffix}.3mf`)).toBe(c.filename);
+  // The `fast` tier exports the default only; the settings above hold for every case.
+  if (!FULL && c.quality === 'export' && c.id !== 'pattern-stripes') return;
   const started = performance.now();
   const bytes = threeMF(PaintedBalloon.make(generate(p, c.quality), p, settings, rasterizers), settings, purge);
   const tsMs = performance.now() - started;

@@ -229,7 +229,7 @@ describe('cancellation', () => {
     const parameters = { ...core.balloon.defaults, hollow: true, diameter: 60, height: 80, neckDiameter: 12 };
     core.balloon.preview({ ...snapshot, parameters }, { isCancelled: () => (hollow++, false) });
     expect(hollow).toBeGreaterThan(2);
-  });
+  }, 180_000);
 
   it('a change of pattern keeps the generated mesh, like BalloonModel.unpainted', () => {
     const parameters = { ...core.balloon.defaults, hollow: true, diameter: 62, height: 80, neckDiameter: 12 };

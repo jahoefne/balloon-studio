@@ -17,8 +17,8 @@ import { parseSTL } from '../src/core/testing/stl';
 import { CABLE_SIDES, CLOUD_STYLES, SUN_STYLES, type CableSide, type CloudParameters, type WallLampKind } from '../src/core/types';
 import { decoded, roundTripped, sameParameters } from './support/lamp';
 import { checkCloudFeatures, checkLEDLayout } from './support/lampFeatures';
+import { FULL, shardOf } from './support/tier';
 
-const FULL = Boolean(process.env['FULL']);
 
 const suns = (): CloudParameters[] => SUN_STYLES.map((sunStyle) => ({ ...wallLampDefaults('sun'), sunStyle }));
 /** Every cloud style, as drawn and mirrored, then the four suns. */
@@ -210,7 +210,7 @@ describe('outlet placement', () => {
  * that leave them the least room. `bash scripts/test.sh outlets`
  */
 describe.skipIf(!FULL)('outlets', () => {
-  const cases = allDesigns().flatMap((design) => (['top', 'bottom'] as CableSide[]).map((side) => [displayName(design), design.mirrored, side, design] as const));
+  const cases = shardOf(allDesigns()).flatMap((design) => (['top', 'bottom'] as CableSide[]).map((side) => [displayName(design), design.mirrored, side, design] as const));
 
   it.each(cases)('%s, mirrored %s, cable at the %s', (_, __, side, design) => {
     // Mirrored clouds repeat the outlines: they get the two extremes.

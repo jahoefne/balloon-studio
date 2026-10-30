@@ -32,8 +32,16 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
-      - run: npm test
-      - run: npm run test:reference
+      - run: npm run census
+      # The `fast` tier of docs/plan.md WP-V3. No pack yet: what needs it (`skipIf`) is the job of test-full.yml.
+      - run: npm test -- --maxWorkers=4
+      - uses: actions/cache@v4
+        with:
+          path: references/pack/refs-v1
+          key: refs-pack-${{ hashFiles('references/manifest.json') }}
+      - run: bash mac/scripts/fetch-pack.sh
+        working-directory: .
+      - run: npm run test:smoke
       - run: npm run build
       - run: npm run size
 
