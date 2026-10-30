@@ -1,0 +1,126 @@
+{
+  "fieldSets" : [
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"cloud\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"soft-star\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":230}",
+      "points" : 224
+    },
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"cloud\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"drift\",\"sunStyle\":\"soft-star\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":230}",
+      "points" : 224
+    },
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"cloud\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"billow\",\"sunStyle\":\"soft-star\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":230}",
+      "points" : 224
+    },
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"cloud\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"twin\",\"sunStyle\":\"soft-star\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":230}",
+      "points" : 224
+    },
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"cloud\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"breeze\",\"sunStyle\":\"soft-star\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":230}",
+      "points" : 224
+    },
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"cloud\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"cotton\",\"sunStyle\":\"soft-star\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":230}",
+      "points" : 224
+    },
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"cloud\",\"ledRowSpacing\":14,\"mirrored\":true,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"billow\",\"sunStyle\":\"soft-star\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":230}",
+      "points" : 224
+    },
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"cloud\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"cotton\",\"sunStyle\":\"soft-star\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":100}",
+      "points" : 224
+    },
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"cloud\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"cotton\",\"sunStyle\":\"soft-star\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":1.6}",
+      "points" : 224
+    },
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"cloud\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"soft-star\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":0.5}",
+      "points" : 224
+    },
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"sun\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"soft-star\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":200}",
+      "points" : 224
+    },
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"sun\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"soft-star\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":160}",
+      "points" : 224
+    },
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"sun\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"cones\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":200}",
+      "points" : 224
+    },
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"sun\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"cones\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":160}",
+      "points" : 224
+    },
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"sun\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"pinwheel\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":200}",
+      "points" : 224
+    },
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"sun\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"pinwheel\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":160}",
+      "points" : 224
+    },
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"sun\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"bold-eight\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":200}",
+      "points" : 224
+    },
+    {
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"sun\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"bold-eight\",\"surface\":\"sculpted\",\"surfaceDepth\":1,\"width\":160}",
+      "points" : 224
+    }
+  ],
+  "meshes" : [
+    {
+      "inputTriangles" : 96,
+      "name" : "cloud-octagon-preview",
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"cloud\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"soft-star\",\"surface\":\"sculpted\",\"surfaceDepth\":5,\"width\":48}",
+      "quality" : "preview",
+      "triangles" : 1638,
+      "vertices" : 821
+    },
+    {
+      "inputTriangles" : 72,
+      "name" : "sun-ray-export",
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.6,\"kind\":\"sun\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"cones\",\"surface\":\"sculpted\",\"surfaceDepth\":12,\"width\":160}",
+      "quality" : "export",
+      "triangles" : 1210,
+      "vertices" : 607
+    },
+    {
+      "inputTriangles" : 48,
+      "name" : "sun-middle-preview",
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":0.8,\"kind\":\"sun\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"pinwheel\",\"surface\":\"sculpted\",\"surfaceDepth\":10,\"width\":160}",
+      "quality" : "preview",
+      "triangles" : 280,
+      "vertices" : 142
+    },
+    {
+      "inputTriangles" : 48,
+      "name" : "sun-middle-export",
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"sun\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"soft-star\",\"surface\":\"sculpted\",\"surfaceDepth\":12,\"width\":160}",
+      "quality" : "export",
+      "triangles" : 608,
+      "vertices" : 306
+    },
+    {
+      "inputTriangles" : 48,
+      "name" : "cloud-ties-export",
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"cloud\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"soft-star\",\"surface\":\"sculpted\",\"surfaceDepth\":5,\"width\":48}",
+      "quality" : "export",
+      "triangles" : 502,
+      "vertices" : 253
+    },
+    {
+      "inputTriangles" : 48,
+      "name" : "tiny-flat",
+      "parameters" : "{\"cableDiameter\":3,\"cableSide\":\"right\",\"clipFit\":0.2,\"depth\":22,\"diffuserThickness\":1.2,\"kind\":\"cloud\",\"ledRowSpacing\":14,\"mirrored\":false,\"nailDiameter\":1.8,\"nailHead\":8,\"nailHeadDiameter\":3.3,\"nailInsert\":false,\"nailShaft\":3.5,\"strainRelief\":true,\"stripCutLength\":16,\"stripThickness\":3,\"stripWidth\":8,\"style\":\"classic\",\"sunStyle\":\"soft-star\",\"surface\":\"sculpted\",\"surfaceDepth\":5,\"width\":48}",
+      "quality" : "preview",
+      "triangles" : 48,
+      "vertices" : 26
+    }
+  ]
+}

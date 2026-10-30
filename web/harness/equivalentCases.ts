@@ -15,4 +15,5 @@ const ANNULUS_TIE =
 export const EQUIVALENT_CASES: readonly EquivalentCase[] = [
   { caseId: 'cloud-drift', entry: 'A-cloud-back-opaque.stl', reason: ANNULUS_TIE },
   { caseId: 'sun-cable-bottom', entry: 'A-sun-back-opaque.stl', reason: ANNULUS_TIE },
+  { caseId: 'cloud-sculpted-billow-min', entry: 'A-cloud-back-opaque.stl', reason: ANNULUS_TIE },
 ];

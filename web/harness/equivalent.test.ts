@@ -226,8 +226,8 @@ describe('the allowlist in compareCase', () => {
   const body = (): Uint8Array => loadCaseBody(c) as Uint8Array;
   const list = [{ caseId: c.id, entry: null, reason: 'test' }];
 
-  it('starts with the clamp entries of the two kits, each with a reason', () => {
-    expect(EQUIVALENT_CASES.map(({ caseId, entry }) => `${caseId}/${entry}`)).toEqual(['cloud-drift/A-cloud-back-opaque.stl', 'sun-cable-bottom/A-sun-back-opaque.stl']);
+  it('lists the clamp entries of three kits, each with a reason', () => {
+    expect(EQUIVALENT_CASES.map(({ caseId, entry }) => `${caseId}/${entry}`)).toEqual(['cloud-drift/A-cloud-back-opaque.stl', 'sun-cable-bottom/A-sun-back-opaque.stl', 'cloud-sculpted-billow-min/A-cloud-back-opaque.stl']);
     for (const { caseId, entry, reason } of EQUIVALENT_CASES) {
       const listed = getCase(caseId);
       if (!isExported(listed)) throw new Error(`${caseId} has no output`);

@@ -24,6 +24,7 @@ build Libm & pids+=($!)
 build Arith & pids+=($!)
 build Format "${CORE_FILES[@]}" & pids+=($!)
 build Json "${CORE_FILES[@]}" & pids+=($!)
+build LampSurface "${CORE_FILES[@]}" & pids+=($!)
 for pid in "${pids[@]}"; do wait "$pid"; done
 if [ -n "$FULL" ]; then .build/probes/Libm --out "$OUT" --full "$FULL"; else .build/probes/Libm --out "$OUT"; fi
 .build/probes/Arith --out "$OUT"
@@ -31,4 +32,8 @@ if [ -n "$FULL" ]; then .build/probes/Libm --out "$OUT" --full "$FULL"; else .bu
 # gzip -n leaves out name and time, so the archive only changes with its content.
 gzip -n -9 -f "$OUT/format.tsv"
 .build/probes/Json --out "$OUT"
-ls -l "$OUT"
+# Fixtures of WP-K4c: Swift's own field values and sculpted fronts, kept with the web tests.
+LAMP_SURFACE=../web/tests/fixtures/swift/lampSurface
+.build/probes/LampSurface --out "$LAMP_SURFACE"
+gzip -n -9 -f "$LAMP_SURFACE"/*.stl "$LAMP_SURFACE"/field.f64
+ls -l "$OUT" "$LAMP_SURFACE"
