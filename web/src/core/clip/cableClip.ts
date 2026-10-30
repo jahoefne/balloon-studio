@@ -1,24 +1,20 @@
 // Ported from mac/Sources/BalloonStudio/CableClip.swift @ cbda68d (:19-510: CableClipParameters,
 // CableClip, CableClipGenerator, CableClipKit). CableClipMount (:4-12) is in core/types.ts.
 //
-// SWIFT-DIFF: CloudMeshBuilder.vertex/mesh (CloudGeometry.swift:1033-1042, 1051), CloudMeshBuilder.bore
-// (CableClamp.swift:384-391) and FlatRegion (CableClamp.swift:262-348) belong to WP-K4a/K4b, which are
-// not merged yet; the clip's copies stay private to this file so K7 keeps to its own output path. When
-// K4 lands, this file imports them from core/lamp and the two sections below go.
-//
 // SWIFT-DIFF: the Swift `assert`s at :293 and :351 are compiled out (`swiftc -O` in build-app.sh,
 // build-reference-exporter.sh and test.sh), so nothing is checked there: a profile that cannot be
 // triangulated gives no triangles and binarySTL's validate() rejects the mesh, as in the app.
 import { CoreFailure, INVALID_SETTINGS_MESSAGE, type Quality } from '../api';
 import { BalloonMesh } from '../geometry/mesh';
-import { cross as cross3, dot, point3, type Point3, type Triangle } from '../geometry/point3';
-import { IntKey3Map } from '../geometry/weld';
+import { cross as cross3, dot, point3, type Point3 } from '../geometry/point3';
+import { bore, FlatRegion } from '../lamp/cableClamp';
+import { CloudMeshBuilder } from '../lamp/cloudGeometry';
 import { asin, cos, hypot, PI, sin } from '../swift/dmath';
 import { formatFixed, formatG } from '../swift/format';
 import { encodeJSONCompact } from '../swift/json';
 import { arrayMin, swiftMax, swiftMax3, swiftMin } from '../swift/minmax';
-import { intDiv, intRounded } from '../swift/rounding';
-import { sortDoubles, stableSorted } from '../swift/sort';
+import { intDiv } from '../swift/rounding';
+import { sortDoubles } from '../swift/sort';
 import type { CableClipParameters, Range } from '../types';
 
 // MARK: CableClipParameters (CableClip.swift:19-88)
@@ -356,134 +352,6 @@ export class CableClip {
   }
 }
 
-// MARK: CloudMeshBuilder, the parts the clip uses (CloudGeometry.swift:1033-1042, 1051; CableClamp.swift:384-391)
-
-class CloudMeshBuilder {
-  vertices: Point3[] = [];
-  triangles: Triangle[] = [];
-  private readonly indices = new IntKey3Map();
-
-  vertex(p: Point3): number {
-    const x = intRounded(p.x * 1e7), y = intRounded(p.y * 1e7), z = intRounded(p.z * 1e7);
-    const known = this.indices.get(x, y, z);
-    if (known >= 0) return known;
-    const i = this.vertices.length;
-    this.vertices.push(p);
-    this.indices.set(x, y, z, i);
-    return i;
-  }
-  /** A round wall between two rings of the same length. */
-  bore(upper: readonly Point3[], lower: readonly Point3[]): void {
-    for (let i = 0; i < upper.length; i++) {
-      const k = (i + 1) % upper.length;
-      const ids = [upper[i]!, upper[k]!, lower[k]!, lower[i]!].map((p) => this.vertex(p));
-      this.triangles.push({ a: ids[0]!, b: ids[1]!, c: ids[2]! });
-      this.triangles.push({ a: ids[0]!, b: ids[2]!, c: ids[3]! });
-    }
-  }
-  get mesh(): BalloonMesh {
-    return new BalloonMesh(this.vertices, this.triangles, 0);
-  }
-}
-
-// MARK: FlatRegion (CableClamp.swift:262-348)
-
-/** Triangles of a flat region with holes in it, by ear clipping. Only the points given are used, so the faces around the region stay whole. */
-class FlatRegion {
-  private static readonly near = 1e-7;
-
-  private static cross(a: P2, b: P2, c: P2): number {
-    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
-  }
-  private static same(a: P2, b: P2): boolean {
-    return Math.abs(a[0] - b[0]) < FlatRegion.near && Math.abs(a[1] - b[1]) < FlatRegion.near;
-  }
-  /** On the segment, its ends included. */
-  private static on(a: P2, b: P2, p: P2): boolean {
-    const length = hypot(b[0] - a[0], b[1] - a[1]);
-    if (!(length > FlatRegion.near)) return FlatRegion.same(a, p);
-    const along = ((p[0] - a[0]) * (b[0] - a[0]) + (p[1] - a[1]) * (b[1] - a[1])) / length;
-    return Math.abs(FlatRegion.cross(a, b, p)) / length < FlatRegion.near && along > -FlatRegion.near && along < length + FlatRegion.near;
-  }
-  private static meet(a: P2, b: P2, c: P2, d: P2): boolean {
-    const s0 = FlatRegion.cross(a, b, c), s1 = FlatRegion.cross(a, b, d), s2 = FlatRegion.cross(c, d, a), s3 = FlatRegion.cross(c, d, b);
-    if (s0 * s1 < 0 && s2 * s3 < 0) return true;
-    return FlatRegion.on(a, b, c) || FlatRegion.on(a, b, d) || FlatRegion.on(c, d, a) || FlatRegion.on(c, d, b);
-  }
-  private static inside(p: P2, outline: readonly P2[]): boolean {
-    let inside = false;
-    for (let i = 0; i < outline.length; i++) {
-      const a = outline[i]!, b = outline[(i + 1) % outline.length]!;
-      if ((a[1] > p[1]) !== (b[1] > p[1]) && p[0] < a[0] + ((b[0] - a[0]) * (p[1] - a[1])) / (b[1] - a[1])) inside = !inside;
-    }
-    return inside;
-  }
-  /** A corner that stands out of the line through its neighbors. */
-  private static corner(a: P2, b: P2, c: P2): boolean {
-    return FlatRegion.cross(a, b, c) > 1e-6 * swiftMax(swiftMax3(hypot(c[0] - a[0], c[1] - a[1]), hypot(b[0] - a[0], b[1] - a[1]), hypot(c[0] - b[0], c[1] - b[1])), 1e-3);
-  }
-  /** In the triangle or on its sides. */
-  private static within(p: P2, a: P2, b: P2, c: P2): boolean {
-    const side = (a: P2, b: P2): number => FlatRegion.cross(a, b, p) / swiftMax(hypot(b[0] - a[0], b[1] - a[1]), FlatRegion.near);
-    return side(a, b) > -FlatRegion.near && side(b, c) > -FlatRegion.near && side(c, a) > -FlatRegion.near;
-  }
-
-  /** The outline runs counterclockwise, the holes clockwise, each a list of indices into `points`. Nil where no triangles can be found. */
-  static triangles(outline: readonly number[], holes: readonly (readonly number[])[], points: readonly P2[]): [number, number, number][] | null {
-    let ring = [...outline];
-    // A cut from each hole to the outline makes one ring of them.
-    for (let index = 0; index < holes.length; index++) {
-      const hole = holes[index]!;
-      const others = holes.slice(index).flatMap((hole) => hole.map((_, k): [number, number] => [hole[k]!, hole[(k + 1) % hole.length]!]));
-      const sides = [...ring.map((_, k): [number, number] => [ring[k]!, ring[(k + 1) % ring.length]!]), ...others];
-      const cuts: [number, number, number][] = [];
-      for (let i = 0; i < hole.length; i++) {
-        for (let j = 0; j < ring.length; j++) {
-          if (ring.filter((r) => FlatRegion.same(points[r]!, points[ring[j]!]!)).length !== 1) continue;
-          const a = points[hole[i]!]!, b = points[ring[j]!]!;
-          cuts.push([hypot(a[0] - b[0], a[1] - b[1]), i, j]);
-        }
-      }
-      const cut = stableSorted(cuts, (x, y) => x[0] < y[0]).find(([, i, j]) => {
-        const a = points[hole[i]!]!, b = points[ring[j]!]!, middle: P2 = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-        if (!(FlatRegion.inside(middle, ring.map((r) => points[r]!)) && !FlatRegion.inside(middle, hole.map((h) => points[h]!)))) return false;
-        return !sides.some((side) => {
-          const c = points[side[0]]!, d = points[side[1]]!;
-          if (FlatRegion.same(c, a) || FlatRegion.same(d, a) || FlatRegion.same(c, b) || FlatRegion.same(d, b)) return false;
-          return FlatRegion.meet(a, b, c, d);
-        });
-      });
-      if (cut === undefined) return null;
-      const turned: number[] = [];
-      for (let k = 0; k <= hole.length; k++) turned.push(hole[(cut[1] + k) % hole.length]!);
-      ring = [...ring.slice(0, cut[2] + 1), ...turned, ...ring.slice(cut[2])];
-    }
-    const result: [number, number, number][] = [];
-    while (ring.length > 3) {
-      const n = ring.length;
-      let ear = -1;
-      for (let i = 0; i < n; i++) {
-        const a = points[ring[(i + n - 1) % n]!]!, b = points[ring[i]!]!, c = points[ring[(i + 1) % n]!]!;
-        if (!FlatRegion.corner(a, b, c)) continue;
-        const blocked = ring.some((index) => {
-          const p = points[index]!;
-          return !FlatRegion.same(p, a) && !FlatRegion.same(p, b) && !FlatRegion.same(p, c) && FlatRegion.within(p, a, b, c);
-        });
-        if (!blocked) {
-          ear = i;
-          break;
-        }
-      }
-      if (ear < 0) return null;
-      result.push([ring[(ear + n - 1) % n]!, ring[ear]!, ring[(ear + 1) % n]!]);
-      ring.splice(ear, 1);
-    }
-    if (!FlatRegion.corner(points[ring[0]!]!, points[ring[1]!]!, points[ring[2]!]!)) return null;
-    result.push([ring[0]!, ring[1]!, ring[2]!]);
-    return result;
-  }
-}
-
 // MARK: CableClipGenerator (CableClip.swift:286-449)
 
 /** Builds the clip where it sits on the wall, and lays it down for printing. */
@@ -599,13 +467,13 @@ export class CableClipGenerator {
       return out;
     };
     const floor = c.plateThickness - c.counterboreDepth;
-    b.bore(ring(c.counterbore / 2, c.plateThickness), ring(c.counterbore / 2, floor));
+    bore(b, ring(c.counterbore / 2, c.plateThickness), ring(c.counterbore / 2, floor));
     const outerRing = ring(c.counterbore / 2, floor), innerRing = ring(c.bore / 2, floor);
     for (let k = 0; k < n; k++) {
       const k1 = (k + 1) % n;
       quad(b, b.vertex(outerRing[k]!), b.vertex(outerRing[k1]!), b.vertex(innerRing[k1]!), b.vertex(innerRing[k]!));
     }
-    b.bore(ring(c.bore / 2, floor), ring(c.bore / 2, 0));
+    bore(b, ring(c.bore / 2, floor), ring(c.bore / 2, 0));
     return b.mesh;
   }
 
