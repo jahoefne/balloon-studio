@@ -14,6 +14,9 @@
 //   `[\n\n<indent>]` for empty containers. → encodeJSONCompactSerialization, encodeJSONPretty17g
 // Both escape `"` `\` `/` and U+0000–U+001F (`\b \t \n \f \r`, else `\u00xx`) and write
 // everything else, DEL and U+2028 included, as raw UTF-8. Non-finite numbers throw, as in Swift.
+//
+// JSONDecoder (reading settings) is not JSON.parse: see JSONKeyedContainer at the end of this file,
+// measured with probes/{balloonDecode,jsonDecoder}.swift.
 import { printfG, swiftDescription } from './format';
 
 /**
@@ -372,4 +375,346 @@ class Parser {
     if (match[1] === undefined && match[2] === undefined) return new SwiftInt(value);
     return value;
   }
+}
+
+// MARK: Decoding as JSONDecoder does
+
+/** `localizedDescription` of DecodingError.keyNotFound and .valueNotFound. */
+export const JSON_DECODE_MISSING_MESSAGE = 'The data couldn’t be read because it is missing.';
+/** `localizedDescription` of DecodingError.typeMismatch and .dataCorrupted. */
+export const JSON_DECODE_FORMAT_MESSAGE = 'The data couldn’t be read because it isn’t in the correct format.';
+
+/** A failed `JSONDecoder().decode`; `message` is the DecodingError's `localizedDescription`. */
+export class JSONDecodeError extends Error {
+  readonly kind: 'missing' | 'format';
+  constructor(kind: 'missing' | 'format') {
+    super(kind === 'missing' ? JSON_DECODE_MISSING_MESSAGE : JSON_DECODE_FORMAT_MESSAGE);
+    this.name = 'JSONDecodeError';
+    this.kind = kind;
+  }
+}
+
+const formatError = (): JSONDecodeError => new JSONDecodeError('format');
+const missingError = (): JSONDecodeError => new JSONDecodeError('missing');
+
+/** A JSON number in source form: JSONDecoder converts it per requested type. */
+class RawNumber {
+  constructor(readonly lexeme: string) {}
+}
+
+/** A JSON string in source form, quotes included: converted only when a field reads it. */
+class RawString {
+  constructor(readonly literal: string) {}
+}
+
+/** A container nobody may read as Double, Int, Bool or String. */
+const OPAQUE = Object.freeze({});
+
+/** The deepest nesting JSONDecoder accepts, counting the outermost container. */
+const MAXIMUM_DEPTH = 512;
+
+const INT_LIMIT = 9223372036854775808; // 2^63, Swift Int.max + 1
+
+/** RFC 8259 number: `01`, `1e`, `-`, `.5` and `5.` are errors once a field reads them. */
+const JSON_NUMBER = /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$/;
+
+/** A string or key as Swift converts it: JSON.parse's rules, and a lone surrogate escape fails too. */
+function convertString(literal: string): string {
+  let converted: unknown;
+  try {
+    converted = JSON.parse(literal);
+  } catch {
+    throw formatError();
+  }
+  if (/\p{Surrogate}/u.test(converted as string)) throw formatError();
+  return converted as string;
+}
+
+function convertDouble(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (value instanceof RawNumber && JSON_NUMBER.test(value.lexeme)) {
+    const d = Number(value.lexeme);
+    // Out-of-range literals fail in both directions: 1e400, but also 1e-400 and 2e-324. Only a
+    // literal whose digits are all zero may read as zero.
+    // SWIFT-DIFF: Foundation also rejects some zero literals with a positive exponent (0e5, 0e1,
+    // 0.00e5, -0.0e5, but not 0e0, 0e+5, -0e5, 0.0e5). No writer produces them; they read as 0 here.
+    if (Number.isFinite(d) && (d !== 0 || !/[1-9]/.test(value.lexeme.split(/[eE]/)[0] as string))) return d;
+  }
+  throw formatError();
+}
+
+function convertInt(value: unknown): number {
+  let d: number | undefined;
+  if (typeof value === 'number') d = value;
+  else if (value instanceof RawNumber && JSON_NUMBER.test(value.lexeme)) {
+    // Digits alone convert exactly. Anything else goes through Double, so 1.50e1 is 15, 1e-400
+    // is 0 and 1.000…01 is 1 (measured).
+    if (/^-?[0-9]+$/.test(value.lexeme)) {
+      const big = BigInt(value.lexeme);
+      if (big < -9223372036854775808n || big > 9223372036854775807n) throw formatError();
+      return Number(big) + 0;
+    }
+    d = Number(value.lexeme);
+  }
+  if (d !== undefined && Number.isInteger(d) && d >= -INT_LIMIT && d < INT_LIMIT) return d + 0;
+  throw formatError();
+}
+
+function convertBool(value: unknown): boolean {
+  if (typeof value === 'boolean') return value;
+  throw formatError();
+}
+
+function convertStringValue(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (value instanceof RawString) return convertString(value.literal);
+  throw formatError();
+}
+
+function convertEnum<T extends string>(value: unknown, cases: readonly T[]): T {
+  const raw = convertStringValue(value);
+  if (!(cases as readonly string[]).includes(raw)) throw formatError();
+  return raw as T;
+}
+
+/**
+ * Swift `decoder.container(keyedBy:)` of JSONDecoder, for porting `init(from:)` and synthesized
+ * Codable. Call the readers in Swift's declaration order: the first failure wins, and it decides
+ * the message. All measured (tests/fixtures/swift/{balloonDecode,jsonDecoder}.txt):
+ *
+ * Document
+ * - One leading BOM is skipped. Whitespace is space, tab, LF and CR only.
+ * - Of two equal keys the FIRST wins, also when its value is null or the wrong type; escaped keys
+ *   count (`"\u0073"` is `"s"`).
+ * - A comma after the last object member or array element is allowed; `[,]` and `{,}` are not.
+ * - Values no field reads are only skimmed: `{"o":01}`, `{"o":1e}`, `{"o":--1}`, a raw newline or
+ *   `\x` in an unread string, and the keys of nested objects pass. A truncated `\u12`, an unknown
+ *   word (`tru`), `.5`, `+1` and nesting deeper than 512 containers fail anywhere. Keys of the
+ *   container itself are converted up front, so a bad one fails the document.
+ *
+ * Conversions of a value that is read
+ * - Double: the number grammar of RFC 8259. Out-of-range literals are errors in both directions
+ *   (`1e400`, `1e-400`, `2e-324`); subnormals (`1e-320`) are fine.
+ * - Int: a digit-only literal is checked exactly against Int64. Anything else goes through Double
+ *   and must be integral there: `1.50e1` is 15, `1e-400` is 0, `1.5` and `9.223372036854775807e18`
+ *   fail.
+ * - Bool: only `true` and `false`. String: no raw control characters, known escapes only, no lone
+ *   surrogate escape. A number is never read as a Bool or a String, nor the reverse.
+ *
+ * Errors, as JSONDecodeError with the DecodingError's `localizedDescription`
+ * - JSON_DECODE_MISSING_MESSAGE: a null document; a required key that is absent or null. **Except
+ *   Bool**: `decode(Bool.self)` on null is a type mismatch, so the other message.
+ * - JSON_DECODE_FORMAT_MESSAGE: everything else: syntax errors, a document that is no object, a
+ *   wrong type, an unknown enum raw value.
+ * - `…IfPresent`: absent or null gives undefined; a wrong type fails as above.
+ */
+export class JSONKeyedContainer {
+  private constructor(private readonly read: (key: string) => unknown) {}
+
+  /** `JSONDecoder().decode(T.self, from: text)` up to the keyed container. */
+  static fromJSON(text: string): JSONKeyedContainer {
+    const fields = scanKeyedContainer(text);
+    return new JSONKeyedContainer((key) => fields.get(key));
+  }
+
+  /** The same readers for a value that JSON.parse or the app already produced. */
+  static fromValue(value: unknown): JSONKeyedContainer {
+    if (value === null) throw missingError();
+    if (typeof value !== 'object' || Array.isArray(value)) throw formatError();
+    const c = value as Readonly<Record<string, unknown>>;
+    return new JSONKeyedContainer((key) => (Object.prototype.hasOwnProperty.call(c, key) ? c[key] : undefined));
+  }
+
+  private required(key: string): unknown {
+    const value = this.read(key);
+    if (value === undefined || value === null) throw missingError();
+    return value;
+  }
+
+  /** `try c.decode(Double.self, forKey: key)` */
+  double(key: string): number {
+    return convertDouble(this.required(key));
+  }
+  /** `try c.decode(Int.self, forKey: key)` */
+  int(key: string): number {
+    return convertInt(this.required(key));
+  }
+  /** `try c.decode(Bool.self, forKey: key)`: null is a type mismatch here, not a missing value. */
+  bool(key: string): boolean {
+    const value = this.read(key);
+    if (value === undefined) throw missingError();
+    return convertBool(value);
+  }
+  /** `try c.decode(String.self, forKey: key)` */
+  string(key: string): string {
+    return convertStringValue(this.required(key));
+  }
+  /** `try c.decode(T.self, forKey: key)` for a String-backed enum with these raw values. */
+  enumeration<T extends string>(key: string, cases: readonly T[]): T {
+    return convertEnum(this.required(key), cases);
+  }
+
+  /** `try c.decodeIfPresent(Double.self, forKey: key)` */
+  doubleIfPresent(key: string): number | undefined {
+    const value = this.read(key);
+    return value === undefined || value === null ? undefined : convertDouble(value);
+  }
+  /** `try c.decodeIfPresent(Int.self, forKey: key)` */
+  intIfPresent(key: string): number | undefined {
+    const value = this.read(key);
+    return value === undefined || value === null ? undefined : convertInt(value);
+  }
+  /** `try c.decodeIfPresent(Bool.self, forKey: key)` */
+  boolIfPresent(key: string): boolean | undefined {
+    const value = this.read(key);
+    return value === undefined || value === null ? undefined : convertBool(value);
+  }
+  /** `try c.decodeIfPresent(String.self, forKey: key)` */
+  stringIfPresent(key: string): string | undefined {
+    const value = this.read(key);
+    return value === undefined || value === null ? undefined : convertStringValue(value);
+  }
+  /** `try c.decodeIfPresent(T.self, forKey: key)` for a String-backed enum with these raw values. */
+  enumerationIfPresent<T extends string>(key: string, cases: readonly T[]): T | undefined {
+    const value = this.read(key);
+    return value === undefined || value === null ? undefined : convertEnum(value, cases);
+  }
+  /** `(try? c.decodeIfPresent(String.self, forKey: key)) ?? nil`: never throws. */
+  lenientString(key: string): string | undefined {
+    try {
+      return this.stringIfPresent(key);
+    } catch (error) {
+      if (error instanceof JSONDecodeError) return undefined;
+      throw error;
+    }
+  }
+}
+
+/** Skims the document and returns the outermost object's first value per key, unconverted. */
+function scanKeyedContainer(text: string): Map<string, unknown> {
+  let i = text.charCodeAt(0) === 0xfeff ? 1 : 0;
+  const whitespace = (): void => {
+    for (;;) {
+      const c = text.charCodeAt(i);
+      if (c !== 0x20 && c !== 0x09 && c !== 0x0a && c !== 0x0d) return;
+      i++;
+    }
+  };
+  /** Moves past a string; returns its source slice with the quotes. */
+  const string = (): string => {
+    const start = i;
+    i++;
+    for (;;) {
+      if (i >= text.length) throw formatError();
+      const c = text.charCodeAt(i);
+      if (c === 0x22) {
+        i++;
+        return text.slice(start, i);
+      }
+      if (c === 0x5c) {
+        if (text.charCodeAt(i + 1) === 0x75) {
+          if (!/^[0-9a-fA-F]{4}$/.test(text.slice(i + 2, i + 6))) throw formatError();
+          i += 6;
+        } else i += 2;
+      } else i++;
+    }
+  };
+  /** Moves past any value; numbers and strings come back in source form. */
+  const value = (depth: number): unknown => {
+    const c = text[i];
+    if (c === '{') {
+      object(depth + 1, () => undefined);
+      return OPAQUE;
+    }
+    if (c === '[') {
+      if (depth + 1 > MAXIMUM_DEPTH) throw formatError();
+      i++;
+      whitespace();
+      if (text[i] === ']') {
+        i++;
+        return OPAQUE;
+      }
+      for (;;) {
+        whitespace();
+        value(depth + 1);
+        whitespace();
+        if (text[i] === ',') {
+          i++;
+          whitespace();
+          if (text[i] === ']') {
+            i++;
+            return OPAQUE;
+          }
+        } else if (text[i] === ']') {
+          i++;
+          return OPAQUE;
+        } else throw formatError();
+      }
+    }
+    if (c === '"') return new RawString(string());
+    if (c === '-' || (c !== undefined && c >= '0' && c <= '9')) {
+      const start = i;
+      while (i < text.length && '0123456789+-.eE'.includes(text[i] as string)) i++;
+      return new RawNumber(text.slice(start, i));
+    }
+    for (const [literal, v] of [['true', true], ['false', false], ['null', null]] as const) {
+      if (text.startsWith(literal, i)) {
+        i += literal.length;
+        return v;
+      }
+    }
+    throw formatError();
+  };
+  /** The object at `i`, reporting each key's source slice and value to `entry`. */
+  const object = (depth: number, entry: (key: string, v: unknown) => void): void => {
+    if (depth > MAXIMUM_DEPTH) throw formatError();
+    i++;
+    whitespace();
+    if (text[i] === '}') {
+      i++;
+      return;
+    }
+    for (;;) {
+      whitespace();
+      if (text[i] !== '"') throw formatError();
+      const key = string();
+      whitespace();
+      if (text[i] !== ':') throw formatError();
+      i++;
+      whitespace();
+      entry(key, value(depth));
+      whitespace();
+      if (text[i] === ',') {
+        i++;
+        whitespace();
+        if (text[i] === '}') {
+          i++;
+          return;
+        }
+      } else if (text[i] === '}') {
+        i++;
+        return;
+      } else throw formatError();
+    }
+  };
+  whitespace();
+  const fields = new Map<string, unknown>();
+  if (text[i] === '{') {
+    const entries: [string, unknown][] = [];
+    object(1, (key, v) => entries.push([key, v]));
+    whitespace();
+    if (i !== text.length) throw formatError();
+    for (const [key, v] of entries) {
+      const converted = convertString(key);
+      if (!fields.has(converted)) fields.set(converted, v);
+    }
+    return fields;
+  }
+  // Not an object: a whole null document is a missing value, all else a wrong format.
+  if (text.startsWith('null', i)) {
+    i += 4;
+    whitespace();
+    if (i === text.length) throw missingError();
+  }
+  throw formatError();
 }

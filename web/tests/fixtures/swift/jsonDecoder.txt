@@ -1,0 +1,163 @@
+REQUIRED
+null	missing
+1	format
+true	format
+"x"	format
+[]	format
+	format
+<U+0020><U+0020><U+0020>	format
+{	format
+{}	missing
+{"d":1,"i":2,"b":true,"s":"x"}	ok 
+[{"d":1,"i":2,"b":true,"s":"x"}]	format
+{"d":null,"i":2,"b":true,"s":"x"}	missing
+{"i":2,"b":true,"s":"x"}	missing
+{"d":"x","i":2,"b":true,"s":"x"}	format
+{"d":"x"}	format
+{"i":"x"}	missing
+{"d":null,"i":"x"}	missing
+{"d":1,"i":"x"}	format
+{"d":1,"i":1.5,"b":null}	format
+{"d":1,"i":2}	missing
+{"d":1,"i":2,"b":null}	format
+{"d":1,"i":null}	missing
+{"d":1,"i":2,"b":1,"s":null}	format
+{"d":1,"i":2,"b":true,"s":1}	format
+{"d":1,"i":2,"b":true,"s":null}	missing
+{"d":1,"i":2,"b":true}	missing
+{"d":1e400}	format
+{"d":[]}	format
+{"d":{}}	format
+{"d":1,"i":2,"b":true,"s":"x"}<U+0020>x	format
+{"d":1,"i":2,"b":true,"s":"x",}	ok 
+OPTIONAL
+null	missing
+1	format
+[]	format
+{}	ok 
+{"d":null}	ok 
+{"d":"x"}	format
+{"s":1}	format
+{"s":null}	ok 
+{"i":true}	format
+{"b":0}	format
+{"d":"x","i":null}	format
+ENUM
+{"k":"one"}	ok one
+{"k":"three"}	format
+{"k":1}	format
+{"k":null}	missing
+{}	missing
+{"k":"ONE"}	format
+LENIENT
+{"s":"x"}	ok x
+{"s":1}	ok nil
+{"s":null}	ok nil
+{}	ok nil
+{"s":"\x"}	ok nil
+[]	format
+null	missing
+STRING
+{"s":"a"}	ok a
+{"s":"\n"}	ok <U+000A>
+{"s":"\t\r\b\f"}	ok <U+0009><U+000D><U+0008><U+000C>
+{"s":"\/"}	ok /
+{"s":"\\"}	ok \
+{"s":"\""}	ok "
+{"s":"\u00e9"}	ok <U+00E9>
+{"s":"\u00E9"}	ok <U+00E9>
+{"s":"\ud83d\ude00"}	ok <U+1F600>
+{"s":"\ud800"}	format
+{"s":"\udc00"}	format
+{"s":"\ud83dx"}	format
+{"s":"\ud83d\n"}	format
+{"s":"\ud83d\u0041"}	format
+{"s":"\ude00\ud83d"}	format
+{"s":"\x"}	format
+{"s":"\U0041"}	format
+{"s":"\u12"}	format
+{"s":"\u12G4"}	format
+{"s":"\u"}	format
+{"s":"a<U+000A>b"}	format
+{"s":"a<U+0009>b"}	format
+{"s":"a<U+0001>b"}	format
+{"s":"a<U+007F>b"}	ok a<U+007F>b
+{"s":"<U+00E9><U+1F600>"}	ok <U+00E9><U+1F600>
+{"s":"\u0000"}	ok <U+0000>
+{"s":"a<U+0000>b"}	format
+{"s":"\a"}	format
+{"s":"\<U+0020>"}	format
+{"s":"<U+2028>"}	ok <U+2028>
+KEYS
+{"\u0073":"x"}	ok x
+{"s":"a","\u0073":"b"}	ok a
+{"\u0073":"a","s":"b"}	ok a
+{"\x":1,"s":"a"}	format
+{"a<U+000A>b":1,"s":"a"}	format
+{"\ud800":1,"s":"a"}	format
+{"\u12":1,"s":"a"}	format
+{"":1,"s":"a"}	ok a
+{"s":"a","s":"\x"}	ok a
+{"s":1,"s":"a"}	format
+{"s":null,"s":"a"}	ok nil
+{"s":"a","s":null}	ok a
+STRUCTURE
+deep-array-510	ok 
+deep-array-511	ok 
+deep-array-512	format
+deep-array-513	format
+deep-object-511	ok 
+deep-object-512	ok 
+deep-object-513	format
+{"o":{"\x":1}}	ok 
+{"o":{"a<U+000A>b":1}}	ok 
+{"o":{"\u12":1}}	format
+{"o":{"\ud800":1}}	ok 
+{"o":{"a":1,"a":2}}	ok 
+{"o":[{"\x":1}]}	ok 
+{"o":"a\x"}	ok 
+{"o":"a<U+000A>b"}	ok 
+{"o":"\ud800"}	ok 
+{"o":[1<U+0020>2]}	format
+{"o":{"a"}}	format
+{"o":{1:2}}	format
+{"o":1x}	format
+{"o":1.2.3}	ok 
+{"o":--1}	ok 
+{"o":+1}	format
+{"o":.5}	format
+{"o":e5}	format
+{"o":truex}	format
+{"o":"a"b}	format
+{"o":nullx}	format
+{"o":[1,,2]}	format
+{"o":[,1]}	format
+{"o":{,"a":1}}	format
+{"o":{"a":1,,}}	format
+{"o":1	format
+{"o":[1	format
+{"o":"a	format
+{"o":"a\	format
+{"o"	format
+{"o":	format
+{"o"<U+0020>	format
+{"o":<U+0000>1}	format
+{"o":1<U+0000>}	format
+<U+0000>{}	format
+{}<U+0000>	format
+<U+000C>{}	format
+{}<U+00A0>	format
+{"d":1.2.3}	format
+{"d":1x}	format
+{"d":--1}	format
+{"d":1+1}	format
+{"d":1e5e5}	format
+{"d":1-}	format
+{"o":-}	ok 
+{"o":-x}	format
+{"o":1e}	ok 
+{"o":1e+}	ok 
+{"o":01}	ok 
+{"o":00}	ok 
+{"o":1.}	ok 
+{"o":-.5}	ok 
