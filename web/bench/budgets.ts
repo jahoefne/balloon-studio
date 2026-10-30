@@ -20,14 +20,14 @@ const BUDGETS: readonly Budget[] = [
   { id: 'balloon-hanger-hollow-tethers', title: 'Hollow + tethered + hanger, export', ms: 5000 },
   { id: 'figureset-defaults', title: 'Figure set', ms: 15000 },
   { id: 'basket-wicker-default', title: 'Wicker basket, export', ms: 6000 },
+  { id: 'pattern-hearts', title: 'Hearts 3MF', ms: 8000 },
   { id: 'cloud-classic', title: 'Cloud 230 kit', ms: 6000 },
   { id: 'sun-soft-star', title: 'Sun kit', ms: 12000 },
   { id: 'sun-sculpted-pinwheel-500', title: 'Sculpted sun 500, preview', ms: 8000 },
-  // TODO(WP-K3): Hearts 3MF ≤ 8 s.
 ];
 
 /** Slow cases without a budget, for the record. */
-const EXTRA: readonly string[] = ['sun-sculpted-soft-star', 'cloud-sculpted-classic', 'balloon-hollow-classic', 'balloon-tethered-classic', 'balloon-hanger-small', 'figureset-two-sided'];
+const EXTRA: readonly string[] = ['relief-night-flight-classic', 'relief-night-flight-round', 'relief-summit-classic', 'text-rounded-hello', 'sun-sculpted-soft-star', 'cloud-sculpted-classic', 'balloon-hollow-classic', 'balloon-tethered-classic', 'balloon-hanger-small', 'figureset-two-sided'];
 
 const REGRESSION_LIMIT = 1.25;
 
@@ -58,6 +58,8 @@ interface Row {
   budgetMs: number | null;
   bytes: number;
 }
+
+await core.prepare(async (file) => new Uint8Array(readFileSync(new URL(`web/public/fonts/${file}`, root))));
 
 const rows: Row[] = [];
 const entries = [...BUDGETS, ...EXTRA.map((id) => ({ id, title: id, ms: null }))].filter((entry) => only.length === 0 || only.includes(entry.id));

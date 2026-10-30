@@ -9,8 +9,21 @@ import { routeRequest } from './route';
 
 const scope = self as unknown as DedicatedWorkerGlobalScope;
 
+const fetchAsset = async (file: string): Promise<ArrayBuffer> => {
+  const response = await fetch(`${import.meta.env.BASE_URL}fonts/${file}`);
+  if (!response.ok) throw new Error(`${file}: HTTP ${response.status}`);
+  return response.arrayBuffer();
+};
+
+// A failed load only costs the Text pattern, which then reports it per request.
+const ready = core.prepare(fetchAsset).catch((error: unknown) => {
+  console.error(error);
+});
+
 scope.onmessage = (event: MessageEvent<WorkerRequest>) => {
-  // The core is synchronous: requests run one after another in arrival order.
-  const { response, transfer } = routeRequest(core, event.data);
-  scope.postMessage(response, transfer);
+  // The core is synchronous: requests run one after another in arrival order, after the fonts.
+  void ready.then(() => {
+    const { response, transfer } = routeRequest(core, event.data);
+    scope.postMessage(response, transfer);
+  });
 };

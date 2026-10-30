@@ -5,15 +5,19 @@
 // REFS_CASES=clip-*,cloud-classic  only these ids (* is a wildcard)
 // REFS_SHARD=2/4                   the second of four parts of the selection
 import { core } from '#core';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { fontLoader } from '../tests/support/textFonts';
 import { compareCase, compareCaseError, type CaseResult } from './compare';
 import { exportedFile, prepareCase } from './exportCase';
 import { describeResult } from './index';
 import { allCases, isExported, loadManifest, type ReferenceCase } from './manifest';
-import { formatTable, skippedRow, summarize, toRow, writeReport } from './report';
-import { skippedBy, skippedEntries } from './skipList';
+import { formatTable, summarize, toRow, writeReport } from './report';
 
-/** What depends on the rasterizer: plan §1 exempts it from the byte criterion, WP-R checks it by tolerances. */
+/**
+ * What depends on the rasterizer: plan §1 exempts it from the byte criterion, WP-R checks it by tolerances.
+ * The 12 tie-flip models on the `equivalent-bounded` allowlist are among these, so they only get their
+ * verdict where they run on Swift's rasters: tests/patterns.reference.test.ts.
+ */
 const RASTER_ENTRIES = ['3D/3dmodel.model', 'Metadata/balloon-studio.txt'];
 
 function selectCases(): ReferenceCase[] {
@@ -29,6 +33,8 @@ function selectCases(): ReferenceCase[] {
 
 const cases = selectCases();
 const isReal = core.implementation === 'real';
+
+beforeAll(() => core.prepare(fontLoader));
 
 describe.skipIf(isReal)('grid structure (stub core)', () => {
   it('covers the grid the manifest was generated from', () => {
@@ -56,20 +62,15 @@ describe.skipIf(isReal)('grid structure (stub core)', () => {
 
 describe.skipIf(!isReal)('grid against the Swift references', () => {
   const results: CaseResult[] = [];
-  const compared = cases.filter((c) => skippedBy(c) === null);
 
   afterAll(() => {
-    const skipped = cases.flatMap((c) => {
-      const by = skippedBy(c);
-      return by === null ? [] : [skippedRow(c.id, by, c.durationMs)];
-    });
-    const rows = [...results.map(toRow), ...skipped];
+    const rows = results.map(toRow);
     console.log(formatTable(rows));
     console.log(JSON.stringify(summarize(rows)));
     writeReport(rows, core.implementation);
   });
 
-  it.each(compared.map((c) => [c.id, c] as const))('%s', (id, c) => {
+  it.each(cases.map((c) => [c.id, c] as const))('%s', (id, c) => {
     const started = performance.now();
     let result: CaseResult;
     try {
@@ -83,8 +84,7 @@ describe.skipIf(!isReal)('grid against the Swift references', () => {
       const file = exportedFile(exported);
       const tsMs = performance.now() - started;
       if (isExported(c)) expect(exported.filename, 'filename').toBe(c.filename);
-      const skipEntries = [...(c.group === 'identity' ? [] : RASTER_ENTRIES), ...skippedEntries(c)];
-      result = compareCase(id, file.bytes, { tsMs, ...(skipEntries.length === 0 ? {} : { skipEntries }) });
+      result = compareCase(id, file.bytes, { tsMs, ...(c.group === 'identity' ? {} : { skipEntries: RASTER_ENTRIES }) });
     } catch (error) {
       // Right for the case Swift fails on; a mismatch row with the message for all others.
       result = compareCaseError(id, error, { tsMs: performance.now() - started });

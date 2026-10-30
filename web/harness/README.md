@@ -116,8 +116,6 @@ The relief and text groups are exempt from the byte criterion (plan §1), so the
 
 `core/real` honors two `ExportOptions` the app does not use (`GridRunOptions` in `exportCase.ts`): `quality` for the 59 preview-quality cases, and `ignoreExportProblem` for `clip-small-head`, which the app refuses to export but the reference keeps.
 
-**Skip list** (`skipList.ts`): the parts `core/real` still takes from the stub (`pattern`, the groups `relief`, `text`) are left out and count as `skipped (WP-K3)` in the table and in `summary.skipped`. Single archive entries that cannot pass the rules are left out of a case that otherwise runs, each with its reason: the fronts of `cloud-sculpted-classic` and `cloud-sculpted-billow-min`.
-
 ## Files
 
-`index.ts` public API · `skipList.ts` the parts not compared yet · `compare.ts` entry points and dispatch · `stlDiff.ts`, `solidDiff.ts`, `boundedDiff.ts`, `zipDiff.ts`, `threeMfDiff.ts`, `jsonDiff.ts`, `textDiff.ts` the comparisons · `equivalentCases.ts` the allowlists · `manifest.ts` manifest and grid · `refs.ts` reference bodies · `report.ts` table and JSON · `result.ts` `DiffResult` · `exportCase.ts` grid case to `CoreApi` call · `fixtures.ts` test fixtures · `*.test.ts` self-tests (`pack.test.ts` needs the pack and is skipped without it).
+`index.ts` public API · `compare.ts` entry points and dispatch · `stlDiff.ts`, `solidDiff.ts`, `boundedDiff.ts`, `zipDiff.ts`, `threeMfDiff.ts`, `jsonDiff.ts`, `textDiff.ts` the comparisons · `equivalentCases.ts` the allowlists · `manifest.ts` manifest and grid · `refs.ts` reference bodies · `report.ts` table and JSON · `result.ts` `DiffResult` · `exportCase.ts` grid case to `CoreApi` call · `fixtures.ts` test fixtures · `*.test.ts` self-tests (`pack.test.ts` needs the pack and is skipped without it).

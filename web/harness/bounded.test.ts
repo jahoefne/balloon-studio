@@ -348,6 +348,6 @@ describe('the allowlist in compareCase', () => {
     expect(rows[0]?.bounded?.verticesWithoutPartner).toBe(2);
     expect(rows[1]?.bounded).toBeNull();
     expect(formatTable(rows)).toContain('| equivalent-bounded |');
-    expect(summarize(rows)).toEqual({ identical: 1, ulp: 0, equivalent: 0, 'equivalent-bounded': 1, mismatch: 0, unverified: 0, skipped: 0 });
+    expect(summarize(rows)).toEqual({ identical: 1, ulp: 0, equivalent: 0, 'equivalent-bounded': 1, mismatch: 0, unverified: 0 });
   });
 });

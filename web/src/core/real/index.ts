@@ -6,7 +6,9 @@
 // hollow inset (BalloonGeometry.swift:308). Exports and imports run in `Task.detached` without a
 // cancellation handler, so nothing there ever sees a cancellation and nothing polls.
 
-import { CoreFailure, type BalloonGeometryApi, type BasketGeometryApi, type ClipGeometryApi, type CloudGeometryApi, type CoreApi, type ExportOptions, type FigureGeometryApi, type RingGeometryApi, type RunOptions, type StlGeometryApi } from '../api';
+import { CoreFailure, type AssetLoader, type BalloonGeometryApi, type BasketGeometryApi, type ClipGeometryApi, type CloudGeometryApi, type CoreApi, type ExportOptions, type FigureGeometryApi, type RingGeometryApi, type RunOptions, type StlGeometryApi } from '../api';
+import { drawNightFlight } from '../artwork/nightFlightArtwork';
+import { drawSummitCableCar } from '../artwork/summitCableCarArtwork';
 import { generate } from '../balloon/balloonGenerator';
 import { normalized as normalizedBalloon } from '../balloon/balloonParameters';
 import { exportSTL } from '../balloon/balloonStl';
@@ -20,8 +22,12 @@ import { filename as lampFilename, normalized as normalizedLamp } from '../lamp/
 import { CloudKit } from '../lamp/cloudKit';
 import { filename as ringFilename, ledFaces, normalized as normalizedRing, RingGenerator } from '../ring/ringGeometry';
 import { SegmentedRingKit } from '../ring/segmentedRing';
-import { geometry as stubGeometry } from '../stub/geometry';
-import { CLOUD_VIEWS, type CloudView, type ExportResult, type MeshBuffers, type PurgeEstimate } from '../types';
+import { calculatePurgeEstimate, PaintedBalloon } from '../patterns/balloonPatterns';
+import type { PatternRasterizers, TextRasterizer } from '../patterns/raster';
+import { threeMF } from '../patterns/threeMF';
+import { loadFontSet, type FontSet } from '../text/fontSet';
+import { createTextRasterizer, missingGlyphs } from '../text/textMask';
+import { CLOUD_VIEWS, type BalloonPreview, type CloudView, type ExportResult, type MeshBuffers, type PatternSettings, type PurgeEstimate } from '../types';
 import { emptyMeshBuffers, toMeshBuffers } from './buffers';
 import { clipDerived, core as parameters, nailInsertInfo } from './parameters';
 
@@ -61,33 +67,75 @@ function preview<T>(options: RunOptions | undefined, cancelled: () => T, body: (
   });
 }
 
-// A solid balloon has one color: `PurgeEstimate.calculate` schedules no change.
-const SOLID_ESTIMATE: Readonly<PurgeEstimate> = Object.freeze({ mixedLayers: 0, minimumChanges: 0, maximumChanges: 0, minimumGrams: 0, maximumGrams: 0 });
+// --- Rasterizers --------------------------------------------------------------------
+
+/** `prepare` fills this; the Text pattern cannot do without it. */
+let fonts: FontSet | null = null;
+let textRasterizer: TextRasterizer | null = null;
+
+const loadedFonts = (): { fonts: FontSet; textRasterizer: TextRasterizer } => {
+  if (fonts === null || textRasterizer === null) throw new CoreFailure('internal', 'The fonts of the Text pattern are not loaded.');
+  return { fonts, textRasterizer };
+};
+
+const rasterizers: PatternRasterizers = {
+  artworks: {
+    nightFlight: drawNightFlight,
+    summitCableCar: drawSummitCableCar,
+  },
+  textRasterizer: (text, font) => loadedFonts().textRasterizer(text, font),
+};
+
+// --- Balloon -------------------------------------------------------------------------
+
+const NO_ESTIMATE: Readonly<PurgeEstimate> = Object.freeze({ mixedLayers: 0, minimumChanges: 0, maximumChanges: 0, minimumGrams: 0, maximumGrams: 0 });
+
+/** BalloonModel.unpainted (BalloonStudioApp.swift:94): a change of pattern keeps the generated mesh. `make` leaves it alone. */
+let unpainted: { key: string; mesh: BalloonMesh } | null = null;
+
+const generatedPreview = (p: BalloonPreview['parameters'], isCancelled: (() => boolean) | undefined): BalloonMesh => {
+  const key = parameters.balloon.codec.encode(p);
+  if (unpainted?.key === key) return unpainted.mesh;
+  const mesh = generate(p, 'preview', isCancelled);
+  if (mesh.triangles.length > 0) unpainted = { key, mesh };
+  return mesh;
+};
+
+/** `missingGlyphs` is about the Text pattern only. A blank or inkless text has no layout, so nothing is missing there either. */
+const missingGlyphsOf = (pattern: PatternSettings): string[] =>
+  pattern.style === 'Text' ? missingGlyphs(pattern.text, pattern.textFont, loadedFonts().fonts) : [];
 
 const balloon: BalloonGeometryApi = {
   preview(snapshot, options) {
     const p = normalizedBalloon(snapshot.parameters);
     const pattern = parameters.balloon.pattern.normalize(snapshot.pattern, p);
     const purge = parameters.balloon.purge.normalize(snapshot.purge);
-    // TODO(WP-K3): PaintedBalloon.make and PurgeEstimate.calculate from core/patterns.
-    if (pattern.style !== 'Solid') return stubGeometry.balloon.preview(snapshot);
-    // TODO(WP-R3): `missingGlyphs` of the text rasterizer; a Solid balloon has none anyway.
-    const bundle = (mesh: MeshBuffers) => ({ parameters: p, pattern, purge, mesh, estimate: { ...SOLID_ESTIMATE }, missingGlyphs: [] });
-    return preview(
-      options,
-      () => bundle(emptyMeshBuffers()),
-      () => {
-        const mesh = generate(p, 'preview', options?.isCancelled);
-        return bundle(toMeshBuffers(mesh, new Uint8Array(mesh.triangles.length)));
-      },
-    );
+    const cancelled = (): BalloonPreview => ({ parameters: p, pattern, purge, mesh: emptyMeshBuffers(), estimate: { ...NO_ESTIMATE }, missingGlyphs: [] });
+    return preview(options, cancelled, () => {
+      const original = generatedPreview(p, options?.isCancelled);
+      // The balloon's own poll came back cancelled; `make` has nothing to paint.
+      if (original.triangles.length === 0) return cancelled();
+      const painted = PaintedBalloon.make(original, p, pattern, rasterizers);
+      return {
+        parameters: p,
+        pattern,
+        purge,
+        mesh: toMeshBuffers(painted.mesh, painted.colors),
+        estimate: calculatePurgeEstimate(painted, purge),
+        missingGlyphs: missingGlyphsOf(pattern),
+      };
+    });
   },
   export(snapshot, options) {
     const p = normalizedBalloon(snapshot.parameters);
     const pattern = parameters.balloon.pattern.normalize(snapshot.pattern, p);
-    // TODO(WP-K3): PaintedBalloon.make(...).threeMF(settings:purge:) from core/patterns.
-    if (parameters.balloon.exportFormat(pattern) === '3mf') return stubGeometry.balloon.export(snapshot);
-    return run(options, () => single(parameters.balloon.exportFilename({ ...snapshot, parameters: p, pattern }), 'model/stl', exportSTL(generate(p, qualityOf(options)), p)));
+    const purge = parameters.balloon.purge.normalize(snapshot.purge);
+    const filename = parameters.balloon.exportFilename({ parameters: p, pattern, purge });
+    return run(options, () => {
+      const mesh = generate(p, qualityOf(options));
+      if (parameters.balloon.exportFormat(pattern) === 'stl') return single(filename, 'model/stl', exportSTL(mesh, p));
+      return single(filename, 'model/3mf', threeMF(PaintedBalloon.make(mesh, p, pattern, rasterizers), pattern, purge));
+    });
   },
 };
 
@@ -268,6 +316,10 @@ const stl: StlGeometryApi = {
 
 export const core: CoreApi = {
   implementation: 'real',
+  async prepare(loader: AssetLoader) {
+    fonts = await loadFontSet(loader);
+    textRasterizer = createTextRasterizer(fonts);
+  },
   balloon: { ...parameters.balloon, ...balloon },
   basket: { ...parameters.basket, ...basket },
   ring: { ...parameters.ring, ...ring },
