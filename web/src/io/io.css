@@ -1,0 +1,53 @@
+/* ExportDialog: an NSSavePanel's strings in the app's alert styling. */
+.io-export {
+  width: min(460px, calc(100vw - 32px));
+}
+.io-export__title {
+  margin: 0 0 var(--space-8);
+  font-size: var(--text-13);
+  font-weight: var(--weight-bold);
+}
+.io-export__message {
+  margin: 0;
+  font-size: var(--text-12);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.io-export__name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-top: var(--space-16);
+  font-size: var(--text-12);
+  font-weight: var(--weight-medium);
+}
+.io-export__name span {
+  flex: none;
+}
+.io-export__name input {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 5px 8px;
+  border: 1px solid var(--field-stroke);
+  border-radius: var(--radius-5);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: var(--weight-regular);
+}
+.io-export__name input:focus {
+  outline: none;
+  border-color: var(--accent-focus);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+.io-export__actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin-top: var(--space-20);
+}
+.io-export__actions .ui-button {
+  min-width: 72px;
+}

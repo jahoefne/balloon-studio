@@ -5,7 +5,7 @@ import CableClipEditor from '../editors/clip';
 import CloudEditor from '../editors/cloud';
 import FigureEditor from '../editors/figure';
 import RingEditor from '../editors/ring';
-import { startExport } from '../io';
+import { chooseFile, ExportDialog, openFile, presentExport, startExport } from '../io';
 import { DropZone } from '../open/DropZone';
 import { ImportReviewDialog } from '../open/ImportReviewDialog';
 import { useAppStore, useBalloonStore, useImportStore } from '../stores';
@@ -25,13 +25,13 @@ function PartEditor({ part }: { part: PartKey }) {
     case 'ring':
       return <RingEditor />;
     case 'cloud':
-      return <CloudEditor kind="cloud" />;
+      return <CloudEditor kind="cloud" onExport={(request) => void presentExport('cloud', request.snapshot)} />;
     case 'sun':
-      return <CloudEditor kind="sun" />;
+      return <CloudEditor kind="sun" onExport={(request) => void presentExport('sun', request.snapshot)} />;
     case 'figure':
-      return <FigureEditor />;
+      return <FigureEditor onExport={(request) => void presentExport('figure', request)} />;
     case 'clip':
-      return <CableClipEditor />;
+      return <CableClipEditor onExport={(parameters) => void presentExport('clip', parameters)} />;
   }
 }
 
@@ -46,19 +46,17 @@ export function App() {
     useAppStore.getState().start();
   }, []);
 
-  const chooseFile = () => {
-    if (useImportStore.getState().chooseFile()) fileInput.current?.click();
-  };
+  const showOpenPanel = () => chooseFile(() => fileInput.current?.click());
 
   useGlobalShortcuts({
     onExport: () => void startExport(useAppStore.getState().part),
-    onOpen: chooseFile,
+    onOpen: showOpenPanel,
     onReset: () => useAppStore.getState().resetCurrentPart(),
   });
 
   return (
     <div className="app">
-      <Header onOpen={chooseFile} />
+      <Header onOpen={showOpenPanel} />
       <main className="app-content">
         <PartEditor part={part} />
       </main>
@@ -80,11 +78,12 @@ export function App() {
           const file = event.currentTarget.files?.[0];
           // Choosing the same file again must fire `change` again.
           event.currentTarget.value = '';
-          if (file) void useAppStore.getState().openFile(file);
+          if (file) void openFile(file);
         }}
       />
       <DropZone />
       <ImportReviewDialog />
+      <ExportDialog />
       <AlertDialog open={exportError !== null} title="Export failed" message={exportError ?? ''} onDismiss={() => useBalloonStore.getState().setError(null)} />
       <AlertDialog open={importError !== null} title="Couldn’t open file" message={importError ?? ''} onDismiss={() => useImportStore.getState().setError(null)} />
     </div>
