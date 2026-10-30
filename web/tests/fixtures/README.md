@@ -53,7 +53,9 @@ needed whenever the Swift sources, the fonts or macOS change.
 | — | — | — | — | — | not generated yet |
 
 For reference, the CoreGraphics path semantics frozen in `path.ts` (WP-R0) were measured on macOS 26.6.2
-(25G83) with Swift 6.3.3 against the `mac/` sources imported in `cbda68d`.
+(25G83) with Swift 6.3.3 against the `mac/` sources imported in `cbda68d`. The arc, stroke and dash semantics of
+`path.ts`, `stroke.ts` and `dash.ts` (WP-R1) were measured on the same system with
+`swift/probes/cg-arcs.swift` (output `swift/cg-arcs.jsonl`) and `swift/probes/cg-stroke-dash.swift`.
 
 ## Metrics and thresholds
 
