@@ -1,5 +1,5 @@
-// Console table and references/report.json (a local or CI artifact, committed once per pack
-// version by WP-V4).
+// Console table and references/report.json, a local or CI working file (gitignored). Once per pack
+// version it is copied to references/report-<release>.json and committed (references/PACK.md).
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { BoundedMeasures } from './boundedDiff';
@@ -36,7 +36,8 @@ export function toRow(result: CaseResult): ReportRow {
     normalDiffs: result.normalDiffs,
     nearZeroCorners: result.nearZeroCorners,
     differingTriangles: result.differingTriangles,
-    bounded: result.bounded ?? null,
+    // In an archive the measures are on the entry.
+    bounded: result.bounded ?? result.entries?.find((entry) => entry.bounded !== undefined)?.bounded ?? null,
     warnings: result.warnings ?? [],
     tsMs: result.tsMs ?? null,
     swiftMs: result.swiftMs,

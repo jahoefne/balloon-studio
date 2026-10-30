@@ -20,6 +20,21 @@ bash mac/scripts/fetch-pack.sh --libm   # also references/pack/refs-v1/probes/li
 
 The script reads release, URLs and SHA-256 from `references/manifest.json`, reuses a pack that `make-references.sh` left in `references/pack/`, downloads otherwise (`curl`, falling back to `gh release download`), verifies the hash and unpacks. CI can cache `references/pack/refs-v1` keyed on the asset SHA-256 in the manifest. On the Mac that generated the references the same tree is in `references/build/` (plus `entries/<id>/<entry>` for every archive).
 
+## The report of a pack
+
+Each pack version has one committed result of the comparison: `references/report-<release>.json`, so `references/report-refs-v1.json` for `refs-v1`. `references/report.json` is only the working file that every harness run overwrites, also with a partial selection, so it is gitignored. Make the committed one from a clean `main` with the pack unpacked, on a machine that is otherwise quiet, because it holds timings:
+
+```bash
+cd web
+VITE_CORE=real npm run test:reference     # no REFS_SHARD and no REFS_CASES: one run over all cases
+npm run bench                             # after the grid: adds the rows under `bench`, the grid would overwrite them
+cp ../references/report.json ../references/report-refs-v1.json
+```
+
+A new pack gets a new file and leaves the old ones in place. It has `implementation`, `release`, `manifestGeneratedAt`, `sourcesSha256`, `summary` (cases per status), `warnings` (stale allowlist entries), `rows` (one per case, `web/harness/report.ts`) and `bench` (`web/bench/budgets.ts`). `docs/acceptance.md` holds the summary table, with the commit, the machine and the load of the run; update it in the same commit.
+
+The grid leaves the rasterizer's entries (`3D/3dmodel.model`, `Metadata/balloon-studio.txt`) out of the 31 relief and text cases, so their rows say nothing about those two entries, and the 12 tie-flip models are not among the `equivalent-bounded` rows. `web/tests/patterns.reference.test.ts` compares them on Swift's rasters.
+
 ## Raster dumps
 
 Written with `--rasters` for cases with `"rasters": true` (group `relief` or `text`), under `rasters/`:
