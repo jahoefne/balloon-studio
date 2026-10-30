@@ -11,7 +11,7 @@ import { wallLampDefaults } from '../src/core/lamp/sunGeometry';
 import { check } from '../src/core/testing/check';
 import { parseSTL } from '../src/core/testing/stl';
 import { CABLE_SIDE_TITLE, CABLE_SIDES, CLOUD_STYLES, SUN_STYLES, type CableSide, type CloudParameters, type WallLampKind } from '../src/core/types';
-import { decoded, sameParameters, waitsFor } from './support/lamp';
+import { decoded, sameParameters } from './support/lamp';
 import { checkCableClamp, checkCableOutlet, checkLEDLayout } from './support/lampFeatures';
 import { FULL, shardOf } from './support/tier';
 
@@ -114,7 +114,6 @@ describe('chained outlets: the kits', () => {
         // Exercise both print orientations, including both skirt notches.
         if (variant === 0 && (designIndex + setIndex) % 2 === 0) p = { ...p, surface: 'sculpted' };
         p = normalized(p);
-        if (p.surface === 'sculpted' && waitsFor.k4c) continue;
         const label = `${displayName(p)}, ${Math.trunc(p.width)} mm, ${cableSides(p).join('+')}, ${p.surface}`;
         checkLEDLayout(p);
         for (const quality of FULL ? (['preview', 'export'] as const) : (['preview'] as const)) {
