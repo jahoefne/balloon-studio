@@ -1,0 +1,385 @@
+/*
+ * Layout of the Figures and Cable clip tabs, after FigureEditor.swift and CableClipEditor.swift:
+ * a 312 pt sidebar with a footer, a divider, and the preview column padded 22 pt.
+ */
+
+.fc-editor {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+/* Sidebar */
+.fc-sidebar {
+  flex: 0 0 312px;
+  width: 312px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid rgb(0 0 0 / 0.045); /* Divider().opacity(0.45) */
+}
+.fc-sidebar__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+  padding: var(--space-22);
+}
+.fc-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.fc-group--8 {
+  gap: var(--space-8);
+}
+.fc-group--12 {
+  gap: var(--space-12);
+}
+.fc-group--13 {
+  gap: var(--space-13);
+}
+.fc-divider {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--divider);
+}
+.fc-caption {
+  margin: 0;
+  color: var(--ink-secondary);
+  font-size: var(--text-10);
+  line-height: 1.45;
+}
+.fc-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-5);
+  margin: 0;
+  font-size: var(--text-10);
+  line-height: 1.45;
+}
+.fc-note--medium {
+  font-weight: var(--weight-medium);
+}
+.fc-note__icon {
+  margin-top: 2px;
+}
+.fc-note[data-tone='warning'] {
+  color: var(--warning);
+}
+.fc-note[data-tone='secondary'] {
+  color: var(--ink-secondary);
+}
+.fc-note[data-tone='accent'] {
+  color: var(--accent);
+}
+.fc-toggle {
+  font-size: var(--text-12);
+  font-weight: var(--weight-medium);
+}
+
+/* Figure cards */
+.fc-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  width: 100%;
+  margin: 0;
+  padding: 11px;
+  border: 0;
+  border-radius: var(--radius-9);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.fc-card[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--surface);
+}
+.fc-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.fc-card .ui-icon {
+  stroke-width: 3.5; /* .font(.system(size:10, weight:.bold)) */
+}
+.fc-card__silhouette {
+  flex: 0 0 28px;
+  color: var(--accent);
+}
+.fc-card[aria-pressed='true'] .fc-card__silhouette {
+  color: var(--surface);
+}
+.fc-card__text {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.fc-card__title {
+  font-size: var(--text-12);
+  font-weight: var(--weight-semibold);
+}
+.fc-card__subtitle {
+  color: var(--ink-secondary);
+  font-size: var(--text-9);
+}
+.fc-card[aria-pressed='true'] .fc-card__subtitle {
+  color: rgb(255 255 255 / 0.8);
+}
+
+/* Footer */
+.fc-footer {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-9);
+  padding: var(--space-20);
+  background: rgb(255 255 255 / 0.45);
+}
+.fc-export.ui-button {
+  justify-content: flex-start;
+  gap: 7px;
+  width: 100%;
+  height: 42px;
+  padding: 0 var(--space-13);
+  border-radius: var(--radius-10);
+  background: var(--accent);
+  color: var(--surface);
+}
+.fc-export.ui-button:hover:not(:disabled) {
+  background: rgb(26 88 76);
+}
+.fc-export.ui-button:disabled {
+  opacity: 0.8;
+}
+.fc-export--blocked.ui-button {
+  background: rgb(142 142 147); /* Color.gray */
+}
+.fc-export__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: var(--weight-semibold);
+  text-align: left;
+}
+.fc-export__shortcut {
+  opacity: 0.65;
+}
+.fc-spinner {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgb(255 255 255 / 0.35);
+  border-top-color: var(--surface);
+  border-radius: 50%;
+  animation: fc-spin 0.8s linear infinite;
+}
+@keyframes fc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.fc-set-export.ui-button {
+  width: 100%;
+  padding: var(--space-9) 0;
+  border-radius: var(--radius-8);
+  background: rgb(31 102 89 / 0.08);
+  color: var(--accent);
+  font-size: var(--text-11);
+}
+.fc-footer__idle {
+  margin: 0;
+  color: var(--ink-secondary);
+  font-size: var(--text-10);
+  text-align: center;
+}
+.fc-footer__saved {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  max-width: 100%;
+  margin: 0;
+  color: var(--accent);
+  font-size: var(--text-11);
+  overflow-wrap: anywhere;
+}
+
+/* Preview column */
+.fc-preview {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+  padding: var(--space-22);
+  overflow-y: auto;
+}
+.fc-preview__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fc-preview__title {
+  margin: 0;
+  font-family: var(--font-rounded);
+  font-size: var(--text-18);
+  font-weight: var(--weight-semibold);
+}
+.fc-preview__name {
+  font-size: var(--text-12);
+  font-weight: var(--weight-semibold);
+}
+.fc-preview__picker {
+  flex: 0 1 220px;
+  min-width: 0;
+}
+.fc-preview__status {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: var(--text-10);
+  font-weight: var(--weight-medium);
+}
+
+/* Stage. The host is absolute so Safari resolves the Stage's 100 % height in the flex item. */
+.fc-stage {
+  position: relative;
+  flex: 1 1 310px;
+  min-height: 310px;
+  border-radius: var(--radius-16);
+  overflow: hidden;
+  background: rgb(24 31 41);
+}
+.fc-stage__host {
+  position: absolute;
+  inset: 0;
+}
+.fc-stage__badge {
+  position: absolute;
+  top: var(--space-15);
+  left: var(--space-15);
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  margin: 0;
+  padding: var(--space-8) 11px;
+  border-radius: var(--radius-pill);
+  background: var(--stage-badge);
+  color: var(--surface);
+  font-size: var(--text-11);
+  font-weight: var(--weight-medium);
+  pointer-events: none;
+}
+.fc-stage__bottom {
+  position: absolute;
+  right: var(--space-15);
+  bottom: var(--space-15);
+  left: var(--space-15);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  pointer-events: none;
+}
+.fc-stage__hint {
+  color: var(--stage-hint);
+  font-size: var(--text-10);
+  white-space: pre;
+}
+.fc-stage__spacer {
+  flex: 1 1 auto;
+}
+.fc-stage__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  height: 29px;
+  margin: 0;
+  padding: 0 var(--space-9);
+  border: 0;
+  border-radius: var(--radius-7);
+  background: var(--stage-control);
+  color: var(--surface);
+  font: inherit;
+  font-size: var(--text-10);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  pointer-events: auto;
+}
+.fc-stage__button--icon {
+  width: 29px;
+  padding: 0;
+}
+.fc-stage__button:focus-visible {
+  outline: 2px solid var(--surface);
+  outline-offset: 1px;
+}
+
+/* Swatches and toggles under the stage */
+.fc-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-9);
+  font-size: var(--text-11);
+}
+.fc-controls__spacer {
+  flex: 1 1 auto;
+}
+.fc-controls__hint {
+  color: var(--ink-secondary);
+  font-size: var(--text-10);
+}
+.fc-swatch {
+  box-sizing: content-box;
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: var(--space-3);
+  border: 1.5px solid transparent;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+.fc-swatch--ringed {
+  border-color: rgb(0 0 0 / 0.1);
+}
+.fc-swatch[aria-pressed='true'] {
+  border-color: var(--accent);
+}
+.fc-swatch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.fc-swatch__fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+/* Metrics: the Swift metric() here has 16 pt leading, 21 pt values on Figures, 15 pt on the clip. */
+.fc-metrics .ui-metric {
+  padding-left: var(--space-16);
+}
+.fc-metrics .ui-metric__title {
+  letter-spacing: 0.7px;
+}
+.fc-metrics .ui-metric__unit {
+  font-size: var(--text-10);
+}
+.fc-metrics--figure .ui-metric__number {
+  font-size: var(--text-21);
+}
+.fc-metrics--clip .ui-metric__number {
+  font-size: 15px;
+}
