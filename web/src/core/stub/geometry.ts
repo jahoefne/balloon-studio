@@ -8,7 +8,7 @@ import type {
   CloudGeometryApi,
   FigureGeometryApi,
   RingGeometryApi,
-  StlApi,
+  StlGeometryApi,
 } from '../api';
 import { CoreFailure, STL_ERRORS } from '../api';
 import {
@@ -353,13 +353,9 @@ const clip: ClipGeometryApi = {
 
 // --- STL import ----------------------------------------------------------------------
 
-const MAXIMUM_BYTES = 150_000_000;
-
-const stl: StlApi = {
-  maximumBytes: MAXIMUM_BYTES,
-  maximumTriangles: 2_000_000,
+const stl: StlGeometryApi = {
   open(bytes) {
-    if (bytes.length > MAXIMUM_BYTES) throw new CoreFailure('invalid-stl', STL_ERRORS.tooLarge);
+    if (bytes.length > 150_000_000) throw new CoreFailure('invalid-stl', STL_ERRORS.tooLarge);
     if (bytes.length === 0) throw new CoreFailure('invalid-stl', STL_ERRORS.emptyOrTooLarge);
     if (bytes.length < 84) throw new CoreFailure('invalid-stl', STL_ERRORS.incomplete);
     // STUB: the file is not parsed; it opens as the classic balloon.
