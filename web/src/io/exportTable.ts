@@ -1,7 +1,7 @@
 // What each Mac `export()` puts in its NSSavePanel, per part and variant, and what its footer
-// says. The strings are Swift's: BalloonStudioApp.swift:162-175 + :475-486, BasketEditor.swift:61-66
-// + :171-179, RingEditor.swift:100-107 + :264-272, CloudEditor.swift:93-100 + :310-315,
-// FigureEditor.swift:50-57 + :169-182, CableClipEditor.swift:50-55 + :176-185. File names come
+// says. The strings are Swift's: BalloonStudioApp.swift:165-174 + :475-486, BasketEditor.swift:62-66
+// + :171-179, RingEditor.swift:98-107 + :264-272, CloudEditor.swift:94-100 + :310-315,
+// FigureEditor.swift:54-60 + :169-182, CableClipEditor.swift:51-56 + :176-185. File names come
 // from the parameter API; the cloud and sun panel strings live with their editor (`exportRequest`).
 
 import { core } from '#core/parameters';
